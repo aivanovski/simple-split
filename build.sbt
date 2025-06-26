@@ -1,5 +1,5 @@
-val scala3Version = "3.6.3"
-val zioVersion = "2.1.14"
+val scala3Version = "3.7.1"
+val zioVersion = "2.1.19"
 
 lazy val root = project
   .in(file("."))
@@ -24,8 +24,8 @@ lazy val root = project
       "org.slf4j" % "slf4j-simple" % "2.0.9",
 
       "com.auth0" % "java-jwt" % "4.5.0",
-      "io.getquill" %% "quill-zio" % "4.8.5",
-      "io.getquill" %% "quill-jdbc-zio" % "4.8.4",
+      "io.getquill" %% "quill-zio" % "4.8.6",
+      "io.getquill" %% "quill-jdbc-zio" % "4.8.6",
       "com.h2database" % "h2" % "2.2.224",
     )
   )

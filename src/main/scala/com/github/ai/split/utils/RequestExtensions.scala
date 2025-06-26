@@ -6,22 +6,6 @@ import zio.ZIO
 import zio.http.{Body, Request}
 import zio.json.*
 
-extension (request: Request) {
-
-  def getLastUrlParameter(): IO[DomainError, String] = {
-    val parameter = request.url.toString.split("/")
-      .filter(_.nonEmpty)
-      .lastOption
-      .getOrElse("")
-
-    if (parameter.nonEmpty) {
-      ZIO.succeed(parameter)
-    } else {
-      ZIO.fail(new DomainError(message = "Invalid groupId".some))
-    }
-  }
-}
-
 extension (body: Body) {
 
   def parse[T](implicit decoder: JsonDecoder[T]): IO[DomainError, T] = {
@@ -33,6 +17,20 @@ extension (body: Body) {
           .left.map(error => new DomainError(message = error.some))
       )
     yield dto
+  }
+}
 
+extension (request: Request) {
+  def getLastUrlParameter(): ZIO[Any, DomainError, String] = {
+    val parameter = request.url.toString.split("/")
+      .filter(_.nonEmpty)
+      .lastOption
+      .getOrElse("")
+
+    if (parameter.nonEmpty) {
+      ZIO.succeed(parameter)
+    } else {
+      ZIO.fail(new DomainError(message = Some("Invalid groupId")))
+    }
   }
 }

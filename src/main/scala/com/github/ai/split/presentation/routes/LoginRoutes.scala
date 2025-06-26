@@ -3,15 +3,16 @@ package com.github.ai.split.presentation.routes
 import com.github.ai.split.utils.toDomainResponse
 import com.github.ai.split.presentation.controllers.LoginController
 import zio.http.{Method, Request, Routes, handler}
+import zio._
 
-class LoginRoutes(
-  private val loginController: LoginController
-) {
+object LoginRoutes {
 
   def routes() = Routes(
     Method.POST / "login" -> handler { (request: Request) =>
-      loginController.login(request)
-        .mapError(_.toDomainResponse)
+      for {
+        controller <- ZIO.service[LoginController]
+        response <- controller.login(request).mapError(_.toDomainResponse)
+      } yield response
     }
   )
 }

@@ -5,24 +5,25 @@ import com.github.ai.split.domain.AuthService
 import com.github.ai.split.entity.AuthenticationContext
 import com.github.ai.split.presentation.controllers.GroupController
 import zio.ZIO
-import zio.http.{Handler, Method, Request, Routes, handler}
+import zio.http.{Handler, Method, Request, Response, Routes, handler}
 
-class GroupRoutes(
-  private val groupController: GroupController,
-  private val authService: AuthService
-) {
+object GroupRoutes {
 
   def routes() = Routes(
-    Method.GET / "group" -> Handler.fromFunctionZIO[Request] { (request: Request) =>
-      ZIO.serviceWith[AuthenticationContext](auth => auth.user)
-        .flatMap(user => groupController.getGroups(request))
-        .mapError(_.toDomainResponse)
-    } @@ authService.authenticationContext,
+    Method.GET / "group" -> handler { (request: Request) =>
+      for {
+        controller <- ZIO.service[GroupController]
+        auth <- ZIO.service[AuthenticationContext]
+        response <- controller.getGroups(auth.user).mapError(_.toDomainResponse)
+      } yield response
+    } @@ AuthService.authenticationContext,
 
-    Method.POST / "group" -> Handler.fromFunctionZIO[Request] { (request: Request) =>
-      ZIO.serviceWith[AuthenticationContext](auth => auth.user)
-        .flatMap(user => groupController.postGroup(user, request))
-        .mapError(_.toDomainResponse)
-    } @@ authService.authenticationContext
+    Method.POST / "group" -> handler { (request: Request) =>
+      for {
+        controller <- ZIO.service[GroupController]
+        auth <- ZIO.service[AuthenticationContext]
+        response <- controller.postGroup(auth.user, request).mapError(_.toDomainResponse)
+      } yield response
+    } @@ AuthService.authenticationContext
   )
 }

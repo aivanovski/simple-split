@@ -1,66 +1,63 @@
 package com.github.ai.split.utils
 
-import com.github.ai.split.entity.{Expense, Group, User}
 import com.github.ai.split.entity.api.{ExpenseDto, GroupDto, UserDto}
+import com.github.ai.split.entity.db.{ExpenseEntity, GroupEntity, GroupMemberEntity, PaidByEntity, SplitBetweenEntity, UserEntity}
 import com.github.ai.split.entity.exception.DomainError
 import zio.*
 
 import java.util.UUID
 
-def toUserDto(user: User) = UserDto(
+def toUserDto(user: UserEntity) = UserDto(
   uid = user.uid.toString,
   email = user.email
 )
 
-def toUserDtos(users: List[User]) = users.map { user => toUserDto(user) }
-
-def toGroupDtos(
-  groups: List[Group],
-  userUidToUserMap: Map[UUID, User]
-): IO[DomainError, List[GroupDto]] =
-  ZIO.collectAll(
-    groups
-      .map { group =>
-        toGroupDto(
-          group = group,
-          userUidToUserMap = userUidToUserMap
-        )
-      }
-  )
+def toUserDtos(users: List[UserEntity]) = users.map { user => toUserDto(user) }
 
 def toExpenseDto(
-  expense: Expense,
-  userUidToUserMap: Map[UUID, User]
+  expense: ExpenseEntity,
+  paidBy: List[PaidByEntity],
+  splitBetween: List[SplitBetweenEntity],
+  userUidToUserMap: Map[UUID, UserEntity]
 ): IO[DomainError, ExpenseDto] = {
-  for
-    paidBy <- toUsers(expense.paidBy, userUidToUserMap)
-    splitBetween <- toUsers(expense.splitBetween, userUidToUserMap)
-  yield
-    ExpenseDto(
-      uid = expense.uid.toString,
-      title = expense.title,
-      description = expense.description.some,
-      amount = expense.amount,
-      paidBy = toUserDtos(paidBy),
-      splitBetween = toUserDtos(splitBetween)
-    )
+  for {
+    paidByUsers <- toUserDtos(paidBy.map(_.userUid), userUidToUserMap)
+    splitBetweenUsers <- toUserDtos(splitBetween.map(_.userUid), userUidToUserMap)
+  } yield ExpenseDto(
+    uid = expense.uid.toString,
+    title = expense.title,
+    description = expense.description.some,
+    amount = expense.amount,
+    paidBy = paidByUsers,
+    splitBetween = splitBetweenUsers
+  )
 }
 
-def toUsers(
+def toUserDtos(
   uids: List[UUID],
-  userUidToUserMap: Map[UUID, User]
-): IO[DomainError, List[User]] = {
+  userUidToUserMap: Map[UUID, UserEntity]
+): IO[DomainError, List[UserDto]] = {
   ZIO.collectAll(
     uids.map { uid =>
       ZIO.fromOption(userUidToUserMap.get(uid))
+        .map(user =>
+          UserDto(
+            uid = user.uid.toString,
+            email = user.email
+          )
+        )
         .mapError(_ => DomainError(message = "User not found".some))
     }
   )
 }
 
 def toGroupDto(
-  group: Group,
-  userUidToUserMap: Map[UUID, User]
+  group: GroupEntity,
+  members: List[GroupMemberEntity],
+  expenses: List[ExpenseEntity],
+  expenseUidToPaidByMap: Map[UUID, List[PaidByEntity]],
+  expenseUidToSplitBetweenMap: Map[UUID, List[SplitBetweenEntity]],
+  userUidToUserMap: Map[UUID, UserEntity]
 ): IO[DomainError, GroupDto] = {
   val owner = userUidToUserMap.get(group.ownerUid)
   if (owner.isEmpty) {
@@ -68,18 +65,26 @@ def toGroupDto(
   }
 
   for {
-    members <- toUsers(group.members, userUidToUserMap)
+    members <- toUserDtos(members.map(_.userUid), userUidToUserMap)
+    transformedExpenses <- ZIO.collectAll(
+      expenses.map(expense =>
+        val paidBy = expenseUidToPaidByMap.getOrElse(expense.uid, List.empty)
+        val splitBetween = expenseUidToSplitBetweenMap.getOrElse(expense.uid, List.empty)
 
-    expenses <- ZIO.collectAll(
-      group.expenses.map(expense => toExpenseDto(expense, userUidToUserMap))
+        toExpenseDto(
+          expense = expense,
+          paidBy = paidBy,
+          splitBetween = splitBetween,
+          userUidToUserMap = userUidToUserMap
+        )
+      )
     )
-  } yield
-    GroupDto(
-      uid = group.uid.toString,
-      owner = toUserDto(owner.get),
-      title = group.title,
-      description = group.description,
-      members = toUserDtos(members),
-      expenses = expenses
-    )
+  } yield GroupDto(
+    uid = group.uid.toString,
+    owner = toUserDto(owner.get),
+    title = group.title,
+    description = group.description,
+    members = members,
+    expenses = transformedExpenses
+  )
 }

@@ -1,51 +1,39 @@
 package com.github.ai.split.presentation.controllers
 
-import com.github.ai.split.data.{GroupRepository, UserRepository}
-import com.github.ai.split.entity.User
+import com.github.ai.split.domain.usecases.{AddMemberUseCase, AssembleGroupResponseUseCase, GetAllUsersUseCase, GetGroupByUidUseCase, GetUserByEmailUseCase}
 import com.github.ai.split.entity.api.request.PostMemberRequest
-import com.github.ai.split.utils.some
+import com.github.ai.split.entity.db.UserEntity
 import com.github.ai.split.utils.parse
 import com.github.ai.split.utils.asUid
-import com.github.ai.split.utils.toGroupDto
+import com.github.ai.split.utils.getLastUrlParameter
 import com.github.ai.split.entity.exception.DomainError
 import zio.{IO, ZIO}
 import zio.http.{Request, Response}
 import zio.json.*
 
 class MemberController(
-  private val groupRepository: GroupRepository,
-  private val userRepository: UserRepository
+  private val getGroupByUidUseCase: GetGroupByUidUseCase,
+  private val getUserByEmailUseCase: GetUserByEmailUseCase,
+  private val getAllUsersUseCase: GetAllUsersUseCase,
+  private val addMemberUseCase: AddMemberUseCase,
+  private val assembleGroupUseCase: AssembleGroupResponseUseCase
 ) {
 
   def postMember(
-    user: User,
-    groupId: String,
+    user: UserEntity,
     request: Request
   ): ZIO[Any, DomainError, Response] = {
-    for
+    for {
       body <- request.body.parse[PostMemberRequest]
-      groupUid <- groupId.asUid()
-      member <- userRepository.getByEmail(body.email)
-      group <- groupRepository.getByUid(groupUid)
-      updatedGroup <- {
-        if (group.members.contains(member.uid)) {
-          ZIO.fail(new DomainError(message = "Member already exists".some))
-        } else {
-          val newMembers = group.members :+ member.uid
-          val newGroup = group.copy(members = newMembers)
-          groupRepository.updateGroup(newGroup)
-        }
-      }
-
-      userUidToUserMap <- userRepository.getUserUidToUserMap()
-
-      response <- {
-        toGroupDto(
-          group = updatedGroup,
-          userUidToUserMap = userUidToUserMap
-        )
-      }
-    yield
-      Response.text(response.toJsonPretty + "\n")
+      groupUidStr <- request.getLastUrlParameter()
+      groupUid <- groupUidStr.asUid()
+      memberUser <- getUserByEmailUseCase.getUserByEmail(body.email)
+      group <- getGroupByUidUseCase.getGroupByUid(groupUid)
+      newMember <- addMemberUseCase.addMember(
+        groupUid = groupUid,
+        memberUserUid = memberUser.uid
+      )
+      response <- assembleGroupUseCase.assembleGroupDto(groupUid)
+    } yield Response.text(response.toJsonPretty + "\n")
   }
 }

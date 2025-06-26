@@ -1,28 +1,21 @@
 package com.github.ai.split.presentation.routes
 
-import com.github.ai.split.utils.getLastUrlParameter
 import com.github.ai.split.utils.toDomainResponse
 import com.github.ai.split.domain.AuthService
 import com.github.ai.split.entity.AuthenticationContext
 import com.github.ai.split.presentation.controllers.MemberController
 import zio.*
-import zio.http.Handler.{fromFunctionZIO, param}
 import zio.http.{string, *}
 
-class MemberRoutes(
-  private val memberController: MemberController,
-  private val authService: AuthService
-) {
+object MemberRoutes {
 
   def routes() = Routes(
-    Method.POST / "member" / string("groupId") -> Handler.fromFunctionZIO[Request] { (request: Request) =>
-      val response = for {
-        groupId <- request.getLastUrlParameter()
-        user <- ZIO.serviceWith[AuthenticationContext](auth => auth.user)
-        response <- memberController.postMember(user, groupId, request)
+    Method.POST / "member" / string("groupId") -> handler { (request: Request) =>
+      for {
+        controller <- ZIO.service[MemberController]
+        auth <- ZIO.service[AuthenticationContext]
+        response <- controller.postMember(auth.user, request).mapError(_.toDomainResponse)
       } yield response
-
-      response.mapError(_.toDomainResponse)
-    } @@ authService.authenticationContext
+    } @@ AuthService.authenticationContext
   )
 }
