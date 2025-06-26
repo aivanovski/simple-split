@@ -1,0 +1,99 @@
+CREATE TABLE IF NOT EXISTS users (
+    uid UUID PRIMARY KEY,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS groups (
+    uid UUID PRIMARY KEY,
+    owner_uid UUID NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS group_members (
+    group_uid UUID NOT NULL REFERENCES groups(uid) ON DELETE CASCADE,
+    user_uid UUID NOT NULL,
+    PRIMARY KEY (group_uid, user_uid) -- Composite primary key to ensure uniqueness
+);
+
+CREATE TABLE IF NOT EXISTS expenses (
+    uid UUID PRIMARY KEY,
+    group_uid UUID NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description VARCHAR(255) NOT NULL,
+    amount DOUBLE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS paid_by (
+    expense_uid UUID NOT NULL REFERENCES expenses(uid) ON DELETE CASCADE,
+    group_uid UUID NOT NULL,
+    user_uid UUID NOT NULL,
+    PRIMARY KEY (expense_uid, user_uid) -- Composite primary key to ensure uniqueness
+);
+
+CREATE TABLE IF NOT EXISTS split_between (
+    expense_uid UUID NOT NULL REFERENCES expenses(uid) ON DELETE CASCADE,
+    group_uid UUID NOT NULL,
+    user_uid UUID NOT NULL,
+    PRIMARY KEY (expense_uid, user_uid) -- Composite primary key to ensure uniqueness
+);
+
+INSERT INTO users VALUES ('00000000-0000-0000-0001-000000000001', 'mickey@disney.com', 'abc123');
+INSERT INTO users VALUES ('00000000-0000-0000-0001-000000000002', 'donald@disney.com', 'abc123');
+INSERT INTO users VALUES ('00000000-0000-0000-0001-000000000003', 'goofy@disney.com', 'abc123');
+INSERT INTO users VALUES ('00000000-0000-0000-0001-000000000004', 'chip@disney.com', 'abc123');
+
+INSERT INTO groups VALUES (
+    '00000000-0000-0000-00ff-000000000001',
+    '00000000-0000-0000-0001-000000000001',
+    'Trip to Disney Land',
+    'Just a regular trip on weekend'
+);
+
+INSERT INTO group_members VALUES (
+    '00000000-0000-0000-00ff-000000000001',
+    '00000000-0000-0000-0001-000000000001'
+);
+
+INSERT INTO group_members VALUES (
+    '00000000-0000-0000-00ff-000000000001',
+    '00000000-0000-0000-0001-000000000002'
+);
+
+INSERT INTO group_members VALUES (
+    '00000000-0000-0000-00ff-000000000001',
+    '00000000-0000-0000-0001-000000000003'
+);
+
+INSERT INTO expenses VALUES (
+    '00000000-0000-0000-00ee-000000000001',
+    '00000000-0000-0000-00ff-000000000001',
+    'Train tickets',
+    '',
+    300.0
+);
+
+INSERT INTO paid_by VALUES (
+    '00000000-0000-0000-00ee-000000000001',
+    '00000000-0000-0000-00ff-000000000001',
+    '00000000-0000-0000-0001-000000000001'
+);
+
+INSERT INTO split_between VALUES (
+    '00000000-0000-0000-00ee-000000000001',
+    '00000000-0000-0000-00ff-000000000001',
+    '00000000-0000-0000-0001-000000000001'
+);
+
+INSERT INTO split_between VALUES (
+    '00000000-0000-0000-00ee-000000000001',
+    '00000000-0000-0000-00ff-000000000001',
+    '00000000-0000-0000-0001-000000000002'
+);
+
+INSERT INTO split_between VALUES (
+    '00000000-0000-0000-00ee-000000000001',
+    '00000000-0000-0000-00ff-000000000001',
+    '00000000-0000-0000-0001-000000000003'
+);

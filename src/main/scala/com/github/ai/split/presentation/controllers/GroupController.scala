@@ -1,11 +1,11 @@
 package com.github.ai.split.presentation.controllers
 
-import com.github.ai.split.data.{GroupRepository, UserRepository}
-import com.github.ai.split.entity.{Group, User}
+import com.github.ai.split.domain.usecases.{AddGroupUseCase, AssembleGroupResponseUseCase, AssembleGroupsResponseUseCase, GetAllUsersUseCase}
 import com.github.ai.split.entity.api.GroupDto
 import com.github.ai.split.entity.api.request.{PostGroupRequest, PostUserRequest}
+import com.github.ai.split.entity.db.{GroupEntity, UserEntity}
 import com.github.ai.split.entity.exception.DomainError
-import com.github.ai.split.utils.{toGroupDto, toGroupDtos, some, parse}
+import com.github.ai.split.utils.{parse, some}
 import zio.{IO, ZIO}
 import zio.http.{Request, Response}
 import zio.json.*
@@ -13,38 +13,34 @@ import zio.json.*
 import java.util.UUID
 
 class GroupController(
-  private val groupRepository: GroupRepository,
-  private val userRepository: UserRepository
+  private val addGroupUseCase: AddGroupUseCase,
+  private val getAllUsersUseCase: GetAllUsersUseCase,
+  private val assembleGroupUseCase: AssembleGroupResponseUseCase,
+  private val assembleGroupsUseCase: AssembleGroupsResponseUseCase
 ) {
 
-  def getGroups(request: Request): ZIO[Any, DomainError, Response] = {
-    for
-      groups <- groupRepository.getGroups()
-      userUidToUserMap <- userRepository.getUserUidToUserMap()
-      response <- toGroupDtos(groups, userUidToUserMap)
-    yield
-      Response.text(response.toJsonPretty + "\n")
+  def getGroups(user: UserEntity): ZIO[Any, DomainError, Response] = {
+    for {
+      response <- assembleGroupsUseCase.assembleGroupDtos(userUid = user.uid)
+    } yield Response.text(response.toJsonPretty + "\n")
   }
 
-  def postGroup(user: User, request: Request): ZIO[Any, DomainError, Response] = {
-    for
-      data <- request.body.parse[PostGroupRequest]
-      group <- groupRepository.add(createGroup(user, data))
-      userUidToUserMap <- userRepository.getUserUidToUserMap()
-      response <- toGroupDto(group, userUidToUserMap)
-    yield
-      Response.text(response.toJsonPretty + "\n")
+  def postGroup(user: UserEntity, request: Request): ZIO[Any, DomainError, Response] = {
+    for {
+      requestData <- request.body.parse[PostGroupRequest]
+      group <- addGroupUseCase.addGroup(createNewGroup(user, requestData))
+      response <- assembleGroupUseCase.assembleGroupDto(groupUid = group.uid)
+    } yield Response.text(response.toJsonPretty + "\n")
   }
 
-  private def createGroup(
-    user: User,
-    request: PostGroupRequest
-  ): Group =
-    Group(
+  private def createNewGroup(
+    user: UserEntity,
+    requestData: PostGroupRequest
+  ): GroupEntity =
+    GroupEntity(
+      uid = UUID.randomUUID(),
       ownerUid = user.uid,
-      title = request.title,
-      description = request.description.getOrElse(""),
-      members = List.empty,
-      expenses = List.empty
+      title = requestData.title,
+      description = requestData.description.getOrElse("")
     )
 }

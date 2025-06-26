@@ -1,5 +1,9 @@
 package com.github.ai.split
 
+import com.github.ai.split.presentation.controllers.LoginController
+import com.github.ai.split.presentation.routes.{ExpenseRoutes, GroupRoutes, LoginRoutes, MemberRoutes, UserRoutes}
+import io.getquill.SnakeCase
+import io.getquill.jdbczio.Quill
 import zio.*
 import zio.http.*
 import zio.logging.LogFormat
@@ -7,20 +11,56 @@ import zio.logging.backend.SLF4J
 
 object MainApp extends ZIOAppDefault {
 
-  private val deps = AppDependencies
+  private val deps = Layers
 
   override val bootstrap: ZLayer[Any, Nothing, Unit] =
     Runtime.removeDefaultLoggers >>> SLF4J.slf4j(LogFormat.colored)
 
   override def run = Server
     .serve(
-      deps.userRoutes.routes()
-        ++ deps.loginRoutes.routes()
-        ++ deps.groupRoutes.routes()
-        ++ deps.memberRoutes.routes()
-        ++ deps.expenseRoutes.routes()
+      LoginRoutes.routes()
+        ++ UserRoutes.routes()
+        ++ GroupRoutes.routes()
+        ++ MemberRoutes.routes()
+        ++ ExpenseRoutes.routes()
     )
     .provide(
-      Server.defaultWithPort(8080)
+      // Use-Cases
+      Layers.addUserUseCase,
+      Layers.getAllUsersUseCase,
+      Layers.getUserByEmailUseCase,
+      Layers.addGroupUseCase,
+      Layers.getGroupByUidUseCase,
+      Layers.addMemberUseCase,
+      Layers.addExpenseUseCase,
+      
+      // Response assemblers use cases
+      Layers.assembleGroupResponseUseCase,
+      Layers.assembleGroupsResponseUseCase,
+      Layers.assembleExpenseUseCase,
+
+      // Controllers
+      Layers.memberController,
+      Layers.groupController,
+      Layers.userController,
+      Layers.loginController,
+      Layers.expenseController,
+
+      // Services
+      Layers.authService,
+      Layers.accessResolverService,
+
+      // Dao
+      Layers.expenseDao,
+      Layers.groupDao,
+      Layers.groupMemberDao,
+      Layers.userDao,
+      Layers.paidByDao,
+      Layers.splitBetweenDao,
+
+      // Others
+      Server.defaultWithPort(8080),
+      Quill.H2.fromNamingStrategy(SnakeCase),
+      Quill.DataSource.fromPrefix("h2db")
     )
 }

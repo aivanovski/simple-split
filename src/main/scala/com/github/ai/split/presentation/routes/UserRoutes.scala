@@ -7,21 +7,20 @@ import com.github.ai.split.presentation.controllers.UserController
 import zio.*
 import zio.http.*
 
-class UserRoutes(
-  private val userController: UserController,
-  private val authService: AuthService
-) {
-
+object UserRoutes {
   def routes() = Routes(
-    Method.GET / "user" -> Handler.fromFunctionZIO[Request] { (request: Request) =>
-      ZIO.serviceWith[AuthenticationContext](auth => auth.user)
-        .flatMap(user => userController.getUsers(request))
-        .mapError(_.toDomainResponse)
-    } @@ authService.authenticationContext,
+    Method.GET / "user" -> handler { (request: Request) =>
+      for {
+        controller <- ZIO.service[UserController]
+        response <- controller.getUsers().mapError(_.toDomainResponse)
+      } yield response
+    } @@ AuthService.authenticationContext,
 
-    Method.POST / "user" -> Handler.fromFunctionZIO[Request] { (request: Request) =>
-      userController.postUser(request)
-        .mapError(_.toDomainResponse)
-    },
+    Method.POST / "user" -> handler { (request: Request) =>
+      for {
+        controller <- ZIO.service[UserController]
+        response <- controller.postUser(request).mapError(_.toDomainResponse)
+      } yield response
+    }
   )
 }
