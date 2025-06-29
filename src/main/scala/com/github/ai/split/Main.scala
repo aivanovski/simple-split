@@ -9,21 +9,21 @@ import zio.http.*
 import zio.logging.LogFormat
 import zio.logging.backend.SLF4J
 
-object MainApp extends ZIOAppDefault {
+object Main extends ZIOAppDefault {
 
   private val deps = Layers
+
+  private val routes = LoginRoutes.routes()
+    ++ UserRoutes.routes()
+    ++ GroupRoutes.routes()
+    ++ MemberRoutes.routes()
+    ++ ExpenseRoutes.routes()
 
   override val bootstrap: ZLayer[Any, Nothing, Unit] =
     Runtime.removeDefaultLoggers >>> SLF4J.slf4j(LogFormat.colored)
 
   override def run = Server
-    .serve(
-      LoginRoutes.routes()
-        ++ UserRoutes.routes()
-        ++ GroupRoutes.routes()
-        ++ MemberRoutes.routes()
-        ++ ExpenseRoutes.routes()
-    )
+    .serve(routes)
     .provide(
       // Use-Cases
       Layers.addUserUseCase,
@@ -35,7 +35,7 @@ object MainApp extends ZIOAppDefault {
       Layers.addExpenseUseCase,
       Layers.convertToTransactionsUseCase,
       Layers.calculateSettlementUseCase,
-      
+
       // Response assemblers use cases
       Layers.assembleGroupResponseUseCase,
       Layers.assembleGroupsResponseUseCase,

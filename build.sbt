@@ -9,6 +9,15 @@ lazy val root = project
 
     scalaVersion := scala3Version,
 
+    assembly / assemblyMergeStrategy := {
+      case PathList("META-INF", "services", xs@_*) => MergeStrategy.concat
+      case PathList("META-INF", xs@_*) => MergeStrategy.discard
+      case "reference.conf" => MergeStrategy.concat
+      case "application.conf" => MergeStrategy.concat
+      case x => MergeStrategy.first
+    },
+    assembly / mainClass := Some("com.github.ai.split.Main"),
+
     libraryDependencies ++= Seq(
       "org.scalameta" %% "munit" % "1.0.0" % Test,
 
@@ -19,9 +28,9 @@ lazy val root = project
       "dev.zio" %% "zio-json" % "0.6.2",
 
       // Logging
-      "dev.zio" %% "zio-logging" % "2.1.15",
-      "dev.zio" %% "zio-logging-slf4j" % "2.1.15",
-      "org.slf4j" % "slf4j-simple" % "2.0.9",
+      "dev.zio" %% "zio-logging" % "2.3.2",
+      "dev.zio" %% "zio-logging-slf4j" % "2.3.1",
+      "ch.qos.logback" % "logback-classic" % "1.5.11",
 
       "com.auth0" % "java-jwt" % "4.5.0",
       "io.getquill" %% "quill-zio" % "4.8.6",
