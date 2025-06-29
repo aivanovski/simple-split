@@ -15,6 +15,8 @@ class AssembleGroupsResponseUseCase(
   private val paidByDao: PaidByEntityDao,
   private val splitBetweenDao: SplitBetweenEntityDao,
   private val getAllUsersUseCase: GetAllUsersUseCase,
+  private val convertExpensesUseCase: ConvertExpensesToTransactionsUseCase,
+  private val settlementCalculator: CalculateSettlementUseCase
 ) {
 
   def assembleGroupDtos(
@@ -37,13 +39,26 @@ class AssembleGroupsResponseUseCase(
         ZIO.collectAll(
           allGroups
             .map { group =>
+              val groupExpenses = groupUidToExpenseMap.getOrElse(group.uid, List.empty)
+              val groupPaidBy = allPaidBy.filter(_.groupUid == group.uid)
+              val groupSplitBetween = allSplitBetween.filter(_.groupUid == group.uid)
+
+              val groupTransactions = convertExpensesUseCase.convertToTransactions(
+                expenses = groupExpenses,
+                paidBy = groupPaidBy,
+                splitBetween = groupSplitBetween
+              )
+
+              val paybackTransactions = settlementCalculator.calculateSettlement(groupTransactions)
+
               toGroupDto(
                 group = group,
                 members = groupUidToMembersMap.getOrElse(group.uid, List.empty),
                 expenses = groupUidToExpenseMap.getOrElse(group.uid, List.empty),
                 expenseUidToPaidByMap = expenseUidToPaidByMap,
                 expenseUidToSplitBetweenMap = expenseUidToSplitBetweenMap,
-                userUidToUserMap = userUidToUserMap
+                userUidToUserMap = userUidToUserMap,
+                paybackTransactions = paybackTransactions
               )
             }
         )

@@ -1,37 +1,77 @@
 package com.github.ai.split.domain.usecases
 
-import com.github.ai.split.data.db.dao.{ExpenseEntityDao, PaidByEntityDao, SplitBetweenEntityDao}
-import com.github.ai.split.domain.usecases.GetAllUsersUseCase
-import com.github.ai.split.entity.exception.DomainError
-import zio.*
+import com.github.ai.split.entity.{Expense, Transaction}
 
 import java.util.UUID
+import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 
-class CalculateSettlementUseCase(
-  private val expenseDao: ExpenseEntityDao,
-  private val paidByDao: PaidByEntityDao,
-  private val splitBetweenDao: SplitBetweenEntityDao,
-  private val getAllUsersUseCase: GetAllUsersUseCase
-) {
+class CalculateSettlementUseCase {
 
-  def calculateDebtSettlement(
-    groupUid: UUID
-  ): IO[DomainError, Unit] = {
-    for {
-      expenses <- expenseDao.getByGroupUid(groupUid)
-      paidBy <- paidByDao.getByGroupUid(groupUid)
-      splitBetween <- splitBetweenDao.getByGroupUid(groupUid)
-      userUidToUserMap <- getAllUsersUseCase.getUserUidToUserMap()
+  def calculateSettlement(
+    transactions: List[Transaction]
+  ): List[Transaction] = {
+    val balances = mutable.Map[UUID, Double]()
 
-      // A: 90 -> A B C
-      // B: 180 -> A B C
-      // C: 360 -> A B C
-      //// 630/3 = 210
-      //
-      // A: (30 - 90) + 60 + 120 => 120
-      // B: 30 + (60 - 180) + 120
-      // C: 30 + 60 + (120 - 360)
+    for (transaction <- transactions) {
+      val creditorBalance = balances.getOrElse(transaction.creditor, 0.0)
+      val debtorBalance = balances.getOrElse(transaction.debtor, 0.0)
 
-    } yield ()
+      balances.put(transaction.creditor, creditorBalance + transaction.amount)
+      balances.put(transaction.debtor, debtorBalance - transaction.amount)
+    }
+
+    val creditors = ListBuffer[(UUID, Double)]()
+    val debtors = ListBuffer[(UUID, Double)]()
+
+    for ((person, balance) <- balances) {
+      if (balance > 0) {
+        creditors.addOne((person, balance))
+      } else if (balance < 0) {
+        debtors.addOne((person, -balance)) // Store as positive for easier calculation
+      }
+    }
+
+    val simplifiedTransactions = ListBuffer[Transaction]()
+
+    // Use while loops with peek() and poll() for LinkedList to simulate pointers and efficient removal
+    while (debtors.nonEmpty && creditors.nonEmpty) {
+      var (debtorUid, debtorAmount) = debtors.head
+      var (creditorUid, creditorAmount) = creditors.head
+
+      // Determine the amount that can be settled in this transaction
+      val settleAmount = Math.min(debtorAmount, creditorAmount)
+
+      if (settleAmount > 0) {
+        simplifiedTransactions.addOne(
+          Transaction(
+            creditor = creditorUid,
+            debtor = debtorUid,
+            amount = settleAmount
+          )
+        )
+      }
+
+      // Update remaining amounts
+      debtorAmount -= settleAmount
+      creditorAmount -= settleAmount
+
+      // Update the head of the lists or remove if settled
+      if (debtorAmount == 0.0) {
+        debtors.remove(0) // Remove fully settled debtor
+      } else {
+        debtors.remove(0) // Remove and re-add with updated amount
+        debtors.prepend((debtorUid, debtorAmount))
+      }
+
+      if (creditorAmount == 0.0) {
+        creditors.remove(0) // Remove fully settled creditor
+      } else {
+        creditors.remove(0) // Remove and re-add with updated amount
+        creditors.prepend((creditorUid, creditorAmount))
+      }
+    }
+
+    simplifiedTransactions.toList
   }
 }

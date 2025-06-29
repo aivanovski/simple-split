@@ -33,6 +33,8 @@ object MainApp extends ZIOAppDefault {
       Layers.getGroupByUidUseCase,
       Layers.addMemberUseCase,
       Layers.addExpenseUseCase,
+      Layers.convertToTransactionsUseCase,
+      Layers.calculateSettlementUseCase,
       
       // Response assemblers use cases
       Layers.assembleGroupResponseUseCase,

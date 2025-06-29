@@ -7,7 +7,5 @@ case class ExpenseEntity(
   groupUid: UUID,
   title: String,
   description: String,
-  amount: Double,
-//  paidBy: List[UUID],
-//  splitBetween: List[UUID]
+  amount: Double
 )
