@@ -1,6 +1,7 @@
 package com.github.ai.split.utils
 
-import com.github.ai.split.entity.api.{ExpenseDto, GroupDto, UserDto}
+import com.github.ai.split.entity.Transaction
+import com.github.ai.split.entity.api.{ExpenseDto, GroupDto, TransactionDto, UserDto}
 import com.github.ai.split.entity.db.{ExpenseEntity, GroupEntity, GroupMemberEntity, PaidByEntity, SplitBetweenEntity, UserEntity}
 import com.github.ai.split.entity.exception.DomainError
 import zio.*
@@ -57,7 +58,8 @@ def toGroupDto(
   expenses: List[ExpenseEntity],
   expenseUidToPaidByMap: Map[UUID, List[PaidByEntity]],
   expenseUidToSplitBetweenMap: Map[UUID, List[SplitBetweenEntity]],
-  userUidToUserMap: Map[UUID, UserEntity]
+  userUidToUserMap: Map[UUID, UserEntity],
+  paybackTransactions: List[Transaction]
 ): IO[DomainError, GroupDto] = {
   val owner = userUidToUserMap.get(group.ownerUid)
   if (owner.isEmpty) {
@@ -85,6 +87,16 @@ def toGroupDto(
     title = group.title,
     description = group.description,
     members = members,
-    expenses = transformedExpenses
+    expenses = transformedExpenses,
+    paybackTransactions = paybackTransactions.map(transaction => toTransactionDto(transaction))
   )
 }
+
+def toTransactionDto(
+  transaction: Transaction
+): TransactionDto =
+  TransactionDto(
+    creditorUid = transaction.creditor.toString,
+    debtorUid = transaction.debtor.toString,
+    amount = transaction.amount
+  )

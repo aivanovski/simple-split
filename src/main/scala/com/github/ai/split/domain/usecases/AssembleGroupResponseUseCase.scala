@@ -15,6 +15,8 @@ class AssembleGroupResponseUseCase(
   private val paidByDao: PaidByEntityDao,
   private val splitBetweenDao: SplitBetweenEntityDao,
   private val getAllUsersUseCase: GetAllUsersUseCase,
+  private val convertExpensesUseCase: ConvertExpensesToTransactionsUseCase,
+  private val calculateSettlementUseCase: CalculateSettlementUseCase
 ) {
 
   def assembleGroupDto(
@@ -27,14 +29,25 @@ class AssembleGroupResponseUseCase(
       expenses <- expenseDao.getByGroupUid(groupUid)
       paidBy <- paidByDao.getByGroupUid(groupUid)
       splitBetween <- splitBetweenDao.getByGroupUid(groupUid)
-      dto <- toGroupDto(
-        group = group,
-        members = members,
-        expenses = expenses,
-        expenseUidToPaidByMap = paidBy.groupBy(_.expenseUid),
-        expenseUidToSplitBetweenMap = splitBetween.groupBy(_.expenseUid),
-        userUidToUserMap = userUidToUserMap
-      )
+      dto <- {
+        val transactions = convertExpensesUseCase.convertToTransactions(
+          expenses = expenses,
+          paidBy = paidBy,
+          splitBetween = splitBetween
+        )
+
+        val paybackTransactions = calculateSettlementUseCase.calculateSettlement(transactions)
+
+        toGroupDto(
+          group = group,
+          members = members,
+          expenses = expenses,
+          expenseUidToPaidByMap = paidBy.groupBy(_.expenseUid),
+          expenseUidToSplitBetweenMap = splitBetween.groupBy(_.expenseUid),
+          userUidToUserMap = userUidToUserMap,
+          paybackTransactions = paybackTransactions
+        )
+      }
     } yield dto
   }
 }

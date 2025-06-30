@@ -8,7 +8,8 @@ case class GroupDto(
   title: String,
   description: String,
   members: List[UserDto],
-  expenses: List[ExpenseDto]
+  expenses: List[ExpenseDto],
+  paybackTransactions: List[TransactionDto]
 )
 
 object GroupDto {
