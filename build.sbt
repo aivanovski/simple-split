@@ -19,6 +19,7 @@ lazy val root = project
     assembly / mainClass := Some("com.github.ai.split.Main"),
 
     libraryDependencies ++= Seq(
+      // Testing
       "org.scalameta" %% "munit" % "1.0.0" % Test,
 
       // ZIO
@@ -32,9 +33,12 @@ lazy val root = project
       "dev.zio" %% "zio-logging-slf4j" % "2.3.1",
       "ch.qos.logback" % "logback-classic" % "1.5.11",
 
+      // JWT
       "com.auth0" % "java-jwt" % "4.5.0",
+
+      // Database
       "io.getquill" %% "quill-zio" % "4.8.6",
       "io.getquill" %% "quill-jdbc-zio" % "4.8.6",
-      "com.h2database" % "h2" % "2.2.224",
+      "com.h2database" % "h2" % "2.3.232",
     )
   )
