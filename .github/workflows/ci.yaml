@@ -20,16 +20,11 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Cache sbt
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.ivy2/cache
-            ~/.sbt
-            ~/.coursier
-          key: sbt-${{ runner.os }}-${{ hashFiles('**/build.sbt') }}-${{ hashFiles('**/project/**') }}
-          restore-keys: |
-            sbt-${{ runner.os }}-
+      - name: Setup SBT
+        uses: sbt/setup-sbt@v1
+
+      - name: Cache Dependencies
+        uses: coursier/cache-action@v6
 
       - name: Run sbt compile
         run: sbt compile
