@@ -1,1 +1,1 @@
-# split-squad
+# simple-split

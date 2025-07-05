@@ -1,32 +1,73 @@
 # macOS
 .DS_Store
 
-# sbt specific
-dist/*
-target/
-lib_managed/
-src_managed/
-project/boot/
-project/plugins/project/
-project/local-plugins.sbt
-.history
-.ensime
-.ensime_cache/
-.sbt-scripted/
-local.sbt
+# Gradle files
+.gradle/
+build/
 
-# Bloop
+# Local configuration file (sdk path, etc)
+local.properties
+
+# Log/OS Files
+*.log
+.DS_Store
+
+# Android Studio generated files and folders
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+output.json
+
+# IntelliJ
+*.iml
+.idea/
+misc.xml
+deploymentTargetDropDown.xml
+render.experimental.xml
+
+# Keystore files
+keys/release.keystore
+
+# Google Services (e.g. APIs or Firebase)
+google-services.json
+
+# Android Profiling
+*.hprof
+
+app-db/
+app-data/
+
+# Clojure files
+.clj-kondo/
+.lsp
+.nrepl-port
+
+# Transpiled server API
+web-api-scala/shared/src
+
+# Scala
+sbt
 .bsp
-
-# VS Code
-.vscode/
-
-# Metals
-.bloop/
+.sbt-local
+.cache
+.history
+.lib
+dist
+target
+lib_managed
+src_managed
+credentials.sbt
+node_modules
 .metals/
+.bloop
 metals.sbt
+.bsp/
+.ammonite
+.coursier
+.parcel-cache
+yarn.lock
+.vscode/
+kls_database.db
+out/
 
-# IDEA
-.idea
-.idea_modules
-/.worksheet/
