@@ -27,10 +27,10 @@ jobs:
         uses: coursier/cache-action@v6
 
       - name: Run sbt compile
-        run: sbt compile
+        run: cd backend && sbt app/compile
 
       - name: Run tests
-        run: sbt test
+        run: cd backend && sbt app/test
 
       - name: Build jar file
-        run: sbt assembly
+        run: cd backend && sbt app/assembly
