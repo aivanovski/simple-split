@@ -3,13 +3,12 @@ package com.github.ai.simplesplit.android.presentation
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
-import androidx.compose.ui.Modifier
+import com.arkivanov.decompose.defaultComponentContext
 import com.github.ai.simplesplit.android.di.GlobalInjector.inject
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppTheme
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.ThemeProvider
+import com.github.ai.simplesplit.android.presentation.root.RootScreen
+import com.github.ai.simplesplit.android.presentation.root.RootScreenComponent
 
 class MainActivity : AppCompatActivity() {
 
@@ -20,13 +19,19 @@ class MainActivity : AppCompatActivity() {
 
         themeProvider.onThemedContextCreated(this)
 
+        val component = RootScreenComponent(
+            componentContext = defaultComponentContext(),
+            fragmentManager = supportFragmentManager,
+            onExitNavigation = {
+                finish()
+            }
+        )
+
         setContent {
             AppTheme(theme = themeProvider.theme) {
-                Box(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    Text("Hello!")
-                }
+                RootScreen(
+                    rootComponent = component
+                )
             }
         }
     }
