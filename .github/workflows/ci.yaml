@@ -26,14 +26,11 @@ jobs:
       - name: Cache Dependencies
         uses: coursier/cache-action@v6
 
-      - name: Change project dir
-        run: cd backend
-
       - name: Run sbt compile
-        run: sbt app/compile
+        run: cd backend && sbt app/compile
 
       - name: Run tests
-        run: sbt app/test
+        run: cd backend && sbt app/test
 
       - name: Build jar file
-        run: sbt app/assembly
+        run: cd backend && sbt app/assembly
