@@ -6,8 +6,8 @@ pluginManagement {
     }
 }
 
-rootProject.name = "simple-split"
+rootProject.name = "simple-split-android"
 
 include(
-    ":simplesplit-android"
+    ":app"
 )
