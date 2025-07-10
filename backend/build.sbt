@@ -56,6 +56,8 @@ lazy val app = project
     )
   )
 
+lazy val generateKotlinClasses = taskKey[Unit]("Generate Kotlin API classes")
+
 lazy val codegen = project
   .in(file("codegen"))
   .dependsOn(api)
@@ -64,5 +66,8 @@ lazy val codegen = project
     libraryDependencies ++= Seq(
       "dev.zio" %% "zio" % zioVersion,
       "dev.zio" %% "zio-json" % zioJsonVersion
-    )
+    ),
+    generateKotlinClasses := {
+      (Compile / runMain).toTask(" com.github.ai.split.codegen.TranspilerMain api/src/main/scala ./../android/backend-api/src/main/kotlin").value
+    },
   )
