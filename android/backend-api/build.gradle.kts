@@ -6,16 +6,16 @@ plugins {
     id("java-library")
 }
 
-val appGroupId = "com.github.aivanovski"
+val appGroupId = "com.github.ai.split"
 
 group = appGroupId
 version = libs.versions.appVersion
 
 tasks.withType<KotlinCompile> {
     kotlinOptions {
-        apiVersion = "1.5"
-        languageVersion = "1.5"
-        jvmTarget = "11"
+        apiVersion = "1.9"
+        languageVersion = "1.9"
+        jvmTarget = JavaVersion.VERSION_17.toString()
     }
 }
 
