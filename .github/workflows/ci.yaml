@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  build-backend:
     runs-on: ubuntu-latest
 
     steps:
@@ -34,3 +34,30 @@ jobs:
 
       - name: Build jar file
         run: cd backend && sbt app/assembly
+
+  transpile-api:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup SBT
+        uses: sbt/setup-sbt@v1
+
+      - name: Cache Dependencies
+        uses: coursier/cache-action@v6
+
+      - name: Run transpiler
+        run: |
+          rm -r android/backend-api/src/main/kotlin/com
+          cd backend && sbt codegen/generateKotlinClasses
+
+      - name: Compile transpiled API
+        run: cd android && ./gradlew backend-api:assemble
