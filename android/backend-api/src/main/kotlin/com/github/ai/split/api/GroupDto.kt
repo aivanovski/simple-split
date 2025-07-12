@@ -1,5 +1,8 @@
 package com.github.ai.split.api
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class GroupDto(
     val uid: String,
     val title: String,

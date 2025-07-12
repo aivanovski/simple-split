@@ -60,11 +60,11 @@ class ScalaToKotlinTranspiler {
   }
 
   private def transpileImports(imports: List[String]): IO[AppError, List[String]] = {
-    ZIO.succeed(
-      imports
-        .map(line => line.trim)
-        .filter(line => line.nonEmpty && !line.startsWith("import zio"))
-    )
+    val filteredImports = imports
+      .map(line => line.trim)
+      .filter(line => line.nonEmpty && !line.startsWith("import zio"))
+    
+    ZIO.succeed(List("import kotlinx.serialization.Serializable") ++ filteredImports)
   }
 
   private def transpileFields(fields: List[String]): IO[AppError, List[Field]] = {
@@ -136,6 +136,7 @@ class ScalaToKotlinTranspiler {
       sb.append("\n")
     }
 
+    sb.append("@Serializable\n")
     sb.append(s"data class ${tpe.typeName}(\n")
     for ((field, index) <- tpe.fields.zipWithIndex) {
       sb.append(s"    val ${field.name}: ${field.fieldType}")
