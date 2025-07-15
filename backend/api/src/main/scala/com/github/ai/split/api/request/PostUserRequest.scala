@@ -3,8 +3,7 @@ package com.github.ai.split.api.request
 import zio.json.{DeriveJsonDecoder, JsonDecoder}
 
 case class PostUserRequest(
-  name: String,
-  password: String
+  name: String
 )
 
 object PostUserRequest {

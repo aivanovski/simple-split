@@ -5,13 +5,14 @@ import sys
 import json
 import textwrap
 
-DEFAULT_USER = "mickey@disney.com"
+# DEFAULT_USER = "mickey@disney.com"
+
+DEFAULT_GROUP_UID = "00000000-0000-0000-00ff-000000000001"
+DEFAULT_PASSORD = "abc123"
 
 HELP_TEXT = """
     Commands:
 
-    login                                  Sends login request with default credentials
-    user                                   Get all get_users
     group                                  Get all groups
     """
 
@@ -20,7 +21,6 @@ class ApiClient:
         self.base_url = base_url
 
     def _run_httpie(self, *args):
-        """Run an HTTPie command and return parsed JSON, or raw output on error."""
         result = subprocess.run(args, capture_output=True, text=True)
 
         if result.stderr:
@@ -29,22 +29,23 @@ class ApiClient:
 
         return result.stdout
 
-    def login(self, email, password):
-        url = f"{self.base_url}/login"
-        body = json.dumps({"email": email, "password": password})
-        return self._run_httpie("http", "POST", url, "Content-Type:application/json", "--raw", body)
+    # def login(self, email, password):
+    #     url = f"{self.base_url}/login"
+    #     body = json.dumps({"email": email, "password": password})
+    #     return self._run_httpie("http", "POST", url, "Content-Type:application/json", "--raw", body)
 
-    def get_auth_header(self):
-        resposne = self.login(email=DEFAULT_USER, password="abc123")
-        data = json.loads(resposne)
-        token = data["token"]
-        return f"Authorization:Bearer {token}"
+    # def get_auth_header(self):
+    #     resposne = self.login(email=DEFAULT_USER, password="abc123")
+    #     data = json.loads(resposne)
+    #     token = data["token"]
+    #     return f"Authorization:Bearer {token}"
 
-    def get_users(self):
-        return self._run_httpie("http", "GET", f"{self.base_url}/user", self.get_auth_header())
+    # def get_users(self):
+    #     return self._run_httpie("http", "GET", f"{self.base_url}/user", self.get_auth_header())
 
     def get_groups(self):
-        return self._run_httpie("http", "GET", f"{self.base_url}/group", self.get_auth_header())
+        url = f"{self.base_url}/group?ids={DEFAULT_GROUP_UID}&passwords={DEFAULT_PASSORD}"
+        return self._run_httpie("http", "GET", url)
 
 def main():
     if len(sys.argv) < 2:
@@ -55,10 +56,6 @@ def main():
     api = ApiClient()
 
     match command:
-        case "login":
-            print(api.login(email=DEFAULT_USER, password="abc123"))
-        case "user":
-            print(api.get_users())
         case "group":
             print(api.get_groups())
         case _:

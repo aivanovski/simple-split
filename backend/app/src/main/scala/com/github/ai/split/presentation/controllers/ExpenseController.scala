@@ -3,12 +3,15 @@ package com.github.ai.split.presentation.controllers
 import com.github.ai.split.utils.*
 import com.github.ai.split.domain.usecases.{AddExpenseUseCase, AssembleExpenseUseCase}
 import com.github.ai.split.api.request.PostExpenseRequest
+import com.github.ai.split.api.response.PostExpenseResponse
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.domain.AccessResolverService
-import com.github.ai.split.entity.{NewExpenseData, Split, SplitBetweenAll, SplitBetweenMembers}
+import com.github.ai.split.entity.{NewExpense, Split, SplitBetweenAll, SplitBetweenMembers, UidReference, UserReference}
 import zio.{IO, ZIO}
 import zio.http.{Request, Response}
 import zio.json.*
+
+import java.util.UUID
 
 class ExpenseController(
   private val accessResolver: AccessResolverService,
@@ -23,30 +26,36 @@ class ExpenseController(
       groupUid <- parseUidFromUrl(request)
       password <- parsePassword(request)
       _ <- accessResolver.canAccessToGroup(groupUid = groupUid, password = password)
-      data <- parseData(request)
+      newExpense <- parseExpense(request)
       expense <- addExpenseUseCase.addExpenseToGroup(
         groupUid = groupUid,
-        data = data,
+        newExpense = newExpense,
       )
-      response <- assembleExpenseUseCase.assembleExpenseDto(expenseUid = expense.uid)
-    } yield Response.text(response.toJsonPretty + "\n")
+      expenseDto <- assembleExpenseUseCase.assembleExpenseDto(expenseUid = expense.uid)
+    } yield Response.text(
+      text = PostExpenseResponse(expenseDto).toJsonPretty
+    )
   }
 
-  private def parseData(request: Request): IO[DomainError, NewExpenseData] = {
+  private def parseExpense(request: Request): IO[DomainError, NewExpense] = {
     for {
       body <- request.body.parse[PostExpenseRequest]
+      paidBy <- parsePaidBy(body)
       split <- parseSplit(body)
-      paidByUids <- {
-        ZIO.collectAll(
-          body.paidBy.map(payer => payer.uid.asUid())
-        )
-      }
-    } yield NewExpenseData(
+    } yield NewExpense(
       title = body.title,
       description = body.description.getOrElse(""),
       amount = body.amount,
-      paidBy = paidByUids,
+      paidBy = paidBy,
       split = split
+    )
+  }
+
+  private def parsePaidBy(body: PostExpenseRequest): IO[DomainError, List[UUID]] = {
+    ZIO.collectAll(
+      body.paidBy.map {
+        payer => payer.uid.asUid()
+      }
     )
   }
 
@@ -63,7 +72,8 @@ class ExpenseController(
 
     if (!isSplitEqually) {
       ZIO.collectAll(
-          splitUids.map(uid => uid.uid.asUid())
+          splitUids
+            .map(uid => uid.uid.asUid())
         )
         .map(uids => SplitBetweenMembers(userUids = uids))
     } else {

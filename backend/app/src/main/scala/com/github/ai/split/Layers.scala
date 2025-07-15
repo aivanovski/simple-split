@@ -2,9 +2,9 @@ package com.github.ai.split
 
 import com.github.ai.split.data.db.dao.{ExpenseEntityDao, GroupEntityDao, GroupMemberEntityDao, PaidByEntityDao, SplitBetweenEntityDao, UserEntityDao}
 import com.github.ai.split.domain.{AccessResolverService, AuthService, PasswordService}
-import com.github.ai.split.domain.usecases.{AddExpenseUseCase, AddGroupUseCase, AddMemberUseCase, AddUserUseCase, AssembleExpenseUseCase, AssembleGroupResponseUseCase, AssembleGroupsResponseUseCase, CalculateSettlementUseCase, ConvertExpensesToTransactionsUseCase, GetAllUsersUseCase, GetGroupByUidUseCase}
+import com.github.ai.split.domain.usecases.{AddExpenseUseCase, AddGroupUseCase, AddMemberUseCase, AddUserUseCase, AssembleExpenseUseCase, AssembleGroupResponseUseCase, AssembleGroupsResponseUseCase, CalculateSettlementUseCase, ConvertExpensesToTransactionsUseCase, FillTestDataUseCase, GetAllUsersUseCase, GetGroupByUidUseCase}
 import com.github.ai.split.presentation.controllers.{ExpenseController, GroupController, MemberController, UserController}
-import zio.ZLayer
+import zio.{ZIO, ZLayer}
 
 object Layers {
 
@@ -30,6 +30,7 @@ object Layers {
   val addExpenseUseCase = ZLayer.fromFunction(AddExpenseUseCase(_, _, _, _, _, _))
   val convertToTransactionsUseCase = ZLayer.succeed(ConvertExpensesToTransactionsUseCase())
   val calculateSettlementUseCase = ZLayer.succeed(CalculateSettlementUseCase())
+  val fillTestDataUseCase = ZLayer.fromFunction(FillTestDataUseCase(_, _, _, _, _, _, _))
 
   // Response use cases
   val assembleGroupResponseUseCase = ZLayer.fromFunction(AssembleGroupResponseUseCase(_, _, _, _, _, _, _, _))
@@ -38,7 +39,7 @@ object Layers {
 
   // Controllers
   val userController = ZLayer.fromFunction(UserController(_, _, _))
-  val groupController = ZLayer.fromFunction(GroupController(_, _, _, _, _))
+  val groupController = ZLayer.fromFunction(GroupController(_, _, _, _, _, _, _, _))
   val memberController = ZLayer.fromFunction(MemberController(_, _, _, _, _))
   val expenseController = ZLayer.fromFunction(ExpenseController(_, _, _))
 }
