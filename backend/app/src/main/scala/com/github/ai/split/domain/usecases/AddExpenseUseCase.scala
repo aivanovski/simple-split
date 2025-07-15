@@ -2,7 +2,7 @@ package com.github.ai.split.domain.usecases
 
 import com.github.ai.split.data.db.dao.{ExpenseEntityDao, GroupEntityDao, GroupMemberEntityDao, PaidByEntityDao, SplitBetweenEntityDao, UserEntityDao}
 import com.github.ai.split.domain.{AccessResolverService, PasswordService}
-import com.github.ai.split.entity.{SplitBetweenMembers, SplitBetweenAll, NewExpenseData, Split}
+import com.github.ai.split.entity.{NewExpense, Split, SplitBetweenAll, SplitBetweenMembers, UidReference, UserReference}
 import com.github.ai.split.entity.db.{ExpenseEntity, GroupEntity, PaidByEntity, SplitBetweenEntity, UserEntity}
 import com.github.ai.split.utils.*
 import com.github.ai.split.entity.exception.DomainError
@@ -22,7 +22,7 @@ class AddExpenseUseCase(
 
   def addExpenseToGroup(
     groupUid: UUID,
-    data: NewExpenseData
+    newExpense: NewExpense
   ): IO[DomainError, ExpenseEntity] = {
     for {
       group <- groupDao.getByUid(groupUid)
@@ -32,22 +32,22 @@ class AddExpenseUseCase(
       _ <- isValidExpense(
         expenses = expenses,
         members = members,
-        data = data
+        data = newExpense
       )
 
       expense <- expenseDao.add(
         ExpenseEntity(
           uid = UUID.randomUUID(),
           groupUid = groupUid,
-          title = data.title,
-          description = data.description,
-          amount = data.amount,
-          isSplitBetweenAll = data.split == SplitBetweenAll
+          title = newExpense.title,
+          description = newExpense.description,
+          amount = newExpense.amount,
+          isSplitBetweenAll = newExpense.split == SplitBetweenAll
         )
       )
 
       payers <- paidByDao.add(
-        data.paidBy.map(payerUid =>
+        newExpense.paidBy.map(payerUid =>
           PaidByEntity(
             groupUid = groupUid,
             expenseUid = expense.uid,
@@ -57,7 +57,7 @@ class AddExpenseUseCase(
       )
 
       _ <- {
-        data.split match
+        newExpense.split match
           case SplitBetweenAll => ZIO.succeed(())
           case SplitBetweenMembers(splitUids) =>
             splitBetweenDao.add(
@@ -77,7 +77,7 @@ class AddExpenseUseCase(
   private def isValidExpense(
     expenses: List[ExpenseEntity],
     members: List[UserEntity],
-    data: NewExpenseData
+    data: NewExpense
   ): IO[DomainError, Unit] = {
     if (data.amount <= 0.0) {
       return ZIO.fail(DomainError(message = s"Invalid payment amount: ${data.amount}".some))

@@ -2,7 +2,7 @@ package com.github.ai.split.entity
 
 import java.util.UUID
 
-case class NewExpenseData(
+case class NewExpense(
   title: String,
   description: String,
   amount: Double,

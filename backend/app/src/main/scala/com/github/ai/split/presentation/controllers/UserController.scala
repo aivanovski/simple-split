@@ -5,6 +5,7 @@ import com.github.ai.split.domain.usecases.{AddUserUseCase, GetAllUsersUseCase}
 import com.github.ai.split.entity.NewUser
 import com.github.ai.split.api.UserDto
 import com.github.ai.split.api.request.PostUserRequest
+import com.github.ai.split.api.response.PostUserResponse
 import com.github.ai.split.entity.db.UserEntity
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.toUserDto
@@ -35,6 +36,8 @@ class UserController(
         )
       )
 
-    } yield Response.text(toUserDto(user).toJsonPretty + "\n")
+    } yield Response.text(
+      text = PostUserResponse(toUserDto(user)).toJsonPretty
+    )
   }
 }
