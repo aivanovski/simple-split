@@ -4,6 +4,7 @@
 # Gradle files
 .gradle/
 build/
+bin/
 
 # Local configuration file (sdk path, etc)
 local.properties
@@ -34,9 +35,6 @@ google-services.json
 
 # Android Profiling
 *.hprof
-
-app-db/
-app-data/
 
 # Clojure files
 .clj-kondo/
