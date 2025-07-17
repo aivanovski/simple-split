@@ -1,7 +1,7 @@
 package com.github.ai.split.api.request
 
-import kotlinx.serialization.Serializable
 import com.github.ai.split.api.*
+import kotlinx.serialization.Serializable
 
 @Serializable
 data class PostGroupRequest(

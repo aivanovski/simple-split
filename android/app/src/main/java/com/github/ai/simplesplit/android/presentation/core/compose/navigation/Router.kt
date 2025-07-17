@@ -1,6 +1,6 @@
 package com.github.ai.simplesplit.android.presentation.core.compose.navigation
 
-import com.github.ai.simplesplit.android.presentation.Screen
+import com.github.ai.simplesplit.android.presentation.screens.Screen
 
 interface Router {
     fun setRoot(screen: Screen)

@@ -7,8 +7,8 @@ import com.arkivanov.decompose.defaultComponentContext
 import com.github.ai.simplesplit.android.di.GlobalInjector.inject
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppTheme
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.ThemeProvider
-import com.github.ai.simplesplit.android.presentation.root.RootScreen
-import com.github.ai.simplesplit.android.presentation.root.RootScreenComponent
+import com.github.ai.simplesplit.android.presentation.screens.root.RootScreen
+import com.github.ai.simplesplit.android.presentation.screens.root.RootScreenComponent
 
 class MainActivity : AppCompatActivity() {
 

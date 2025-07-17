@@ -1,7 +1,7 @@
 package com.github.ai.split.api.response
 
-import kotlinx.serialization.Serializable
 import com.github.ai.split.api.UserDto
+import kotlinx.serialization.Serializable
 
 @Serializable
 data class PostUserResponse(
