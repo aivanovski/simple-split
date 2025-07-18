@@ -4,6 +4,7 @@ import com.github.ai.simplesplit.android.R
 import com.github.ai.simplesplit.android.presentation.core.ResourceProvider
 import com.github.ai.simplesplit.android.presentation.core.compose.navigation.Router
 import com.github.ai.simplesplit.android.presentation.core.mvi.MviViewModel
+import com.github.ai.simplesplit.android.presentation.core.mvi.nonStateAction
 import com.github.ai.simplesplit.android.presentation.screens.groupEditor.model.GroupEditorArgs
 import com.github.ai.simplesplit.android.presentation.screens.groupEditor.model.GroupEditorIntent
 import com.github.ai.simplesplit.android.presentation.screens.groupEditor.model.GroupEditorState
@@ -34,7 +35,7 @@ class GroupEditorViewModel(
     override fun handleIntent(intent: GroupEditorIntent): Flow<GroupEditorState> {
         return when (intent) {
             GroupEditorIntent.Initialize -> emptyFlow()
-            GroupEditorIntent.OnBackClick -> onBackClicked()
+            GroupEditorIntent.OnBackClick -> nonStateAction { navigateBack() }
             GroupEditorIntent.OnAddMemberClick -> onAddMemberClicked()
             GroupEditorIntent.OnDoneClick -> onDoneClicked()
             is GroupEditorIntent.OnTitleChanged -> onTitleChanged(intent)
@@ -42,12 +43,10 @@ class GroupEditorViewModel(
             is GroupEditorIntent.OnConfirmPasswordChanged -> onConfirmPasswordChanged(intent)
             is GroupEditorIntent.OnMemberChanged -> onMemberChanged(intent)
             is GroupEditorIntent.OnRemoveMemberClick -> onRemoveMemberClicked(intent)
+            is GroupEditorIntent.OnPasswordToggleClick -> onPasswordToggleClicked(intent)
+            is GroupEditorIntent.OnConfirmPasswordToggleClick ->
+                onConfirmPasswordToggleClicked(intent)
         }
-    }
-
-    private fun onBackClicked(): Flow<GroupEditorState> {
-        navigateBack()
-        return emptyFlow()
     }
 
     private fun onTitleChanged(
@@ -125,6 +124,26 @@ class GroupEditorViewModel(
 
     private fun navigateBack() {
         router.exit()
+    }
+
+    private fun onPasswordToggleClicked(
+        intent: GroupEditorIntent.OnPasswordToggleClick
+    ): Flow<GroupEditorState> {
+        dataState = dataState.copy(
+            isPasswordVisible = intent.isVisible
+        )
+
+        return flowOf(dataState)
+    }
+
+    private fun onConfirmPasswordToggleClicked(
+        intent: GroupEditorIntent.OnConfirmPasswordToggleClick
+    ): Flow<GroupEditorState> {
+        dataState = dataState.copy(
+            isConfirmPasswordVisible = intent.isVisible
+        )
+
+        return flowOf(dataState)
     }
 
     private fun onDoneClicked(): Flow<GroupEditorState> {

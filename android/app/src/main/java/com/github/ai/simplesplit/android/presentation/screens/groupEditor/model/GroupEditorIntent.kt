@@ -17,4 +17,6 @@ sealed class GroupEditorIntent(
     ) : GroupEditorIntent(isImmediate = true)
     data class OnMemberChanged(val member: String) : GroupEditorIntent(isImmediate = true)
     data class OnRemoveMemberClick(val memberIndex: Int) : GroupEditorIntent()
+    data class OnPasswordToggleClick(val isVisible: Boolean) : GroupEditorIntent()
+    data class OnConfirmPasswordToggleClick(val isVisible: Boolean) : GroupEditorIntent()
 }

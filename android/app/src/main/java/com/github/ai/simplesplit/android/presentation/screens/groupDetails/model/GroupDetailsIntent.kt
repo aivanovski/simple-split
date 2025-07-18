@@ -7,4 +7,5 @@ sealed class GroupDetailsIntent(
 ) : MviIntent {
     data object Initialize : GroupDetailsIntent()
     data object OnBackClick : GroupDetailsIntent()
+    data object OnFabClick : GroupDetailsIntent()
 }

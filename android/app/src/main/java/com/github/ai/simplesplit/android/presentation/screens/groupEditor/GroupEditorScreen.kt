@@ -130,7 +130,12 @@ private fun RenderDataContent(
             value = state.password,
             error = state.passwordError,
             label = stringResource(R.string.password),
-            // TODO: remember callback
+            isPasswordToggleEnabled = true,
+            isPasswordVisible = state.isPasswordVisible,
+            // TODO: remember callbacks
+            onPasswordToggleClicked = { isVisible ->
+                onIntent.invoke(GroupEditorIntent.OnPasswordToggleClick(isVisible))
+            },
             onValueChange = { newValue ->
                 onIntent.invoke(GroupEditorIntent.OnPasswordChanged(newValue))
             },
@@ -143,7 +148,12 @@ private fun RenderDataContent(
             value = state.confirmPassword,
             error = state.confirmPasswordError,
             label = stringResource(R.string.confirm_password),
-            // TODO: remember callback
+            isPasswordToggleEnabled = true,
+            isPasswordVisible = state.isConfirmPasswordVisible,
+            // TODO: remember callbacks
+            onPasswordToggleClicked = { isVisible ->
+                onIntent.invoke(GroupEditorIntent.OnConfirmPasswordToggleClick(isVisible))
+            },
             onValueChange = { newValue ->
                 onIntent.invoke(GroupEditorIntent.OnConfirmPasswordChanged(newValue))
             },

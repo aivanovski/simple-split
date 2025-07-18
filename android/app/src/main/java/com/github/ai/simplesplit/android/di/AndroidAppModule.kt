@@ -15,6 +15,9 @@ import com.github.ai.simplesplit.android.presentation.screens.groupDetails.Group
 import com.github.ai.simplesplit.android.presentation.screens.groupDetails.GroupDetailsViewModel
 import com.github.ai.simplesplit.android.presentation.screens.groupDetails.cells.GroupDetailsCellFactory
 import com.github.ai.simplesplit.android.presentation.screens.groupDetails.model.GroupDetailsArgs
+import com.github.ai.simplesplit.android.presentation.screens.expenseEditor.ExpenseEditorInteractor
+import com.github.ai.simplesplit.android.presentation.screens.expenseEditor.ExpenseEditorViewModel
+import com.github.ai.simplesplit.android.presentation.screens.expenseEditor.model.ExpenseEditorArgs
 import com.github.ai.simplesplit.android.presentation.screens.groupEditor.GroupEditorInteractor
 import com.github.ai.simplesplit.android.presentation.screens.groupEditor.GroupEditorViewModel
 import com.github.ai.simplesplit.android.presentation.screens.groupEditor.model.GroupEditorArgs
@@ -49,6 +52,7 @@ object AndroidAppModule {
         singleOf(::GroupsInteractor)
         singleOf(::GroupDetailsInteractor)
         singleOf(::GroupEditorInteractor)
+        singleOf(::ExpenseEditorInteractor)
 
         // CellFactories
         singleOf(::GroupDetailsCellFactory)
@@ -75,6 +79,14 @@ object AndroidAppModule {
         }
         factory { (router: Router, args: GroupEditorArgs) ->
             GroupEditorViewModel(
+                get(),
+                get(),
+                router,
+                args
+            )
+        }
+        factory { (router: Router, args: ExpenseEditorArgs) ->
+            ExpenseEditorViewModel(
                 get(),
                 get(),
                 router,

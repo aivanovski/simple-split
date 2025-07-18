@@ -3,6 +3,10 @@ package com.github.ai.simplesplit.android.presentation.screens.groupDetails
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.CellEvent
 import com.github.ai.simplesplit.android.presentation.core.compose.navigation.Router
 import com.github.ai.simplesplit.android.presentation.core.mvi.CellsMviViewModel
+import com.github.ai.simplesplit.android.presentation.core.mvi.nonStateAction
+import com.github.ai.simplesplit.android.presentation.screens.Screen
+import com.github.ai.simplesplit.android.presentation.screens.expenseEditor.model.ExpenseEditorArgs
+import com.github.ai.simplesplit.android.presentation.screens.expenseEditor.model.ExpenseEditorMode
 import com.github.ai.simplesplit.android.presentation.screens.groupDetails.cells.GroupDetailsCellFactory
 import com.github.ai.simplesplit.android.presentation.screens.groupDetails.model.GroupDetailsArgs
 import com.github.ai.simplesplit.android.presentation.screens.groupDetails.model.GroupDetailsIntent
@@ -11,7 +15,6 @@ import com.github.ai.simplesplit.android.utils.getErrorMessage
 import com.github.ai.split.api.GroupDto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 
@@ -27,8 +30,10 @@ class GroupDetailsViewModel(
 
     override fun handleIntent(intent: GroupDetailsIntent): Flow<GroupDetailsState> {
         return when (intent) {
-            is GroupDetailsIntent.Initialize -> showData(args.group)
-            is GroupDetailsIntent.OnBackClick -> navigateBack()
+            GroupDetailsIntent.Initialize -> showData(args.group)
+            GroupDetailsIntent.OnBackClick -> nonStateAction { navigateBack() }
+            GroupDetailsIntent.OnFabClick ->
+                nonStateAction { navigateToNewExpenseScreen() }
         }
     }
 
@@ -36,9 +41,20 @@ class GroupDetailsViewModel(
         // TODO: implement
     }
 
-    private fun navigateBack(): Flow<GroupDetailsState> {
+    private fun navigateToNewExpenseScreen() {
+        router.navigateTo(
+            Screen.ExpenseEditor(
+                ExpenseEditorArgs(
+                    mode = ExpenseEditorMode.NewExpense(
+                        group = args.group
+                    )
+                )
+            )
+        )
+    }
+
+    private fun navigateBack() {
         router.exit()
-        return emptyFlow()
     }
 
     private fun loadData(groupUid: String): Flow<GroupDetailsState> {

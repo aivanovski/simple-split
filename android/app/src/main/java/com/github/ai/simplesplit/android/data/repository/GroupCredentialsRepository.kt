@@ -1,17 +1,22 @@
 package com.github.ai.simplesplit.android.data.repository
 
-import com.github.ai.simplesplit.android.data.dao.GroupCredentialsDao
-import com.github.ai.simplesplit.android.model.GroupCredentials
+import com.github.ai.simplesplit.android.data.database.dao.GroupCredentialsDao
+import com.github.ai.simplesplit.android.model.db.GroupCredentials
+import kotlinx.coroutines.flow.Flow
 
 class GroupCredentialsRepository(
     private val dao: GroupCredentialsDao
 ) {
 
-    fun getAll(): List<GroupCredentials> {
-        return dao.getAll()
-    }
+    fun getAll(): List<GroupCredentials> =
+        dao.getAll()
 
-    fun add(credentials: GroupCredentials) {
+    fun getAllFlow(): Flow<List<GroupCredentials>> =
+        dao.getAllFlow()
+
+    fun getByGroupUid(groupUid: String): GroupCredentials? =
+        dao.getByGroupUid(groupUid)
+
+    fun add(credentials: GroupCredentials) =
         dao.insert(credentials)
-    }
 }

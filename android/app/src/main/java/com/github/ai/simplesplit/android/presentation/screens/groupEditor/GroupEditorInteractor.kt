@@ -4,7 +4,7 @@ import arrow.core.Either
 import arrow.core.raise.either
 import com.github.ai.simplesplit.android.data.repository.GroupCredentialsRepository
 import com.github.ai.simplesplit.android.data.repository.GroupRepository
-import com.github.ai.simplesplit.android.model.GroupCredentials
+import com.github.ai.simplesplit.android.model.db.GroupCredentials
 import com.github.ai.simplesplit.android.model.exception.AppException
 import com.github.ai.split.api.UserNameDto
 import com.github.ai.split.api.request.PostGroupRequest

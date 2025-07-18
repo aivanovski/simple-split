@@ -5,6 +5,8 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -32,6 +34,7 @@ fun AppTextField(
     onValueChange: (String) -> Unit,
     isPasswordToggleEnabled: Boolean = false,
     isPasswordVisible: Boolean = false,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     onPasswordToggleClicked: ((isPasswordVisible: Boolean) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
@@ -101,6 +104,7 @@ fun AppTextField(
                 }
             }
         },
+        keyboardOptions = keyboardOptions,
         modifier = modifier
     )
 }

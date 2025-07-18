@@ -11,9 +11,21 @@
     <string name="confirm_password">Confirm Password</string>
     <string name="passwords_dont_match">Passwords don\'t match</string>
     <string name="invalid_member_count_message">Add at least 2 members</string>
-    <!--    <string name=""></string>-->
-    <!--    <string name=""></string>-->
-    <!--    <string name=""></string>-->
+
+    <!-- Group Details screen -->
+    <string name="no_expenses_message">No expenses yet in this group. Add the first expense to get started!</string>
+
+    <!-- Expense Editor screen -->
+    <string name="add_expense">Add Expense</string>
+    <string name="payer">Payer</string>
+    <string name="expense_title">Expense Title</string>
+    <string name="amount">Amount</string>
+    <string name="select_payer">Select a payer</string>
+    <string name="enter_expense_title">Enter expense title</string>
+    <string name="enter_amount">Enter amount</string>
+    <string name="invalid_amount">Invalid amount</string>
+    <string name="amount_must_be_positive">Amount must be positive</string>
+
     <!--    <string name=""></string>-->
 
 </resources>

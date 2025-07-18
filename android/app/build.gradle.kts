@@ -120,6 +120,7 @@ dependencies {
 
     // Room
     implementation(libs.room.runtime)
+    implementation(libs.room.kts)
     kapt(libs.room.compiler)
     androidTestImplementation(libs.room.test)
 

@@ -1,4 +1,4 @@
-package com.github.ai.simplesplit.android.model
+package com.github.ai.simplesplit.android.model.db
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

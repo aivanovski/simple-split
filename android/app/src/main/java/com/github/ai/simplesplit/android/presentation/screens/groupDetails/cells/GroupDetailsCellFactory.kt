@@ -1,5 +1,6 @@
 package com.github.ai.simplesplit.android.presentation.screens.groupDetails.cells
 
+import com.github.ai.simplesplit.android.R
 import com.github.ai.simplesplit.android.presentation.core.ResourceProvider
 import com.github.ai.simplesplit.android.presentation.core.compose.CornersShape
 import com.github.ai.simplesplit.android.presentation.core.compose.TextSize
@@ -7,11 +8,13 @@ import com.github.ai.simplesplit.android.presentation.core.compose.cells.CellEve
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.CellModel
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.CellViewModel
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.model.DividerCellModel
+import com.github.ai.simplesplit.android.presentation.core.compose.cells.model.EmptyMessageCellModel
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.model.HeaderCellModel
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.model.ShapedSpaceCellModel
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.model.ShapedTextCellModel
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.model.SpaceCellModel
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.viewModel.DividerCellViewModel
+import com.github.ai.simplesplit.android.presentation.core.compose.cells.viewModel.EmptyMessageCellViewModel
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.viewModel.HeaderCellViewModel
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.viewModel.ShapedSpaceCellViewModel
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.viewModel.ShapedTextCellViewModel
@@ -39,11 +42,15 @@ class GroupDetailsCellFactory(
         val models = mutableListOf<CellModel>()
 
         models.addAll(createTitleModels(group))
-        models.addAll(createExpenseHeaderModels())
-        models.addAll(createExpenseModels(group))
-        models.addAll(createSettlementHeaderModels())
-        models.addAll(createSettlementModels(group))
-        models.add(createBottomSpaceModel())
+        if (group.expenses.isNotEmpty()) {
+            models.addAll(createExpenseHeaderModels())
+            models.addAll(createExpenseModels(group))
+            models.addAll(createSettlementHeaderModels())
+            models.addAll(createSettlementModels(group))
+            models.add(createBottomSpaceModel())
+        } else {
+            models.addAll(createEmptyStateModels())
+        }
 
         return models.map { model ->
             when (model) {
@@ -54,6 +61,7 @@ class GroupDetailsCellFactory(
                 is ExpenseCellModel -> ExpenseCellViewModel(model, eventProvider)
                 is SettlementCellModel -> SettlementCellViewModel(model, eventProvider)
                 is DividerCellModel -> DividerCellViewModel(model)
+                is EmptyMessageCellModel -> EmptyMessageCellViewModel(model)
                 else -> throw IllegalArgumentException("Unknown model type: $model")
             }
         }
@@ -111,6 +119,16 @@ class GroupDetailsCellFactory(
                 text = "Expenses",
                 textSize = TextSize.TITLE_MEDIUM,
                 textColor = themeProvider.theme.colors.primaryText
+            )
+        )
+    }
+
+    private fun createEmptyStateModels(): List<CellModel> {
+        return listOf(
+            EmptyMessageCellModel(
+                id = "empty_message",
+                message = resourceProvider.getString(R.string.no_expenses_message)
+
             )
         )
     }

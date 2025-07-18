@@ -4,6 +4,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBackIos
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Check
@@ -21,4 +22,5 @@ object AppIcons {
     val VisibilityOn = Icons.Outlined.Visibility
     val ErrorCircle = Icons.Outlined.ErrorOutline
     val Close = Icons.Filled.Close
+    val ExpandMore = Icons.Filled.ExpandMore
 }

@@ -11,6 +11,7 @@ import com.github.ai.simplesplit.android.presentation.core.ViewModelFactory
 import com.github.ai.simplesplit.android.presentation.core.ViewModelStoreOwnerImpl
 import com.github.ai.simplesplit.android.presentation.core.compose.navigation.RouterImpl
 import com.github.ai.simplesplit.android.presentation.screens.Screen
+import com.github.ai.simplesplit.android.presentation.screens.expenseEditor.ExpenseEditorScreenComponent
 import com.github.ai.simplesplit.android.presentation.screens.groupDetails.GroupDetailsScreenComponent
 import com.github.ai.simplesplit.android.presentation.screens.groupEditor.GroupEditorScreenComponent
 import com.github.ai.simplesplit.android.presentation.screens.groups.GroupsScreenComponent
@@ -66,13 +67,21 @@ class RootScreenComponent(
                 rootViewModel = viewModel,
                 router = router
             )
+
             is Screen.GroupDetails -> GroupDetailsScreenComponent(
                 context = childContext,
                 rootViewModel = viewModel,
                 router = router,
                 args = screen.args
             )
+
             is Screen.GroupEditor -> GroupEditorScreenComponent(
+                context = childContext,
+                args = screen.args,
+                router = router
+            )
+
+            is Screen.ExpenseEditor -> ExpenseEditorScreenComponent(
                 context = childContext,
                 args = screen.args,
                 router = router

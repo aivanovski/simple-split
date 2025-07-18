@@ -1,24 +1,26 @@
 package com.github.ai.simplesplit.android.presentation.screens.groups
 
+import androidx.lifecycle.viewModelScope
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.CellEvent
 import com.github.ai.simplesplit.android.presentation.core.compose.navigation.Router
 import com.github.ai.simplesplit.android.presentation.core.mvi.CellsMviViewModel
+import com.github.ai.simplesplit.android.presentation.core.mvi.nonStateAction
 import com.github.ai.simplesplit.android.presentation.screens.Screen
 import com.github.ai.simplesplit.android.presentation.screens.groupDetails.model.GroupDetailsArgs
 import com.github.ai.simplesplit.android.presentation.screens.groupEditor.model.GroupEditorArgs
 import com.github.ai.simplesplit.android.presentation.screens.groupEditor.model.GroupEditorMode
 import com.github.ai.simplesplit.android.presentation.screens.groups.cells.CellFactory
 import com.github.ai.simplesplit.android.presentation.screens.groups.cells.model.GroupCellEvent
+import com.github.ai.simplesplit.android.presentation.screens.groups.model.GroupsData
 import com.github.ai.simplesplit.android.presentation.screens.groups.model.GroupsIntent
 import com.github.ai.simplesplit.android.presentation.screens.groups.model.GroupsState
 import com.github.ai.simplesplit.android.utils.getErrorMessage
 import com.github.ai.simplesplit.android.utils.mutableStateFlow
-import com.github.ai.split.api.GroupDto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.launch
 
 class GroupsViewModel(
     private val interactor: GroupsInteractor,
@@ -29,13 +31,29 @@ class GroupsViewModel(
 ) {
 
     private val cellFactory = CellFactory()
-    private var groups by mutableStateFlow(emptyList<GroupDto>())
+    private var screenData by mutableStateFlow(GroupsData())
+
+    init {
+        doWhenStarted {
+            viewModelScope.launch {
+                interactor.getGroupCredentialsFlow()
+                    .collect { _ ->
+                        sendIntent(GroupsIntent.ReloadData)
+                    }
+            }
+        }
+    }
 
     override fun handleIntent(intent: GroupsIntent): Flow<GroupsState> {
         return when (intent) {
             GroupsIntent.Initialize -> loadData()
-            is GroupsIntent.OnGroupClick -> navigateToGroupDetails(intent.groupUid)
-            is GroupsIntent.OnAddGroupClick -> navigateToGroupEditor()
+            GroupsIntent.ReloadData -> loadData()
+
+            is GroupsIntent.OnGroupClick ->
+                nonStateAction { navigateToGroupDetails(intent.groupUid) }
+
+            is GroupsIntent.OnAddGroupClick ->
+                nonStateAction { navigateToGroupEditor() }
         }
     }
 
@@ -51,19 +69,19 @@ class GroupsViewModel(
         return flow {
             emit(GroupsState.Loading)
 
-            val getGroupsResult = interactor.getStoredGroups()
-            if (getGroupsResult.isLeft()) {
-                val message = getGroupsResult.getErrorMessage()
+            val getDataResult = interactor.loadData()
+            if (getDataResult.isLeft()) {
+                val message = getDataResult.getErrorMessage()
                 emit(GroupsState.Error(message))
                 return@flow
             }
 
-            val groups = getGroupsResult.getOrNull() ?: emptyList()
-            this@GroupsViewModel.groups = groups
+            val data = getDataResult.getOrNull() ?: GroupsData()
+            screenData = data
 
-            if (groups.isNotEmpty()) {
+            if (data.groups.isNotEmpty()) {
                 val viewModels = cellFactory.createCells(
-                    groups = groups,
+                    groups = data.groups,
                     eventProvider = cellEventProvider
                 )
                 emit(GroupsState.Data(viewModels))
@@ -74,23 +92,24 @@ class GroupsViewModel(
             .flowOn(Dispatchers.IO)
     }
 
-    private fun navigateToGroupDetails(groupUid: String): Flow<GroupsState> {
-        val group = groups.firstOrNull { group -> group.uid == groupUid }
-            ?: return emptyFlow()
+    private fun navigateToGroupDetails(
+        groupUid: String
+    ) {
+        val groupAndCreds = screenData.groups
+            .zip(screenData.credentials)
+            .firstOrNull { (group, _) -> group.uid == groupUid } ?: return
 
         router.navigateTo(
             Screen.GroupDetails(
                 GroupDetailsArgs(
-                    group = group,
-                    password = "abc123"
+                    group = groupAndCreds.first,
+                    password = groupAndCreds.second.password
                 )
             )
         )
-
-        return emptyFlow()
     }
 
-    private fun navigateToGroupEditor(): Flow<GroupsState> {
+    private fun navigateToGroupEditor() {
         router.navigateTo(
             Screen.GroupEditor(
                 GroupEditorArgs(
@@ -98,7 +117,5 @@ class GroupsViewModel(
                 )
             )
         )
-
-        return emptyFlow()
     }
 }

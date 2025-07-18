@@ -1,5 +1,6 @@
 package com.github.ai.simplesplit.android.presentation.screens
 
+import com.github.ai.simplesplit.android.presentation.screens.expenseEditor.model.ExpenseEditorArgs
 import com.github.ai.simplesplit.android.presentation.screens.groupDetails.model.GroupDetailsArgs
 import com.github.ai.simplesplit.android.presentation.screens.groupEditor.model.GroupEditorArgs
 import kotlinx.serialization.Serializable
@@ -18,5 +19,10 @@ sealed class Screen {
     @Serializable
     data class GroupEditor(
         val args: GroupEditorArgs
+    ) : Screen()
+
+    @Serializable
+    data class ExpenseEditor(
+        val args: ExpenseEditorArgs
     ) : Screen()
 }

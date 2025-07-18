@@ -4,7 +4,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -17,11 +21,13 @@ import com.github.ai.simplesplit.android.presentation.core.compose.CenteredBox
 import com.github.ai.simplesplit.android.presentation.core.compose.TopBar
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.CellViewModel
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.ui.DividerCell
+import com.github.ai.simplesplit.android.presentation.core.compose.cells.ui.EmptyMessageCell
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.ui.HeaderCell
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.ui.ShapedSpaceCell
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.ui.ShapedTextCell
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.ui.SpaceCell
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.viewModel.DividerCellViewModel
+import com.github.ai.simplesplit.android.presentation.core.compose.cells.viewModel.EmptyMessageCellViewModel
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.viewModel.HeaderCellViewModel
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.viewModel.ShapedSpaceCellViewModel
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.viewModel.ShapedTextCellViewModel
@@ -56,6 +62,10 @@ private fun GroupDetailsScreen(
         onIntent.invoke(GroupDetailsIntent.OnBackClick)
     }
 
+    val onFabClick = rememberOnClickedCallback {
+        onIntent.invoke(GroupDetailsIntent.OnFabClick)
+    }
+
     Scaffold(
         topBar = {
             TopBar(
@@ -63,6 +73,18 @@ private fun GroupDetailsScreen(
                 isBackVisible = true,
                 onBackClick = onBackClick
             )
+        },
+        floatingActionButton = {
+            if (state != GroupDetailsState.Loading) {
+                FloatingActionButton(
+                    onClick = onFabClick
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Add expense"
+                    )
+                }
+            }
         }
     ) { padding ->
 
@@ -110,6 +132,7 @@ private fun RenderCell(viewModel: CellViewModel) {
         is ExpenseCellViewModel -> ExpenseCell(viewModel)
         is SettlementCellViewModel -> SettlementCell(viewModel)
         is DividerCellViewModel -> DividerCell(viewModel)
+        is EmptyMessageCellViewModel -> EmptyMessageCell(viewModel)
     }
 }
 
