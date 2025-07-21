@@ -10,6 +10,7 @@ import zio.http.{string, *}
 object MemberRoutes {
 
   def routes() = Routes(
+    // TODO: refactor, could be done via PUT /group/uid
     Method.POST / "member" / string("groupId") -> handler { (request: Request) =>
       for {
         controller <- ZIO.service[MemberController]

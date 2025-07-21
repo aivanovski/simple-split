@@ -19,6 +19,8 @@ class AddMemberUseCase(
     userUid: UUID
   ): IO[DomainError, GroupMemberEntity] = {
     for {
+      _ <- isUserExists(userUid = userUid)
+
       members <- groupMemberDao.getByGroupUid(groupUid)
       newMember <- {
         if (members.exists(_.userUid == userUid)) {
@@ -33,5 +35,16 @@ class AddMemberUseCase(
         }
       }
     } yield newMember
+  }
+
+  private def isUserExists(userUid: UUID): IO[DomainError, Unit] = {
+    for {
+      userOption <- userDao.findByUid(userUid)
+      _ <- if (userOption.isDefined) {
+        ZIO.succeed(())
+      } else {
+        ZIO.fail(DomainError(message = s"User not found: $userUid".some))
+      }
+    } yield ()
   }
 }

@@ -9,5 +9,4 @@ case class PostUserResponse(
 
 object PostUserResponse {
   implicit val encoder: JsonEncoder[PostUserResponse] = DeriveJsonEncoder.gen[PostUserResponse]
-  implicit val decoder: JsonDecoder[PostUserResponse] = DeriveJsonDecoder.gen[PostUserResponse]
 }

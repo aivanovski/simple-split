@@ -21,7 +21,7 @@ class GroupMemberEntityDao(
     val query = quote {
       querySchema[GroupMemberEntity]("group_members")
     }
-    
+
     run(query)
       .mapError(_.toDomainError())
   }
@@ -44,7 +44,7 @@ class GroupMemberEntityDao(
       .mapError(_.toDomainError())
   }
 
-  def add(members: List[GroupMemberEntity]): IO[DomainError, Unit] = {
+  def add(members: List[GroupMemberEntity]): IO[DomainError, List[GroupMemberEntity]] = {
     val insertQuery = quote {
       liftQuery(members).foreach { member =>
         querySchema[GroupMemberEntity]("group_members")
@@ -55,7 +55,7 @@ class GroupMemberEntityDao(
     val result: IO[SQLException, List[Long]] = run(insertQuery)
 
     result
-      .map(_ => ())
+      .map(_ => members)
       .mapError(_.toDomainError())
   }
 

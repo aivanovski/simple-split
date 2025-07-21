@@ -1,6 +1,6 @@
 package com.github.ai.split.api.request
 
-import com.github.ai.split.api.{NewExpenseDto, UserDto, UserNameDto, UserUid}
+import com.github.ai.split.api.{NewExpenseDto, UserNameDto}
 import zio.json.{DeriveJsonDecoder, JsonDecoder}
 
 case class PostGroupRequest(
