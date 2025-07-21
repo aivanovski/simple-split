@@ -2,13 +2,13 @@ package com.github.ai.split.presentation.controllers
 
 import com.github.ai.split.api.{NewExpenseDto, UserNameDto}
 import com.github.ai.split.domain.AccessResolverService
-import com.github.ai.split.domain.usecases.{AddExpenseUseCase, AddGroupUseCase, AddMemberUseCase, AddUserUseCase, AssembleGroupResponseUseCase, AssembleGroupsResponseUseCase, GetAllUsersUseCase}
+import com.github.ai.split.domain.usecases.{AddExpenseUseCase, AddGroupUseCase, AddMemberUseCase, AddUserUseCase, AssembleGroupResponseUseCase, AssembleGroupsResponseUseCase, GetAllUsersUseCase, UpdateGroupUseCase}
 import com.github.ai.split.entity.{NewExpense, NewGroup, NewUser, Split, SplitBetweenAll, SplitBetweenMembers}
-import com.github.ai.split.api.request.{PostGroupRequest}
-import com.github.ai.split.api.response.{GetGroupsResponse, PostGroupResponse}
+import com.github.ai.split.api.request.{PostGroupRequest, PutGroupRequest}
+import com.github.ai.split.api.response.{GetGroupsResponse, PostGroupResponse, PutGroupResponse}
 import com.github.ai.split.entity.db.{ExpenseEntity, UserEntity}
 import com.github.ai.split.entity.exception.DomainError
-import com.github.ai.split.utils.{asUid, parse, some}
+import com.github.ai.split.utils.{asUid, parse, parsePasswordParam, parseUidFromUrl, some}
 import zio.{IO, ZIO}
 import zio.http.{Request, Response}
 import zio.json.*
@@ -23,7 +23,8 @@ class GroupController(
   private val addExpenseUseCase: AddExpenseUseCase,
   private val getAllUsersUseCase: GetAllUsersUseCase,
   private val assembleGroupUseCase: AssembleGroupResponseUseCase,
-  private val assembleGroupsUseCase: AssembleGroupsResponseUseCase
+  private val assembleGroupsUseCase: AssembleGroupsResponseUseCase,
+  private val updateGroupUseCase: UpdateGroupUseCase
 ) {
 
   def getGroups(
@@ -37,14 +38,55 @@ class GroupController(
     } yield Response.text(GetGroupsResponse(groups).toJsonPretty + "\n")
   }
 
-  def postGroup(
+  def updateGroup(
+    request: Request
+  ): IO[DomainError, Response] = {
+    for {
+      groupUid <- parseUidFromUrl(request)
+      password <- parsePasswordParam(request)
+      _ <- accessResolver.canAccessToGroup(groupUid = groupUid, password = password)
+
+      data <- request.body.parse[PutGroupRequest]
+      _ <- validateRequestData(data)
+
+      newMembers <- {
+        val newMembers = data.members.getOrElse(List.empty)
+        if (newMembers.nonEmpty) {
+          ZIO.collectAll(
+              newMembers.map(member => member.uid.asUid())
+            )
+            .map(uids => Some(uids))
+        } else {
+          ZIO.succeed(None)
+        }
+      }
+
+      _ <- updateGroupUseCase.updateGroup(
+        groupUid = groupUid,
+        newPassword = data.password.flatMap { newPassword =>
+          if (newPassword.isBlank) None else Some(newPassword.trim)
+        },
+        newTitle = data.title.flatMap { newTitle =>
+          if (newTitle.isBlank) None else Some(newTitle.trim)
+        },
+        newDescription = data.description.flatMap { newDescription =>
+          if (newDescription.isBlank) None else Some(newDescription.trim)
+        },
+        newMemberUids = newMembers
+      )
+
+      groupDto <- assembleGroupUseCase.assembleGroupDto(groupUid = groupUid)
+    } yield Response.text(PutGroupResponse(groupDto).toJsonPretty)
+  }
+
+  def createGroup(
     request: Request
   ): IO[DomainError, Response] = {
     for {
       data <- request.body.parse[PostGroupRequest]
 
       // TODO: check users are distinct
-      _ <- validateData(data)
+      _ <- validateRequestData(data)
 
       newUsers <- if (data.members.nonEmpty) {
         ZIO.collectAll(
@@ -160,7 +202,20 @@ class GroupController(
     } yield e
   }
 
-  private def validateData(data: PostGroupRequest): IO[DomainError, Unit] = {
+  private def validateRequestData(
+    data: PutGroupRequest
+  ): IO[DomainError, Unit] = {
+    if (data.members.isDefined) {
+      val members = data.members.getOrElse(List.empty)
+      if (members.size < 2) {
+        return ZIO.fail(DomainError(message = "At least 2 members should be specified".some))
+      }
+    }
+
+    ZIO.succeed(())
+  }
+
+  private def validateRequestData(data: PostGroupRequest): IO[DomainError, Unit] = {
     val members = data.members.getOrElse(List.empty)
     val expenses = data.expenses.getOrElse(List.empty)
     val memberNames = members.map(member => member.name).toSet

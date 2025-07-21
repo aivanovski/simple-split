@@ -42,6 +42,7 @@ object Main extends ZIOAppDefault {
         Layers.convertToTransactionsUseCase,
         Layers.calculateSettlementUseCase,
         Layers.fillTestDataUseCase,
+        Layers.updateGroupUseCase,
 
         // Response assemblers use cases
         Layers.assembleGroupResponseUseCase,

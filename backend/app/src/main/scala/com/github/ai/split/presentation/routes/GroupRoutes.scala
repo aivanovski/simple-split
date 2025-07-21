@@ -20,7 +20,14 @@ object GroupRoutes {
     Method.POST / "group" -> handler { (request: Request) =>
       for {
         controller <- ZIO.service[GroupController]
-        response <- controller.postGroup(request).mapError(_.toDomainResponse)
+        response <- controller.createGroup(request).mapError(_.toDomainResponse)
+      } yield response
+    },
+
+    Method.PUT / "group" / string("groupId") ->  handler { (request: Request) =>
+      for {
+        controller <- ZIO.service[GroupController]
+        response <- controller.updateGroup(request).mapError(_.toDomainResponse)
       } yield response
     }
   )

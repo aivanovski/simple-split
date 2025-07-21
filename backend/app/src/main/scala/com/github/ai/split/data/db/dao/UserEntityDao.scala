@@ -40,6 +40,17 @@ class UserEntityDao(
     } yield members.map((member, user) => user)
   }
 
+  def findByUid(uid: UUID): IO[DomainError, Option[UserEntity]] = {
+    val query = quote {
+      querySchema[UserEntity]("users")
+        .filter(_.uid == lift(uid))
+    }
+
+    for {
+      users <- run(query).mapError(_.toDomainError())
+    } yield users.headOption
+  }
+
   def getByUid(uid: UUID): IO[DomainError, UserEntity] = {
     val query = quote {
       querySchema[UserEntity]("users")
@@ -67,6 +78,7 @@ class UserEntityDao(
       .mapError(_.toDomainError())
   }
 
+  // TODO: remove function and refactor
   def getUserUidToUserMap(): IO[DomainError, Map[UUID, UserEntity]] = {
     for {
       users <- getAll()
