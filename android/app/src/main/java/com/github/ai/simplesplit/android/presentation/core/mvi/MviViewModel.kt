@@ -3,21 +3,24 @@ package com.github.ai.simplesplit.android.presentation.core.mvi
 import androidx.annotation.CallSuper
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.github.ai.simplesplit.android.utils.SingleFlow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
-abstract class MviViewModel<State, Intent>(
+abstract class MviViewModel<State, Intent : MviIntent>(
     initialState: State,
     private val initialIntent: Intent
-) : ViewModel() {
+) : ViewModel(), ScreenViewModel {
 
     val state = MutableStateFlow(initialState)
     private val intents = Channel<Intent>(capacity = Channel.BUFFERED)
@@ -39,7 +42,7 @@ abstract class MviViewModel<State, Intent>(
     }
 
     @CallSuper
-    fun start() {
+    override fun start() {
         if (!isStarted.value) {
             isStarted.value = true
 
@@ -51,14 +54,29 @@ abstract class MviViewModel<State, Intent>(
     }
 
     @CallSuper
-    fun destroy() {
+    override fun destroy() {
         isStarted.value = false
         viewModelScope.cancel()
     }
 
     fun sendIntent(intent: Intent) {
-        viewModelScope.launch {
-            intents.send(intent)
+        if (intent.isImmediate) {
+            val flow = handleIntent(intent)
+            if (flow !is SingleFlow<*>) {
+                throw IllegalStateException(
+                    "The result of immediate intent should always be a SingleFlow"
+                )
+            }
+
+            val newState = runBlocking { flow.firstOrNull() }
+
+            if (newState != null) {
+                state.value = newState
+            }
+        } else {
+            viewModelScope.launch {
+                intents.send(intent)
+            }
         }
     }
 

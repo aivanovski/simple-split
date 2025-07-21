@@ -7,9 +7,45 @@ on:
     branches: [ main ]
 
 jobs:
-  build-backend:
+  check-kotlin-code-format:
+    name: Check Kotlin code format
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
 
+      - name: Download ktlint binary
+        run: |
+          curl -sSLO https://github.com/pinterest/ktlint/releases/download/1.2.1/ktlint
+          chmod +x ktlint
+          cp ktlint android/ktlint
+
+      - name: Run ktlint
+        run: cd android && ./ktlint --editorconfig=".editorconfig"
+
+  build-android-app:
+    name: Build Android app
+    needs: [ check-kotlin-code-format ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: 17
+
+      - name: Build debug apk
+        run: cd android && ./gradlew app:assembleDebug
+
+      - name: Store APK file
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug.apk
+          path: ./android/app/build/outputs/apk/debug/app-debug.apk
+
+  build-backend:
+    name: Build Backend app
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4
@@ -42,8 +78,8 @@ jobs:
           path: ./backend/app/target/scala-3.7.1/simple-split-backend.jar
 
   transpile-api:
+    name: Transpile REST API to Kotlin
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4

@@ -68,27 +68,12 @@ android {
         }
     }
 
-    // signingConfigs {
-    //     getByName("debug") {
-    //         storeFile = File(project.rootProject.rootDir, "keys/debug.keystore")
-    //     }
-
-    //     create("release") {
-    //         storeFile = File(project.rootProject.rootDir, "keys/release.keystore")
-    //         storePassword = signingCredentials?.password.orEmpty()
-    //         keyAlias = signingCredentials?.alias.orEmpty()
-    //         keyPassword = signingCredentials?.password.orEmpty()
-    //     }
-    // }
-
     buildTypes {
         debug {
-            // signingConfig = signingConfigs.getByName("debug")
             isDebuggable = true
         }
 
         release {
-            // signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
 
             proguardFiles(
@@ -135,6 +120,7 @@ dependencies {
 
     // Room
     implementation(libs.room.runtime)
+    implementation(libs.room.kts)
     kapt(libs.room.compiler)
     androidTestImplementation(libs.room.test)
 
@@ -153,4 +139,7 @@ dependencies {
     // Navigation
     implementation(libs.decompose)
     implementation(libs.decompose.extensions)
+
+    // Api
+    implementation(project(":backend-api"))
 }

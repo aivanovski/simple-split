@@ -2,7 +2,7 @@ package com.github.ai.simplesplit.android.presentation.core.compose.theme
 
 import android.content.Context
 import android.content.res.Configuration
-import java.util.concurrent.atomic.AtomicBoolean
+import com.github.ai.simplesplit.android.utils.mutableStateFlow
 
 interface ThemeProvider {
     val theme: Theme
@@ -11,11 +11,11 @@ interface ThemeProvider {
 
 class ThemeProviderImpl : ThemeProvider {
 
-    private val isDark = AtomicBoolean(false)
+    private var isDark by mutableStateFlow(false)
 
     override val theme: Theme
         get(): Theme {
-            return if (isDark.get()) {
+            return if (isDark) {
                 DarkTheme
             } else {
                 LightTheme
@@ -23,7 +23,7 @@ class ThemeProviderImpl : ThemeProvider {
         }
 
     override fun onThemedContextCreated(context: Context) {
-        isDark.set(isDarkTheme(context))
+        isDark = isDarkTheme(context)
     }
 
     private fun isDarkTheme(context: Context): Boolean {
