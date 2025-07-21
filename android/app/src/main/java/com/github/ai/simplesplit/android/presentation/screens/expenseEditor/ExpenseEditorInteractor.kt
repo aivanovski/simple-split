@@ -5,7 +5,7 @@ import arrow.core.raise.either
 import com.github.ai.simplesplit.android.data.repository.ExpenseRepository
 import com.github.ai.simplesplit.android.data.repository.GroupCredentialsRepository
 import com.github.ai.simplesplit.android.model.exception.AppException
-import com.github.ai.split.api.UserUid
+import com.github.ai.split.api.UserUidDto
 import com.github.ai.split.api.request.PostExpenseRequest
 import com.github.ai.split.api.response.PostExpenseResponse
 
@@ -28,7 +28,7 @@ class ExpenseEditorInteractor(
                 title = title,
                 amount = amount,
                 description = "",
-                paidBy = listOf(UserUid(uid = payerUid)),
+                paidBy = listOf(UserUidDto(uid = payerUid)),
                 isSplitBetweenAll = true,
                 splitBetween = null
             )
