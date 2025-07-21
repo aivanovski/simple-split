@@ -27,6 +27,7 @@ lazy val app = project
       case x => MergeStrategy.first
     },
     assembly / mainClass := Some("com.github.ai.split.Main"),
+    assembly / assemblyJarName := "simple-split-backend.jar",
 
     libraryDependencies ++= Seq(
       // Testing
