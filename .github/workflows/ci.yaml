@@ -7,9 +7,23 @@ on:
     branches: [ main ]
 
 jobs:
+  check-kotlin-code-format:
+    name: Check Kotlin code format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Download ktlint binary
+        run: |
+          curl -sSLO https://github.com/pinterest/ktlint/releases/download/1.2.1/ktlint
+          chmod +x ktlint
+          cp ktlint android/ktlint
+
+      - name: Run ktlint
+        run: cd android && ./ktlint --editorconfig=".editorconfig"
+
   build-backend:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4
@@ -43,7 +57,6 @@ jobs:
 
   transpile-api:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4
