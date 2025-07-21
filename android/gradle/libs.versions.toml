@@ -102,6 +102,7 @@ logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 room-test = { module = "androidx.room:room-testing", version.ref = "room" }
+room-kts = { module = "androidx.room:room-ktx", version.ref = "room"}
 jackson-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson" }
 jackson-yaml = { module = "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml", version.ref = "jackson" }
 arrow-core = { module = "io.arrow-kt:arrow-core", version.ref = "arrow" }
