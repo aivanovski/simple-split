@@ -60,22 +60,18 @@ class ScalaToKotlinTranspiler {
   }
 
   private def transpileImports(imports: List[String]): IO[AppError, List[String]] = {
-    val filteredImports = imports.map(line => transpileImport(line))
+    val transpiledImports = imports.map(line => transpileImport(line))
 
-    ZIO.collectAll(filteredImports)
+    ZIO.collectAll(transpiledImports)
       .map(lines =>
-        val transpiledImports = lines
-          .filter(line => line.isDefined)
-          .map(line => line.get)
-
-        List("import kotlinx.serialization.Serializable") ++ transpiledImports
+        List("import kotlinx.serialization.Serializable") ++ lines.flatten
       )
   }
 
-  private def transpileImport(line: String): IO[AppError, Option[String]] = {
+  private def transpileImport(line: String): IO[AppError, List[String]] = {
     val trimmedLine = line.trim.replaceAll("_", "*")
     if (trimmedLine.isEmpty || trimmedLine.startsWith("import zio")) {
-      return ZIO.succeed(None)
+      return ZIO.succeed(List.empty)
     }
 
 
@@ -86,9 +82,16 @@ class ScalaToKotlinTranspiler {
         return ZIO.fail(ScalaSyntaxError(message = s"Unable to transpile '$line'"))
       }
 
-      ZIO.succeed(Some(trimmedLine.substring(0, bracketStartIdx) + "*"))
+      val typeNames = trimmedLine.substring(bracketStartIdx + 1, bracketEndIdx)
+        .split(" ")
+        .map(name => name.replaceAll(",", ""))
+
+      val packageName = trimmedLine.substring(0, bracketStartIdx - 1)
+      val types = typeNames.map(name => packageName + "." + name).toList
+
+      ZIO.succeed(types)
     } else {
-      ZIO.succeed(Some(trimmedLine))
+      ZIO.succeed(List(trimmedLine))
     }
   }
 
