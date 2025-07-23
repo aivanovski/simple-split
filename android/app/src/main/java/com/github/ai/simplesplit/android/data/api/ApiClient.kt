@@ -98,12 +98,11 @@ class ApiClient(
         }
 
     suspend fun postExpense(
-        groupUid: String,
         password: String,
         request: PostExpenseRequest
     ): Either<ApiException, PostExpenseResponse> =
         either {
-            val url = "http://10.0.2.2:8080/expense/$groupUid?password=$password"
+            val url = "http://10.0.2.2:8080/expense?password=$password"
 
             val requestBody = jsonSerializer.serialize(request)
 

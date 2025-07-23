@@ -1,8 +1,8 @@
 package com.github.ai.split.domain.usecases
 
-import com.github.ai.split.data.db.dao.{ExpenseEntityDao, GroupEntityDao, GroupMemberEntityDao, PaidByEntityDao, SplitBetweenEntityDao}
-import com.github.ai.split.domain.AccessResolverService
+import com.github.ai.split.data.db.dao.{GroupEntityDao, GroupMemberEntityDao, PaidByEntityDao, SplitBetweenEntityDao}
 import com.github.ai.split.api.GroupDto
+import com.github.ai.split.data.db.repository.ExpenseRepository
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.toGroupDto
 import zio.*
@@ -10,9 +10,9 @@ import zio.*
 import java.util.UUID
 
 class AssembleGroupsResponseUseCase(
+  private val expenseRepository: ExpenseRepository,
   private val groupDao: GroupEntityDao,
   private val groupMemberDao: GroupMemberEntityDao,
-  private val expenseDao: ExpenseEntityDao,
   private val paidByDao: PaidByEntityDao,
   private val splitBetweenDao: SplitBetweenEntityDao,
   private val getAllUsersUseCase: GetAllUsersUseCase,
@@ -28,7 +28,7 @@ class AssembleGroupsResponseUseCase(
       // TODO: Optimize DB querying
       groups <- groupDao.getByUids(uids)
       allMembers <- groupMemberDao.getAll()
-      allExpenses <- expenseDao.getAll()
+      allExpenses <- expenseRepository.getEntitiesByGroupUids(uids)
       allPaidBy <- paidByDao.getAll()
       allSplitBetween <- splitBetweenDao.getAll()
       data <- {

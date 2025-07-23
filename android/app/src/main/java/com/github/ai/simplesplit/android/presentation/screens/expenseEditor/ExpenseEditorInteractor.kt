@@ -25,6 +25,7 @@ class ExpenseEditorInteractor(
                 ?: raise(AppException(message = "Fail to load credentials for group"))
 
             val request = PostExpenseRequest(
+                groupUid = groupUid,
                 title = title,
                 amount = amount,
                 description = "",
@@ -34,7 +35,6 @@ class ExpenseEditorInteractor(
             )
 
             expenseRepository.createExpense(
-                groupUid = groupUid,
                 password = credentials.password,
                 request = request
             ).bind()

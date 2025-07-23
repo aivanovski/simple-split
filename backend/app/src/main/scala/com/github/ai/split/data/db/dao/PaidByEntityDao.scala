@@ -61,4 +61,16 @@ class PaidByEntityDao(
       .map(_ => payers)
       .mapError(_.toDomainError())
   }
+
+  def removeByExpenseUid(expenseUid: UUID): IO[DomainError, Unit] = {
+    val deleteQuery = quote {
+      querySchema[PaidByEntity]("paid_by")
+        .filter(_.expenseUid == lift(expenseUid))
+        .delete
+    }
+
+    run(deleteQuery)
+      .map(_ => ())
+      .mapError(_.toDomainError())
+  }
 }

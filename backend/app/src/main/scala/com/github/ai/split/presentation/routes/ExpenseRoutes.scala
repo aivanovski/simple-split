@@ -1,7 +1,5 @@
 package com.github.ai.split.presentation.routes
 
-import com.github.ai.split.domain.AuthService
-import com.github.ai.split.entity.AuthenticationContext
 import com.github.ai.split.utils.toDomainResponse
 import com.github.ai.split.presentation.controllers.ExpenseController
 import zio.ZIO
@@ -10,10 +8,17 @@ import zio.http.*
 object ExpenseRoutes {
 
   def routes() = Routes(
-    Method.POST / "expense" / string("groupId") -> Handler.fromFunctionZIO[Request] { (request: Request) =>
+    Method.POST / "expense" -> Handler.fromFunctionZIO[Request] { (request: Request) =>
       for {
         controller <- ZIO.service[ExpenseController]
-        response <- controller.postExpense(request).mapError(_.toDomainResponse)
+        response <- controller.createExpense(request).mapError(_.toDomainResponse)
+      } yield response
+    },
+    
+    Method.PUT / "expense" / string("expenseId") -> Handler.fromFunctionZIO[Request] { (request: Request) =>
+      for {
+        controller <- ZIO.service[ExpenseController]
+        response <- controller.updateExpense(request).mapError(_.toDomainResponse)
       } yield response
     }
   )
