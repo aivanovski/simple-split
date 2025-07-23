@@ -28,9 +28,11 @@ class GroupEntityDao(
   }
 
   def getByUids(uids: List[UUID]): IO[DomainError, List[GroupEntity]] = {
+    val uidSet = uids.toSet
+    
     val query = quote {
       querySchema[GroupEntity]("groups")
-        .filter(gr => liftQuery(uids).contains(gr.uid))
+        .filter(gr => liftQuery(uidSet).contains(gr.uid))
     }
 
     run(query)

@@ -61,4 +61,16 @@ class SplitBetweenEntityDao(
       .map(_ => splits)
       .mapError(_.toDomainError())
   }
+
+  def removeByExpenseUid(expenseUid: UUID): IO[DomainError, Unit] = {
+    val deleteQuery = quote {
+      querySchema[SplitBetweenEntity]("split_between")
+        .filter(_.expenseUid == lift(expenseUid))
+        .delete
+    }
+
+    run(deleteQuery)
+      .map(_ => ())
+      .mapError(_.toDomainError())
+  }
 }

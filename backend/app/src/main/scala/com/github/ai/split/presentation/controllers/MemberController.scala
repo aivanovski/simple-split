@@ -2,7 +2,7 @@ package com.github.ai.split.presentation.controllers
 
 import com.github.ai.split.domain.usecases.{AddMemberUseCase, AssembleGroupResponseUseCase, GetGroupByUidUseCase}
 import com.github.ai.split.api.request.PostMemberRequest
-import com.github.ai.split.entity.db.UserEntity
+import com.github.ai.split.api.response.PostMemberResponse
 import com.github.ai.split.domain.AccessResolverService
 import com.github.ai.split.utils.{asUid, getLastUrlParameter, parse, parsePasswordParam, parseUidFromUrl}
 import com.github.ai.split.entity.exception.DomainError
@@ -32,7 +32,7 @@ class MemberController(
         groupUid = groupUid,
         userUid = memberUid
       )
-      response <- assembleGroupUseCase.assembleGroupDto(groupUid)
-    } yield Response.text(response.toJsonPretty + "\n")
+      groupDto <- assembleGroupUseCase.assembleGroupDto(groupUid)
+    } yield Response.text(PostMemberResponse(groupDto).toJsonPretty)
   }
 }

@@ -1,12 +1,23 @@
 package com.github.ai.split.domain.usecases
 
-import com.github.ai.split.entity.Transaction
-import com.github.ai.split.entity.db.{ExpenseEntity, GroupMemberEntity, PaidByEntity, SplitBetweenEntity}
+import com.github.ai.split.entity.{ExpenseWithRelations, Transaction}
+import com.github.ai.split.entity.db.{ExpenseEntity, PaidByEntity, SplitBetweenEntity}
 
 import java.util.UUID
 import scala.collection.mutable.ListBuffer
 
 class ConvertExpensesToTransactionsUseCase {
+
+  def convertToTransactions(
+    expenses: List[ExpenseWithRelations],
+    members: List[UUID],
+  ): List[Transaction] =
+    convertToTransactions(
+      expenses = expenses.map(_.entity),
+      members = members,
+      paidBy = expenses.flatMap(_.paidBy),
+      splitBetween = expenses.flatMap(_.splitBetween)
+    )
 
   def convertToTransactions(
     expenses: List[ExpenseEntity],

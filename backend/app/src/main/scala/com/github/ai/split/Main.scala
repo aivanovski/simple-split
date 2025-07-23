@@ -43,6 +43,7 @@ object Main extends ZIOAppDefault {
         Layers.calculateSettlementUseCase,
         Layers.fillTestDataUseCase,
         Layers.updateGroupUseCase,
+        Layers.updateExpenseUseCase,
 
         // Response assemblers use cases
         Layers.assembleGroupResponseUseCase,
@@ -59,6 +60,9 @@ object Main extends ZIOAppDefault {
         Layers.authService,
         Layers.passwordService,
         Layers.accessResolverService,
+
+        // Repositories
+        Layers.expenseRepository,
 
         // Dao
         Layers.expenseDao,

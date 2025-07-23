@@ -3,16 +3,15 @@ package com.github.ai.split.api.request
 import com.github.ai.split.api.UserUidDto
 import zio.json.{DeriveJsonDecoder, JsonDecoder}
 
-case class PostExpenseRequest(
-  groupUid: String,
-  title: String,
+case class PutExpenseRequest(
+  title: Option[String],
   description: Option[String],
-  amount: Double,
-  paidBy: List[UserUidDto],
+  amount: Option[Double],
+  paidBy: Option[List[UserUidDto]],
   isSplitBetweenAll: Option[Boolean],
   splitBetween: Option[List[UserUidDto]]
 )
 
-object PostExpenseRequest {
-  implicit val decoder: JsonDecoder[PostExpenseRequest] = DeriveJsonDecoder.gen[PostExpenseRequest]
-}
+object PutExpenseRequest {
+  implicit val decoder: JsonDecoder[PutExpenseRequest] = DeriveJsonDecoder.gen[PutExpenseRequest]
+} 

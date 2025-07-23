@@ -63,15 +63,9 @@ class GroupController(
 
       _ <- updateGroupUseCase.updateGroup(
         groupUid = groupUid,
-        newPassword = data.password.flatMap { newPassword =>
-          if (newPassword.isBlank) None else Some(newPassword.trim)
-        },
-        newTitle = data.title.flatMap { newTitle =>
-          if (newTitle.isBlank) None else Some(newTitle.trim)
-        },
-        newDescription = data.description.flatMap { newDescription =>
-          if (newDescription.isBlank) None else Some(newDescription.trim)
-        },
+        newPassword = data.password.map(_.trim).filter(_.nonEmpty),
+        newTitle = data.title.map(_.trim).filter(_.nonEmpty),
+        newDescription = data.description.map(_.trim).filter(_.nonEmpty),
         newMemberUids = newMembers
       )
 

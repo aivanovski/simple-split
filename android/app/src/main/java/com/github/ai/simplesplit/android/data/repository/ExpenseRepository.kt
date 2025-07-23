@@ -11,12 +11,10 @@ class ExpenseRepository(
 ) {
 
     suspend fun createExpense(
-        groupUid: String,
         password: String,
         request: PostExpenseRequest
     ): Either<AppException, PostExpenseResponse> =
         api.postExpense(
-            groupUid = groupUid,
             password = password,
             request = request
         )

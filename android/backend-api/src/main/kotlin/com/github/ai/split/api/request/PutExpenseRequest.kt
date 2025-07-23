@@ -4,12 +4,11 @@ import kotlinx.serialization.Serializable
 import com.github.ai.split.api.UserUidDto
 
 @Serializable
-data class PostExpenseRequest(
-    val groupUid: String,
-    val title: String,
+data class PutExpenseRequest(
+    val title: String?,
     val description: String?,
-    val amount: Double,
-    val paidBy: List<UserUidDto>,
+    val amount: Double?,
+    val paidBy: List<UserUidDto>?,
     val isSplitBetweenAll: Boolean?,
     val splitBetween: List<UserUidDto>?
 )

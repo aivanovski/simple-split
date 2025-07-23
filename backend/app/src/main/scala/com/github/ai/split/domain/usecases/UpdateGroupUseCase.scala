@@ -1,6 +1,6 @@
 package com.github.ai.split.domain.usecases
 
-import com.github.ai.split.data.db.dao.{ExpenseEntityDao, GroupEntityDao, GroupMemberEntityDao, PaidByEntityDao, SplitBetweenEntityDao, UserEntityDao}
+import com.github.ai.split.data.db.dao.{GroupEntityDao, GroupMemberEntityDao, PaidByEntityDao, SplitBetweenEntityDao, UserEntityDao}
 import com.github.ai.split.domain.usecases.AddMemberUseCase
 import com.github.ai.split.domain.PasswordService
 import com.github.ai.split.entity.db.{GroupEntity, GroupMemberEntity}
@@ -15,7 +15,6 @@ class UpdateGroupUseCase(
   private val groupDao: GroupEntityDao,
   private val groupMemberDao: GroupMemberEntityDao,
   private val userDao: UserEntityDao,
-  private val expenseDao: ExpenseEntityDao,
   private val paidByDao: PaidByEntityDao,
   private val splitBetweenDao: SplitBetweenEntityDao,
   private val addMemberUseCase: AddMemberUseCase

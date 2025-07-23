@@ -1,6 +1,6 @@
 package com.github.ai.split.utils
 
-import com.github.ai.split.entity.Transaction
+import com.github.ai.split.entity.{ExpenseWithRelations, Transaction}
 import com.github.ai.split.api.{ExpenseDto, GroupDto, TransactionDto, UserDto}
 import com.github.ai.split.entity.db.{ExpenseEntity, GroupEntity, GroupMemberEntity, PaidByEntity, SplitBetweenEntity, UserEntity}
 import com.github.ai.split.entity.exception.DomainError
@@ -14,6 +14,19 @@ def toUserDto(user: UserEntity) = UserDto(
 )
 
 def toUserDtos(users: List[UserEntity]) = users.map { user => toUserDto(user) }
+
+def toExpenseDto(
+  expense: ExpenseWithRelations,
+  members: List[GroupMemberEntity],
+  userUidToUserMap: Map[UUID, UserEntity]
+): IO[DomainError, ExpenseDto] =
+  toExpenseDto(
+    expense = expense.entity,
+    members = members,
+    paidBy = expense.paidBy,
+    splitBetween = expense.splitBetween,
+    userUidToUserMap = userUidToUserMap
+  )
 
 def toExpenseDto(
   expense: ExpenseEntity,
@@ -58,6 +71,23 @@ def toUserDtos(
     }
   )
 }
+
+def toGroupDto(
+  group: GroupEntity,
+  members: List[GroupMemberEntity],
+  expenses: List[ExpenseWithRelations],
+  userUidToUserMap: Map[UUID, UserEntity],
+  paybackTransactions: List[Transaction]
+): IO[DomainError, GroupDto] =
+  toGroupDto(
+    group = group,
+    members = members,
+    expenses = expenses.map(_.entity),
+    expenseUidToPaidByMap = expenses.map(expense => (expense.entity.uid, expense.paidBy)).toMap,
+    expenseUidToSplitBetweenMap = expenses.map(expense => (expense.entity.uid, expense.splitBetween)).toMap,
+    userUidToUserMap = userUidToUserMap,
+    paybackTransactions = paybackTransactions
+  )
 
 def toGroupDto(
   group: GroupEntity,

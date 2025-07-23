@@ -1,23 +1,19 @@
 package com.github.ai.split.domain.usecases
 
-import com.github.ai.split.data.db.dao.{ExpenseEntityDao, GroupEntityDao, GroupMemberEntityDao, PaidByEntityDao, SplitBetweenEntityDao, UserEntityDao}
-import com.github.ai.split.domain.{AccessResolverService, PasswordService}
-import com.github.ai.split.entity.{NewExpense, Split, SplitBetweenAll, SplitBetweenMembers, UidReference, UserReference}
-import com.github.ai.split.entity.db.{ExpenseEntity, GroupEntity, PaidByEntity, SplitBetweenEntity, UserEntity}
+import com.github.ai.split.data.db.dao.{GroupEntityDao, UserEntityDao}
+import com.github.ai.split.data.db.repository.ExpenseRepository
+import com.github.ai.split.entity.{ExpenseWithRelations, NewExpense, SplitBetweenAll, SplitBetweenMembers}
+import com.github.ai.split.entity.db.{ExpenseEntity, PaidByEntity, SplitBetweenEntity, UserEntity}
 import com.github.ai.split.utils.*
 import com.github.ai.split.entity.exception.DomainError
-import com.sun.tools.javac.code.Type.ForAll
 import zio.*
 
 import java.util.UUID
 
 class AddExpenseUseCase(
+  private val expenseRepository: ExpenseRepository,
   private val userDao: UserEntityDao,
-  private val groupDao: GroupEntityDao,
-  private val expenseDao: ExpenseEntityDao,
-  private val groupMemberDao: GroupMemberEntityDao,
-  private val paidByDao: PaidByEntityDao,
-  private val splitBetweenDao: SplitBetweenEntityDao
+  private val groupDao: GroupEntityDao
 ) {
 
   def addExpenseToGroup(
@@ -25,9 +21,9 @@ class AddExpenseUseCase(
     newExpense: NewExpense
   ): IO[DomainError, ExpenseEntity] = {
     for {
-      group <- groupDao.getByUid(groupUid)
+      group <- groupDao.getByUid(uid = groupUid)
       members <- userDao.getByGroupUid(groupUid = groupUid)
-      expenses <- expenseDao.getByGroupUid(groupUid)
+      expenses <- expenseRepository.getEntitiesByGroupUid(groupUid = groupUid)
 
       _ <- isValidExpense(
         expenses = expenses,
@@ -35,43 +31,45 @@ class AddExpenseUseCase(
         data = newExpense
       )
 
-      expense <- expenseDao.add(
-        ExpenseEntity(
-          uid = UUID.randomUUID(),
-          groupUid = groupUid,
-          title = newExpense.title,
-          description = newExpense.description,
-          amount = newExpense.amount,
-          isSplitBetweenAll = newExpense.split == SplitBetweenAll
-        )
-      )
+      expense <- {
+        val expenseUid = UUID.randomUUID()
 
-      payers <- paidByDao.add(
-        newExpense.paidBy.map(payerUid =>
+        val splitBetween = newExpense.split match {
+          case SplitBetweenAll => List.empty
+          case SplitBetweenMembers(splitUids) =>
+            splitUids.map(splitUid =>
+              SplitBetweenEntity(
+                groupUid = groupUid,
+                expenseUid = expenseUid,
+                userUid = splitUid
+              )
+            )
+        }
+
+        val paidBy = newExpense.paidBy.map(payerUid =>
           PaidByEntity(
             groupUid = groupUid,
-            expenseUid = expense.uid,
+            expenseUid = expenseUid,
             userUid = payerUid
           )
         )
-      )
 
-      _ <- {
-        newExpense.split match
-          case SplitBetweenAll => ZIO.succeed(())
-          case SplitBetweenMembers(splitUids) =>
-            splitBetweenDao.add(
-              splitUids.map(splitUid =>
-                SplitBetweenEntity(
-                  groupUid = groupUid,
-                  expenseUid = expense.uid,
-                  userUid = splitUid
-                )
-              )
-            )
+        expenseRepository.add(
+          ExpenseWithRelations(
+            entity = ExpenseEntity(
+              uid = expenseUid,
+              groupUid = groupUid,
+              title = newExpense.title,
+              description = newExpense.description,
+              amount = newExpense.amount,
+              isSplitBetweenAll = newExpense.split == SplitBetweenAll
+            ),
+            paidBy = paidBy,
+            splitBetween = splitBetween
+          )
+        )
       }
-
-    } yield expense
+    } yield expense.entity
   }
 
   private def isValidExpense(
@@ -104,7 +102,7 @@ class AddExpenseUseCase(
           return ZIO.fail(DomainError(message = "Invalid splitting".some))
         }
       }
-      case _ => 
+      case _ =>
     }
 
     ZIO.succeed(())

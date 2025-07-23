@@ -1,11 +1,12 @@
 package com.github.ai.split.presentation.controllers
 
 import com.github.ai.split.utils.*
-import com.github.ai.split.domain.usecases.{AddExpenseUseCase, AssembleExpenseUseCase}
-import com.github.ai.split.api.request.PostExpenseRequest
-import com.github.ai.split.api.response.PostExpenseResponse
+import com.github.ai.split.domain.usecases.{AddExpenseUseCase, AssembleExpenseUseCase, UpdateExpenseUseCase}
+import com.github.ai.split.api.request.{PostExpenseRequest, PutExpenseRequest}
+import com.github.ai.split.api.response.{PostExpenseResponse, PutExpenseResponse}
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.domain.AccessResolverService
+import com.github.ai.split.utils.parsePasswordParam
 import com.github.ai.split.entity.{NewExpense, Split, SplitBetweenAll, SplitBetweenMembers, UidReference, UserReference}
 import zio.{IO, ZIO}
 import zio.http.{Request, Response}
@@ -16,52 +17,95 @@ import java.util.UUID
 class ExpenseController(
   private val accessResolver: AccessResolverService,
   private val addExpenseUseCase: AddExpenseUseCase,
-  private val assembleExpenseUseCase: AssembleExpenseUseCase
+  private val assembleExpenseUseCase: AssembleExpenseUseCase,
+  private val updateExpenseUseCase: UpdateExpenseUseCase
 ) {
 
-  def postExpense(
+  def createExpense(
     request: Request
   ): IO[DomainError, Response] = {
     for {
-      groupUid <- parseUidFromUrl(request)
-      password <- parsePassword(request)
+      body <- request.body.parse[PostExpenseRequest]
+      groupUid <- body.groupUid.asUid()
+      password <- parsePasswordParam(request)
       _ <- accessResolver.canAccessToGroup(groupUid = groupUid, password = password)
-      newExpense <- parseExpense(request)
+
+      paidBy <- parsePaidBy(paidByUids = body.paidBy.map(_.uid))
+      split <- parseSplit(
+        isSplitEqually = body.isSplitBetweenAll.getOrElse(false),
+        splitUids = body.splitBetween.getOrElse(List.empty).map(_.uid)
+      )
+
       expense <- addExpenseUseCase.addExpenseToGroup(
         groupUid = groupUid,
-        newExpense = newExpense,
+        newExpense = NewExpense(
+          title = body.title.trim,
+          description = body.description.map(_.trim).getOrElse(""),
+          amount = body.amount,
+          paidBy = paidBy,
+          split = split
+        )
       )
       expenseDto <- assembleExpenseUseCase.assembleExpenseDto(expenseUid = expense.uid)
-    } yield Response.text(
-      text = PostExpenseResponse(expenseDto).toJsonPretty
-    )
+    } yield Response.text(PostExpenseResponse(expenseDto).toJsonPretty)
   }
 
-  private def parseExpense(request: Request): IO[DomainError, NewExpense] = {
+  def updateExpense(
+    request: Request
+  ): IO[DomainError, Response] = {
     for {
-      body <- request.body.parse[PostExpenseRequest]
-      paidBy <- parsePaidBy(body)
-      split <- parseSplit(body)
-    } yield NewExpense(
-      title = body.title,
-      description = body.description.getOrElse(""),
-      amount = body.amount,
-      paidBy = paidBy,
-      split = split
-    )
+      expenseUid <- parseUidFromUrl(request)
+      password <- parsePasswordParam(request)
+      _ <- accessResolver.canAccessToExpense(expenseUid = expenseUid, password = password)
+
+      data <- request.body.parse[PutExpenseRequest]
+
+      newPaidBy <- if (data.paidBy.isDefined) {
+        parsePaidBy(
+          paidByUids = data.paidBy.getOrElse(List.empty).map(_.uid)
+        ).map(paidBy => Some(paidBy))
+      } else {
+        ZIO.succeed(None)
+      }
+
+      newSplit <- if (data.splitBetween.isDefined || data.isSplitBetweenAll.isDefined) {
+        parseSplit(
+          isSplitEqually = data.isSplitBetweenAll.getOrElse(false),
+          splitUids = data.splitBetween.getOrElse(List.empty).map(_.uid)
+        )
+          .map(split => Some(split))
+      } else {
+        ZIO.succeed(None)
+      }
+
+      _ <- updateExpenseUseCase.updateExpense(
+        expenseUid = expenseUid,
+        newTitle = data.title.map(_.trim).filter(_.nonEmpty),
+        newDescription = data.description.map(_.trim).filter(_.nonEmpty),
+        newAmount = data.amount,
+        newPaidBy = newPaidBy,
+        newSplit = newSplit
+      )
+
+      expenseDto <- assembleExpenseUseCase.assembleExpenseDto(expenseUid = expenseUid)
+    } yield Response.text(PutExpenseResponse(expenseDto).toJsonPretty)
   }
 
-  private def parsePaidBy(body: PostExpenseRequest): IO[DomainError, List[UUID]] = {
+  private def parsePaidBy(
+    paidByUids: List[String]
+  ): IO[DomainError, List[UUID]] = {
     ZIO.collectAll(
-      body.paidBy.map {
-        payer => payer.uid.asUid()
+      paidByUids.map {
+        payer => payer.asUid()
       }
     )
   }
 
-  private def parseSplit(body: PostExpenseRequest): IO[DomainError, Split] = {
-    val isSplitEqually = body.isSplitBetweenAll.getOrElse(false)
-    val splitUids = body.splitBetween.getOrElse(List.empty)
+  private def parseSplit(
+    isSplitEqually: Boolean,
+    splitUids: List[String]
+  ): IO[DomainError, Split] = {
+
     if (!isSplitEqually && splitUids.isEmpty) {
       return ZIO.fail(DomainError(message = "Split is not specified".some))
     }
@@ -73,17 +117,11 @@ class ExpenseController(
     if (!isSplitEqually) {
       ZIO.collectAll(
           splitUids
-            .map(uid => uid.uid.asUid())
+            .map(uid => uid.asUid())
         )
         .map(uids => SplitBetweenMembers(userUids = uids))
     } else {
       ZIO.succeed(SplitBetweenAll)
     }
-  }
-
-  private def parsePassword(request: Request): IO[DomainError, String] = {
-    val password = request.url.queryParamOrElse("password", "")
-
-    ZIO.succeed(password)
   }
 }

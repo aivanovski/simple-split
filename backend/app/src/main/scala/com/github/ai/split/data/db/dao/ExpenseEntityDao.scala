@@ -41,6 +41,31 @@ class ExpenseEntityDao(
     } yield expense
   }
 
+  def getByUids(uids: List[UUID]): IO[DomainError, List[ExpenseEntity]] = {
+    val uidSet = uids.toSet
+
+    val query = quote {
+      querySchema[ExpenseEntity]("expenses")
+        .filter(expense => liftQuery(uidSet).contains(expense.uid))
+    }
+
+    run(query)
+      .mapError(_.toDomainError())
+  }
+
+  def getByGroupUids(groupUids: List[UUID]): IO[DomainError, List[ExpenseEntity]] = {
+    val groupUidSet = groupUids.toSet
+
+    val query = quote {
+      querySchema[ExpenseEntity]("expenses")
+        .filter(expense => liftQuery(groupUidSet).contains(expense.groupUid))
+    }
+
+    run(query)
+      .mapError(_.toDomainError())
+  }
+  
+
   def getByGroupUid(groupUid: UUID): IO[DomainError, List[ExpenseEntity]] = {
     val query = quote {
       querySchema[ExpenseEntity]("expenses")
@@ -59,6 +84,30 @@ class ExpenseEntityDao(
       }
     )
       .map(_ => expense)
+      .mapError(_.toDomainError())
+  }
+
+  def update(expense: ExpenseEntity): IO[DomainError, ExpenseEntity] = {
+    val updateQuery = quote {
+      querySchema[ExpenseEntity]("expenses")
+        .filter(_.uid == lift(expense.uid))
+        .updateValue(lift(expense))
+    }
+
+    run(updateQuery)
+      .map(_ => expense)
+      .mapError(_.toDomainError())
+  }
+
+  def delete(uid: UUID): IO[DomainError, Unit] = {
+    val deleteQuery = quote {
+      querySchema[ExpenseEntity]("expenses")
+        .filter(_.uid == lift(uid))
+        .delete
+    }
+
+    run(deleteQuery)
+      .map(_ => ())
       .mapError(_.toDomainError())
   }
 }
