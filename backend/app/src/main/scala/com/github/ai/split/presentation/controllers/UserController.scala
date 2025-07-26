@@ -36,8 +36,6 @@ class UserController(
         )
       )
 
-    } yield Response.text(
-      text = PostUserResponse(toUserDto(user)).toJsonPretty
-    )
+    } yield Response.json(PostUserResponse(toUserDto(user)).toJsonPretty)
   }
 }

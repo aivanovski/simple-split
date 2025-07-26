@@ -33,6 +33,6 @@ class MemberController(
         userUid = memberUid
       )
       groupDto <- assembleGroupUseCase.assembleGroupDto(groupUid)
-    } yield Response.text(PostMemberResponse(groupDto).toJsonPretty)
+    } yield Response.json(PostMemberResponse(groupDto).toJsonPretty)
   }
 }
