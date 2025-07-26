@@ -1,6 +1,9 @@
 val scala3Version = "3.7.1"
 val zioVersion = "2.1.19"
 val zioJsonVersion = "0.6.2"
+val circeVersion = "0.14.10"
+val zioDirect = "1.0.0-RC7"
+val zioHttp = "3.0.1"
 
 ThisBuild / scalaVersion := scala3Version
 ThisBuild / version := "0.1.0-SNAPSHOT"
@@ -36,7 +39,7 @@ lazy val app = project
       // ZIO
       "dev.zio" %% "zio" % zioVersion,
       "dev.zio" %% "zio-streams" % zioVersion,
-      "dev.zio" %% "zio-http" % "3.0.1",
+      "dev.zio" %% "zio-http" % zioHttp,
       "dev.zio" %% "zio-json" % zioJsonVersion,
 
       // Logging
@@ -66,9 +69,31 @@ lazy val codegen = project
     name := "simple-split-codegen",
     libraryDependencies ++= Seq(
       "dev.zio" %% "zio" % zioVersion,
-      "dev.zio" %% "zio-json" % zioJsonVersion
+      "dev.zio" %% "zio-json" % zioJsonVersion,
+      "dev.zio" %% "zio-direct" % zioDirect
     ),
     generateKotlinClasses := {
       (Compile / runMain).toTask(" com.github.ai.split.codegen.TranspilerMain api/src/main/scala ./../android/backend-api/src/main/kotlin").value
     },
+  )
+
+lazy val apiClient = project
+  .in(file("api-client"))
+  .dependsOn(api)
+  .settings(
+    name := "simple-split-api-client",
+    assembly / assemblyMergeStrategy := {
+      case PathList("META-INF", xs@_*) => MergeStrategy.discard
+      case x => MergeStrategy.first
+    },
+    assembly / mainClass := Some("com.github.ai.split.client.ApiClientMain"),
+    assembly / assemblyJarName := "simple-split-api-client.jar",
+
+    libraryDependencies ++= Seq(
+      "dev.zio" %% "zio" % zioVersion,
+      "dev.zio" %% "zio-json" % zioJsonVersion,
+      "dev.zio" %% "zio-direct" % zioDirect,
+      "dev.zio" %% "zio-http" % zioHttp,
+      "dev.zio" %% "zio-json" % zioJsonVersion
+    )
   )

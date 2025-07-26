@@ -1,7 +1,7 @@
 package com.github.ai.split.api.request
 
 import com.github.ai.split.api.UserUidDto
-import zio.json.{DeriveJsonDecoder, JsonDecoder}
+import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
 
 case class PostExpenseRequest(
   groupUid: String,
@@ -14,5 +14,6 @@ case class PostExpenseRequest(
 )
 
 object PostExpenseRequest {
+  implicit val encoder: JsonEncoder[PostExpenseRequest] = DeriveJsonEncoder.gen[PostExpenseRequest]
   implicit val decoder: JsonDecoder[PostExpenseRequest] = DeriveJsonDecoder.gen[PostExpenseRequest]
 }
