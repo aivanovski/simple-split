@@ -35,7 +35,7 @@ class GroupController(
       passwords <- parsePasswords(request)
       _ <- accessResolver.canAccessToGroups(groupUids = groupUids, passwords = passwords)
       groups <- assembleGroupsUseCase.assembleGroupDtos(uids = groupUids)
-    } yield Response.text(GetGroupsResponse(groups).toJsonPretty + "\n")
+    } yield Response.json(GetGroupsResponse(groups).toJsonPretty)
   }
 
   def updateGroup(
@@ -70,7 +70,7 @@ class GroupController(
       )
 
       groupDto <- assembleGroupUseCase.assembleGroupDto(groupUid = groupUid)
-    } yield Response.text(PutGroupResponse(groupDto).toJsonPretty)
+    } yield Response.json(PutGroupResponse(groupDto).toJsonPretty)
   }
 
   def createGroup(
@@ -129,9 +129,7 @@ class GroupController(
       }
 
       groupDto <- assembleGroupUseCase.assembleGroupDto(groupUid = newGroup.uid)
-    } yield Response.text(
-      text = PostGroupResponse(groupDto).toJsonPretty
-    )
+    } yield Response.json(PostGroupResponse(groupDto).toJsonPretty)
   }
 
   private def addExpenses(

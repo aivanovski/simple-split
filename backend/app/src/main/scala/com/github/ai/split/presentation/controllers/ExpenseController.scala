@@ -47,7 +47,7 @@ class ExpenseController(
         )
       )
       expenseDto <- assembleExpenseUseCase.assembleExpenseDto(expenseUid = expense.uid)
-    } yield Response.text(PostExpenseResponse(expenseDto).toJsonPretty)
+    } yield Response.json(PostExpenseResponse(expenseDto).toJsonPretty)
   }
 
   def updateExpense(
@@ -88,7 +88,7 @@ class ExpenseController(
       )
 
       expenseDto <- assembleExpenseUseCase.assembleExpenseDto(expenseUid = expenseUid)
-    } yield Response.text(PutExpenseResponse(expenseDto).toJsonPretty)
+    } yield Response.json(PutExpenseResponse(expenseDto).toJsonPretty)
   }
 
   private def parsePaidBy(
