@@ -47,16 +47,33 @@ class ExpenseEditorViewModel(
         return flow {
             emit(ExpenseEditorState.Loading)
 
-            val group = when (args.mode) {
-                is ExpenseEditorMode.NewExpense -> args.mode.group
+            val memberNames = args.group.members.map { member -> member.name }
+
+            when (args.mode) {
+                ExpenseEditorMode.NewExpense -> {
+                    dataState = dataState.copy(
+                        payer = memberNames.first(),
+                        availablePayers = memberNames
+                    )
+                }
+
+                is ExpenseEditorMode.EditExpense -> {
+                    val expense = args.group.expenses
+                        .firstOrNull { expense -> expense.uid == args.mode.expenseUid }
+
+                    val payer = expense?.paidBy
+                        ?.firstOrNull()
+                        ?.name
+                        .orEmpty()
+
+                    dataState = dataState.copy(
+                        title = expense?.title.orEmpty(),
+                        amount = expense?.amount?.toString().orEmpty(),
+                        payer = payer,
+                        availablePayers = memberNames
+                    )
+                }
             }
-
-            val memberNames = group.members.map { it.name }
-
-            dataState = dataState.copy(
-                payer = memberNames.first(),
-                availablePayers = memberNames
-            )
 
             emit(dataState)
         }.flowOn(Dispatchers.IO)
@@ -99,15 +116,6 @@ class ExpenseEditorViewModel(
     }
 
     private fun onDoneClicked(): Flow<ExpenseEditorState> {
-        // TODO: load first payer in the list
-
-//        if (dataState.payer.isBlank()) {
-//            dataState = dataState.copy(
-//                payerError = resourceProvider.getString(R.string.select_payer)
-//            )
-//            return flowOf(dataState)
-//        }
-
         if (dataState.title.isBlank()) {
             dataState = dataState.copy(
                 titleError = resourceProvider.getString(R.string.enter_expense_title)
@@ -138,35 +146,43 @@ class ExpenseEditorViewModel(
             return flowOf(dataState)
         }
 
-        val group = when (args.mode) {
-            is ExpenseEditorMode.NewExpense -> args.mode.group
-        }
-
         val payerName = dataState.payer.trim()
-        val payer = group.members.firstOrNull { member -> member.name == payerName }
+        val payer = args.group.members.firstOrNull { member -> member.name == payerName }
             ?: return flowOf(dataState)
 
         return flow {
             emit(ExpenseEditorState.Loading)
 
-            val createExpenseResult = interactor.createExpense(
-                groupUid = group.uid,
-                title = dataState.title.trim(),
-                amount = amount,
-                payerUid = payer.uid
-            )
+            val response = when (args.mode) {
+                ExpenseEditorMode.NewExpense -> interactor.createExpense(
+                    groupUid = args.group.uid,
+                    title = dataState.title.trim(),
+                    amount = amount,
+                    payerUid = payer.uid
+                )
 
-            if (createExpenseResult.isLeft()) {
-                val message = createExpenseResult.getErrorMessage()
-                emit(ExpenseEditorState.Error(message))
+                is ExpenseEditorMode.EditExpense -> {
+                    interactor.updateExpense(
+                        credentials = args.credentials,
+                        expenseUid = args.mode.expenseUid,
+                        title = dataState.title.trim().ifBlank { null },
+                        amount = amount,
+                        payerUid = payer.uid
+                    )
+                }
+            }
+
+            if (response.isLeft()) {
+                emit(ExpenseEditorState.Error(response.getErrorMessage()))
                 return@flow
             }
 
-            Timber.d("Successfully created expense: title=${dataState.title}, amount=$amount")
+            val expense = response.getOrNull() ?: return@flow
 
-            val expense = createExpenseResult.getOrNull() ?: return@flow
+            // TODO: remove logging
+            Timber.d("Successfully: title=${expense.title}, uid=${expense.uid}, amount=$amount")
 
-            router.setResult(Screen.ExpenseEditor::class, expense.expense)
+            router.setResult(Screen.ExpenseEditor::class, expense)
             router.exit()
         }.flowOn(Dispatchers.IO)
     }

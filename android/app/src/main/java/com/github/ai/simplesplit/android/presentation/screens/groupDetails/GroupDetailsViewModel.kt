@@ -2,6 +2,7 @@ package com.github.ai.simplesplit.android.presentation.screens.groupDetails
 
 import androidx.annotation.StringRes
 import com.github.ai.simplesplit.android.R
+import com.github.ai.simplesplit.android.model.db.GroupCredentials
 import com.github.ai.simplesplit.android.presentation.core.ResourceProvider
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.CellEvent
 import com.github.ai.simplesplit.android.presentation.core.compose.navigation.Router
@@ -22,6 +23,7 @@ import com.github.ai.simplesplit.android.presentation.screens.groupDetails.model
 import com.github.ai.simplesplit.android.presentation.screens.groupDetails.model.GroupDetailsState
 import com.github.ai.simplesplit.android.utils.getErrorMessage
 import com.github.ai.simplesplit.android.utils.getStringOrNull
+import com.github.ai.simplesplit.android.utils.mutableStateFlow
 import com.github.ai.simplesplit.android.utils.parseCellId
 import com.github.ai.split.api.GroupDto
 import kotlinx.coroutines.Dispatchers
@@ -41,6 +43,8 @@ class GroupDetailsViewModel(
     initialIntent = GroupDetailsIntent.Initialize
 ) {
 
+    private var data by mutableStateFlow(args.group)
+
     override fun handleIntent(intent: GroupDetailsIntent): Flow<GroupDetailsState> {
         return when (intent) {
             GroupDetailsIntent.Initialize -> loadData(args.group.uid, args.password)
@@ -56,7 +60,7 @@ class GroupDetailsViewModel(
                 nonStateAction { showExpenseMenuDialog(intent.expenseUid) }
 
             is GroupDetailsIntent.OnEditExpenseClick ->
-                nonStateAction { } // TODO:
+                nonStateAction { navigateToEditExpenseScreen(intent.expenseUid) }
 
             is GroupDetailsIntent.OnRemoveExpenseClick ->
                 nonStateAction { showRemoveExpenseConfirmationDialog(intent.expenseUid) }
@@ -83,9 +87,26 @@ class GroupDetailsViewModel(
         router.navigateTo(
             Screen.ExpenseEditor(
                 ExpenseEditorArgs(
-                    mode = ExpenseEditorMode.NewExpense(
-                        group = args.group
-                    )
+                    mode = ExpenseEditorMode.NewExpense,
+                    group = data,
+                    credentials = GroupCredentials(args.group.uid, args.password)
+                )
+            )
+        )
+        router.setResultListener(Screen.ExpenseEditor::class) { _ ->
+            sendIntent(GroupDetailsIntent.ReloadData)
+        }
+    }
+
+    private fun navigateToEditExpenseScreen(expenseUid: String) {
+        router.navigateTo(
+            Screen.ExpenseEditor(
+                ExpenseEditorArgs(
+                    mode = ExpenseEditorMode.EditExpense(
+                        expenseUid = expenseUid
+                    ),
+                    group = data,
+                    credentials = GroupCredentials(args.group.uid, args.password)
                 )
             )
         )
@@ -105,18 +126,19 @@ class GroupDetailsViewModel(
         return flow {
             emit(GroupDetailsState.Loading)
 
-            val getGroupDetailsResult = interactor.getGroup(
+            val getGroupResult = interactor.getGroup(
                 groupUid = groupUid,
                 password = password
             )
-            if (getGroupDetailsResult.isLeft()) {
-                emit(GroupDetailsState.Error(getGroupDetailsResult.getErrorMessage()))
+            if (getGroupResult.isLeft()) {
+                emit(GroupDetailsState.Error(getGroupResult.getErrorMessage()))
                 return@flow
             }
 
-            val group = getGroupDetailsResult.getOrNull() ?: return@flow
+            val groupDto = getGroupResult.getOrNull() ?: return@flow
+            data = groupDto
 
-            emitAll(showData(group))
+            emitAll(showData(groupDto))
         }.flowOn(Dispatchers.IO)
     }
 
@@ -183,8 +205,7 @@ class GroupDetailsViewModel(
     ) {
         when (action) {
             MenuAction.EDIT_EXPENSE -> {
-                // TODO:
-                // sendIntent(GroupsIntent.OnEditGroupClick(groupUid = groupUid))
+                sendIntent(GroupDetailsIntent.OnEditExpenseClick(expenseUid))
             }
 
             MenuAction.REMOVE_EXPENSE -> {
