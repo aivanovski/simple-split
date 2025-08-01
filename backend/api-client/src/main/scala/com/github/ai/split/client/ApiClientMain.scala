@@ -18,10 +18,11 @@ object ApiClientMain extends ZIOAppDefault {
       |
       |post-expense                                          Creates new expense in default group
       |gen-expense                                           Generates new expense in default group
+      |delete-expense [EXPENSE_UID]                          Deletes expense by EXPENSE_UID
       |
       |post-member [GROUP_UID] [USER_NAME]                   Create new member with USER_NAME in GROUP_UID
       |gen-members [GROUP_UID]
-      |delete-member [MEMBER_UID]                           Deletes member by MEMBER_UID
+      |delete-member [MEMBER_UID]                            Deletes member by MEMBER_UID
       |help                                                  Print help
       |""".stripMargin
 
@@ -64,6 +65,7 @@ object ApiClientMain extends ZIOAppDefault {
 
       case "post-expense" => api.postExpense().run
       case "gen-expense" => api.postExpense(title = Data.newExpenseTitle()).run
+      case s"delete-expense $expenseUid" => api.deleteExpense(expenseUid = expenseUid).run
 
       case s"post-member $groupUid $userName" => api.postMember(groupUid = groupUid, userName = userName).run
       case s"gen-members $groupUid" => {

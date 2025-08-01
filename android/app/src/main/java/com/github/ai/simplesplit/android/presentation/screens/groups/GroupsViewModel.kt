@@ -244,7 +244,6 @@ class GroupsViewModel(
     }
 
     object MenuActions {
-
         const val EDIT_GROUP = 100
         const val REMOVE_GROUP = 101
     }

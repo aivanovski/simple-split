@@ -1,25 +1,30 @@
 package com.github.ai.split.presentation.controllers
 
 import com.github.ai.split.utils.*
-import com.github.ai.split.domain.usecases.{AddExpenseUseCase, AssembleExpenseUseCase, UpdateExpenseUseCase}
+import com.github.ai.split.domain.usecases.{AddExpenseUseCase, AssembleExpenseUseCase, AssembleGroupResponseUseCase, RemoveExpenseUseCase, UpdateExpenseUseCase}
 import com.github.ai.split.api.request.{PostExpenseRequest, PutExpenseRequest}
-import com.github.ai.split.api.response.{PostExpenseResponse, PutExpenseResponse}
+import com.github.ai.split.api.response.{DeleteExpenseResponse, PostExpenseResponse, PutExpenseResponse}
+import com.github.ai.split.data.db.repository.ExpenseRepository
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.domain.AccessResolverService
 import com.github.ai.split.entity.db.{ExpenseUid, GroupUid, MemberUid}
 import com.github.ai.split.utils.parsePasswordParam
-import com.github.ai.split.entity.{NewExpense, Split, SplitBetweenAll, SplitBetweenMembers, MemberReference, UserReference}
-import zio.{IO, ZIO}
-import zio.http.{Request, Response}
+import com.github.ai.split.entity.{MemberReference, NewExpense, Split, SplitBetweenAll, SplitBetweenMembers, UserReference}
+import zio.*
+import zio.http.*
 import zio.json.*
+import zio.direct.*
 
 import java.util.UUID
 
 class ExpenseController(
+  private val expenseRepository: ExpenseRepository,
   private val accessResolver: AccessResolverService,
   private val addExpenseUseCase: AddExpenseUseCase,
   private val assembleExpenseUseCase: AssembleExpenseUseCase,
-  private val updateExpenseUseCase: UpdateExpenseUseCase
+  private val assembleGroupUseCase: AssembleGroupResponseUseCase,
+  private val updateExpenseUseCase: UpdateExpenseUseCase,
+  private val removeExpenseUseCase: RemoveExpenseUseCase
 ) {
 
   def createExpense(
@@ -90,6 +95,23 @@ class ExpenseController(
 
       expenseDto <- assembleExpenseUseCase.assembleExpenseDto(expenseUid = expenseUid)
     } yield Response.json(PutExpenseResponse(expenseDto).toJsonPretty)
+  }
+
+  def removeExpense(
+    request: Request
+  ): IO[DomainError, Response] = {
+    defer {
+      val password = parsePasswordParam(request).run
+      val expenseUid = parseUidFromUrl(request).map(uid => ExpenseUid(uid)).run
+      accessResolver.canAccessToExpense(expenseUid, password).run
+
+      val expense = expenseRepository.getEntityByUid(expenseUid).run
+      removeExpenseUseCase.remvoveExpense(expenseUid).run
+
+      val groupDto = assembleGroupUseCase.assembleGroupDto(expense.groupUid).run
+
+      Response.json(DeleteExpenseResponse(groupDto).toJsonPretty)
+    }
   }
 
   private def parsePaidBy(

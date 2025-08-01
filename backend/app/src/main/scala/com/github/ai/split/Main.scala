@@ -47,6 +47,7 @@ object Main extends ZIOAppDefault {
         Layers.resolveUserReferencesUseCase,
         Layers.validateMemberNameUseCase,
         Layers.validateExpenseUseCase,
+        Layers.removeExpenseUseCase,
 
         // Response assemblers use cases
         Layers.assembleGroupResponseUseCase,

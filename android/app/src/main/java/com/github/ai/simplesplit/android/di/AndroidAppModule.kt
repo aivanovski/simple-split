@@ -83,6 +83,7 @@ object AndroidAppModule {
                 get(),
                 get(),
                 get(),
+                get(),
                 args
             )
         }

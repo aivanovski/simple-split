@@ -29,6 +29,9 @@ import com.github.ai.simplesplit.android.presentation.screens.groupDetails.cells
 import com.github.ai.simplesplit.android.presentation.screens.groupDetails.cells.model.SettlementCellModel
 import com.github.ai.simplesplit.android.presentation.screens.groupDetails.cells.viewModel.ExpenseCellViewModel
 import com.github.ai.simplesplit.android.presentation.screens.groupDetails.cells.viewModel.SettlementCellViewModel
+import com.github.ai.simplesplit.android.utils.CellId
+import com.github.ai.simplesplit.android.utils.CellIdPayload.StringPayload
+import com.github.ai.simplesplit.android.utils.format
 import com.github.ai.split.api.GroupDto
 
 class GroupDetailsCellFactory(
@@ -164,9 +167,9 @@ class GroupDetailsCellFactory(
 
             models.add(
                 ExpenseCellModel(
-                    id = expense.uid,
+                    id = CellId("expense", StringPayload(expense.uid)).format(),
                     title = expense.title,
-                    description = "Paid by $payerName",
+                    description = "Paid by $payerName", // TODO: string
                     members = members,
                     amount = expense.amount.toString(),
                     // TODO: date should be implemented on server side
