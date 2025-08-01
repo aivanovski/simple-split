@@ -1,12 +1,14 @@
 package com.github.ai.simplesplit.android.presentation.screens.expenseEditor.model
 
-import com.github.ai.split.api.GroupDto
 import kotlinx.serialization.Serializable
 
 @Serializable
 sealed class ExpenseEditorMode {
     @Serializable
-    data class NewExpense(
-        val group: GroupDto
+    data object NewExpense : ExpenseEditorMode()
+
+    @Serializable
+    data class EditExpense(
+        val expenseUid: String
     ) : ExpenseEditorMode()
 }

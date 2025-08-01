@@ -6,6 +6,7 @@ import com.github.ai.simplesplit.android.model.exception.ApiException
 import com.github.ai.split.api.request.PostExpenseRequest
 import com.github.ai.split.api.request.PostGroupRequest
 import com.github.ai.split.api.request.PostMemberRequest
+import com.github.ai.split.api.request.PutExpenseRequest
 import com.github.ai.split.api.request.PutGroupRequest
 import com.github.ai.split.api.response.DeleteExpenseResponse
 import com.github.ai.split.api.response.DeleteMemberResponse
@@ -13,6 +14,7 @@ import com.github.ai.split.api.response.GetGroupsResponse
 import com.github.ai.split.api.response.PostExpenseResponse
 import com.github.ai.split.api.response.PostGroupResponse
 import com.github.ai.split.api.response.PostMemberResponse
+import com.github.ai.split.api.response.PutExpenseResponse
 import com.github.ai.split.api.response.PutGroupResponse
 import io.ktor.client.HttpClient
 
@@ -48,6 +50,17 @@ class ApiClient(
         httpClient.sendRequest<PostExpenseRequest, PostExpenseResponse>(
             type = RequestType.POST,
             url = "$baseUrl/expense?password=$password",
+            body = Some(request)
+        )
+
+    suspend fun putExpense(
+        password: String,
+        expenseUid: String,
+        request: PutExpenseRequest
+    ): Either<ApiException, PutExpenseResponse> =
+        httpClient.sendRequest(
+            type = RequestType.PUT,
+            url = "$baseUrl/expense/$expenseUid?password=$password",
             body = Some(request)
         )
 
