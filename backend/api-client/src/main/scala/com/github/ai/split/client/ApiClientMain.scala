@@ -13,9 +13,15 @@ object ApiClientMain extends ZIOAppDefault {
       |Commands:
       |
       |group                                                 Gets default group
-      |post-group                                            Creates new group
+      |group [GROUP_UID]                                     Gets group by GROUP_UID
+      |gen-group                                             Generate new test group with members and expenses
+      |
       |post-expense                                          Creates new expense in default group
       |gen-expense                                           Generates new expense in default group
+      |
+      |post-member [GROUP_UID] [USER_NAME]                   Create new member with USER_NAME in GROUP_UID
+      |gen-members [GROUP_UID]
+      |delete-member [MEMBER_UID]                           Deletes member by MEMBER_UID
       |help                                                  Print help
       |""".stripMargin
 
@@ -23,7 +29,7 @@ object ApiClientMain extends ZIOAppDefault {
 
   override def run: ZIO[ZIOAppArgs, Any, ExitCode] = {
     val application = for {
-      arguments <- getArgs.map(_.toList.mkString)
+      arguments <- getArgs.map(_.toList.mkString(" "))
       result <- processArguments(arguments)
         .provide(
           Client.default,
@@ -52,10 +58,19 @@ object ApiClientMain extends ZIOAppDefault {
     val printer = ZIO.service[Printer].run
 
     val response = arguments match {
-      case "group" => api.getGroup().run
-      case "post-group" => api.postGroup().run
+      case "group" => api.getGroup(uid = Groups.TripToDisneyLand).run
+      case s"group $groupUid" => api.getGroup(uid = groupUid).run
+      case s"gen-group" => api.postGroup().run
+
       case "post-expense" => api.postExpense().run
       case "gen-expense" => api.postExpense(title = Data.newExpenseTitle()).run
+
+      case s"post-member $groupUid $userName" => api.postMember(groupUid = groupUid, userName = userName).run
+      case s"gen-members $groupUid" => {
+        api.postMember(groupUid = groupUid, userName = "Mickey").run
+        api.postMember(groupUid = groupUid, userName = "Donald").run
+      }
+      case s"delete-member $memberUid" => api.deleteMember(memberUid = memberUid).run
       case _ => ZIO.fail(InvalidCliArgumentException(s"Illegal arguments: $arguments")).run
     }
 
@@ -63,5 +78,4 @@ object ApiClientMain extends ZIOAppDefault {
 
     ExitCode.success
   }
-
 }

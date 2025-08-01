@@ -2,13 +2,14 @@ package com.github.ai.split.presentation.controllers
 
 import com.github.ai.split.api.{NewExpenseDto, UserNameDto}
 import com.github.ai.split.domain.AccessResolverService
-import com.github.ai.split.domain.usecases.{AddExpenseUseCase, AddGroupUseCase, AddMemberUseCase, AddUserUseCase, AssembleGroupResponseUseCase, AssembleGroupsResponseUseCase, GetAllUsersUseCase, UpdateGroupUseCase}
-import com.github.ai.split.entity.{NewExpense, NewGroup, NewUser, Split, SplitBetweenAll, SplitBetweenMembers}
+import com.github.ai.split.domain.usecases.{AddExpenseUseCase, AddGroupUseCase, AddMembersUseCase, AddUserUseCase, AssembleGroupResponseUseCase, AssembleGroupsResponseUseCase, GetAllUsersUseCase, UpdateGroupUseCase}
+import com.github.ai.split.entity.{Member, NameReference, NewExpense, NewGroup, NewUser, Split, SplitBetweenAll, SplitBetweenMembers, UserReference}
 import com.github.ai.split.api.request.{PostGroupRequest, PutGroupRequest}
 import com.github.ai.split.api.response.{GetGroupsResponse, PostGroupResponse, PutGroupResponse}
-import com.github.ai.split.entity.db.{ExpenseEntity, UserEntity}
+import com.github.ai.split.data.db.dao.GroupMemberEntityDao
+import com.github.ai.split.entity.db.{ExpenseEntity, GroupMemberEntity, GroupUid, UserEntity, UserUid}
 import com.github.ai.split.entity.exception.DomainError
-import com.github.ai.split.utils.{asUid, parse, parsePasswordParam, parseUidFromUrl, some}
+import com.github.ai.split.utils.{parse, parsePasswordParam, parseUid, parseUidFromUrl, some}
 import zio.{IO, ZIO}
 import zio.http.{Request, Response}
 import zio.json.*
@@ -18,7 +19,7 @@ import java.util.UUID
 class GroupController(
   private val accessResolver: AccessResolverService,
   private val addUserUseCase: AddUserUseCase,
-  private val addMemberUseCase: AddMemberUseCase,
+  private val addMemberUseCase: AddMembersUseCase,
   private val addGroupUseCase: AddGroupUseCase,
   private val addExpenseUseCase: AddExpenseUseCase,
   private val getAllUsersUseCase: GetAllUsersUseCase,
@@ -31,9 +32,10 @@ class GroupController(
     request: Request
   ): IO[DomainError, Response] = {
     for {
-      groupUids <- parseUids(request)
+      groupUids <- parseUids(request).map(uids => uids.map(GroupUid(_)))
       passwords <- parsePasswords(request)
       _ <- accessResolver.canAccessToGroups(groupUids = groupUids, passwords = passwords)
+
       groups <- assembleGroupsUseCase.assembleGroupDtos(uids = groupUids)
     } yield Response.json(GetGroupsResponse(groups).toJsonPretty)
   }
@@ -42,18 +44,16 @@ class GroupController(
     request: Request
   ): IO[DomainError, Response] = {
     for {
-      groupUid <- parseUidFromUrl(request)
+      groupUid <- parseUidFromUrl(request).map(uid => GroupUid(uid))
       password <- parsePasswordParam(request)
       _ <- accessResolver.canAccessToGroup(groupUid = groupUid, password = password)
 
       data <- request.body.parse[PutGroupRequest]
-      _ <- validateRequestData(data)
-
       newMembers <- {
         val newMembers = data.members.getOrElse(List.empty)
         if (newMembers.nonEmpty) {
           ZIO.collectAll(
-              newMembers.map(member => member.uid.asUid())
+              newMembers.map(member => member.uid.parseUid().map(uid => UserUid(uid)))
             )
             .map(uids => Some(uids))
         } else {
@@ -79,213 +79,47 @@ class GroupController(
     for {
       data <- request.body.parse[PostGroupRequest]
 
-      // TODO: check users are distinct
-      _ <- validateRequestData(data)
-
-      newUsers <- if (data.members.nonEmpty) {
-        ZIO.collectAll(
-          data.members.getOrElse(List.empty)
-            .map { member =>
-              addUserUseCase.addUser(
-                NewUser(
-                  name = member.name
-                )
-              )
-            }
-        )
-      } else {
-        ZIO.succeed(List.empty)
-      }
-
-      newGroup <- addGroupUseCase.addGroup(
-        NewGroup(
-          password = data.password,
-          title = data.title,
-          description = data.description.getOrElse("")
-        )
+      newExpenses <- parseNewExpenses(
+        expenses = data.expenses.getOrElse(List.empty)
       )
 
-      newMembers <- if (newUsers.nonEmpty) {
-        ZIO.collectAll(
-          newUsers.map { user =>
-            addMemberUseCase.addMember(
-              groupUid = newGroup.uid,
-              userUid = user.uid
-            )
-          }
-        )
-      } else {
-        ZIO.succeed(List.empty)
-      }
+      newGroup <- {
+        val newUsers = data.members.getOrElse(List.empty)
+          .map(member => NewUser(name = member.name))
 
-      newExpenses <- if (data.expenses.nonEmpty) {
-        addExpenses(
-          groupUid = newGroup.uid,
-          expenses = data.expenses.getOrElse(List.empty),
-          members = newUsers
+        addGroupUseCase.addGroup(
+          NewGroup(
+            password = data.password,
+            title = data.title,
+            description = data.description.getOrElse(""),
+            members = newUsers,
+            expenses = newExpenses
+          )
         )
-      } else {
-        ZIO.succeed(List.empty)
       }
 
       groupDto <- assembleGroupUseCase.assembleGroupDto(groupUid = newGroup.uid)
     } yield Response.json(PostGroupResponse(groupDto).toJsonPretty)
   }
 
-  private def addExpenses(
-    groupUid: UUID,
-    expenses: List[NewExpenseDto],
-    members: List[UserEntity]
-  ): IO[DomainError, List[ExpenseEntity]] = {
-    val userNameToUserMap = members.map(member => (member.name, member)).toMap
+  private def parseNewExpenses(
+    expenses: List[NewExpenseDto]
+  ): IO[DomainError, List[NewExpense]] = {
+    val newExpenses = expenses.map { expense =>
+      val isSplitBetweenAll = expense.isSplitBetweenAll.getOrElse(true)
+      val splitMembers = expense.splitBetween.getOrElse(List.empty)
+        .map(splitMember => NameReference(name = splitMember.name))
 
-    for {
-      newExpenses <- {
-        ZIO.collectAll(
-          expenses.map { expense =>
-            val paidBy = ZIO.collectAll(
-              expense.paidBy.map { payer =>
-                ZIO.fromOption(userNameToUserMap.get(payer.name))
-                  .map(user => user.uid)
-                  .mapError(_ =>
-                    DomainError(message = s"Unable to find user by name: ${payer.name}".some)
-                  )
-              }
-            )
-
-            val split: IO[DomainError, Split] = if (expense.isSplitBetweenAll.getOrElse(false)) {
-              ZIO.succeed(SplitBetweenAll)
-            } else {
-              ZIO.collectAll(
-                  expense.splitBetween.getOrElse(List.empty)
-                    .map(splitUser =>
-                      ZIO.fromOption(userNameToUserMap.get(splitUser.name))
-                        .map(user => user.uid)
-                        .mapError(_ =>
-                          DomainError(message = s"Unable to find user by name: ${splitUser.name}".some)
-                        )
-                    )
-                )
-                .map(uids => SplitBetweenMembers(userUids = uids))
-            }
-
-            for {
-              p <- paidBy
-              s <- split
-            } yield NewExpense(
-              title = expense.title,
-              description = expense.description.getOrElse(""),
-              amount = expense.amount,
-              paidBy = p,
-              split = s
-            )
-          }
-        )
-      }
-
-      e <- ZIO.collectAll(
-        newExpenses.map { newExpense =>
-          addExpenseUseCase.addExpenseToGroup(
-            groupUid = groupUid,
-            newExpense = newExpense
-          )
-        }
+      NewExpense(
+        title = expense.title,
+        description = expense.description.getOrElse(""),
+        amount = expense.amount,
+        paidBy = expense.paidBy.map(payer => NameReference(name = payer.name)),
+        split = if (isSplitBetweenAll) SplitBetweenAll else SplitBetweenMembers(splitMembers)
       )
-    } yield e
-  }
-
-  private def validateRequestData(
-    data: PutGroupRequest
-  ): IO[DomainError, Unit] = {
-    if (data.members.isDefined) {
-      val members = data.members.getOrElse(List.empty)
-      if (members.size < 2) {
-        return ZIO.fail(DomainError(message = "At least 2 members should be specified".some))
-      }
     }
 
-    ZIO.succeed(())
-  }
-
-  private def validateRequestData(data: PostGroupRequest): IO[DomainError, Unit] = {
-    val members = data.members.getOrElse(List.empty)
-    val expenses = data.expenses.getOrElse(List.empty)
-    val memberNames = members.map(member => member.name).toSet
-
-    for {
-      _ <- ZIO.collectAll(members.map(member => isValidMember(member)))
-
-      _ <- if (members.size > 1 && members.size < 2) {
-        ZIO.fail(DomainError(message = "At least 2 members should be specified".some))
-      } else {
-        ZIO.succeed(())
-      }
-
-      _ <- ZIO.collectAll(expenses.map(expense => isValidExpense(expense, memberNames)))
-    } yield ()
-  }
-
-  private def isValidMember(member: UserNameDto): IO[DomainError, Unit] = {
-    for {
-      _ <- if (member.name.isBlank) {
-        ZIO.fail(DomainError(message = "Invalid member name is empty".some))
-      } else {
-        ZIO.succeed(())
-      }
-
-    } yield ()
-  }
-
-  private def isValidExpense(
-    expense: NewExpenseDto,
-    memberNames: Set[String]
-  ): IO[DomainError, Unit] = {
-    // TODO: check amount is > 0
-    val splitBetween = expense.splitBetween.getOrElse(List.empty)
-    val isSplitBetweenAll = expense.isSplitBetweenAll.getOrElse(false)
-
-    for {
-      _ <- if (expense.title.isBlank) {
-        ZIO.fail(DomainError(message = "Expense title is empty".some))
-      } else {
-        ZIO.succeed(())
-      }
-
-      _ <- ZIO.collectAll(
-        expense.paidBy.map { payer =>
-          if (memberNames.contains(payer.name)) {
-            ZIO.succeed(())
-          } else {
-            ZIO.fail(DomainError(message = s"Payer is not a member of the group: ${payer.name}".some))
-          }
-        }
-      )
-
-      _ <- ZIO.collectAll(
-        expense.splitBetween.getOrElse(List.empty)
-          .map { splitee =>
-            if (memberNames.contains(splitee.name)) {
-              ZIO.succeed(())
-            } else {
-              ZIO.fail(DomainError(message = s"Cannot split to not a member: ${splitee.name}".some))
-            }
-          }
-      )
-
-      _ <- if (isSplitBetweenAll && splitBetween.nonEmpty) {
-        ZIO.fail(DomainError(message = "Invalid split option".some))
-      } else if (!isSplitBetweenAll && splitBetween.isEmpty) {
-        ZIO.fail(DomainError(message = "Invalid split option".some))
-      } else {
-        ZIO.succeed(())
-      }
-    } yield ()
-  }
-
-  private def parseData(request: Request): IO[DomainError, PostGroupRequest] = {
-    for {
-      data <- request.body.parse[PostGroupRequest]
-    } yield data
+    ZIO.succeed(newExpenses)
   }
 
   private def parseUids(request: Request): IO[DomainError, List[UUID]] = {
@@ -294,7 +128,7 @@ class GroupController(
         val uids = request.url.queryParamOrElse("ids", "")
           .split(",")
           .toList
-          .map(id => id.asUid())
+          .map(id => id.parseUid())
 
         if (uids.nonEmpty) {
           ZIO.collectAll(uids)

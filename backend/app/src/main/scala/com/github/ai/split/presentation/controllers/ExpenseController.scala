@@ -6,8 +6,9 @@ import com.github.ai.split.api.request.{PostExpenseRequest, PutExpenseRequest}
 import com.github.ai.split.api.response.{PostExpenseResponse, PutExpenseResponse}
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.domain.AccessResolverService
+import com.github.ai.split.entity.db.{ExpenseUid, GroupUid, MemberUid}
 import com.github.ai.split.utils.parsePasswordParam
-import com.github.ai.split.entity.{NewExpense, Split, SplitBetweenAll, SplitBetweenMembers, UidReference, UserReference}
+import com.github.ai.split.entity.{NewExpense, Split, SplitBetweenAll, SplitBetweenMembers, MemberReference, UserReference}
 import zio.{IO, ZIO}
 import zio.http.{Request, Response}
 import zio.json.*
@@ -26,7 +27,7 @@ class ExpenseController(
   ): IO[DomainError, Response] = {
     for {
       body <- request.body.parse[PostExpenseRequest]
-      groupUid <- body.groupUid.asUid()
+      groupUid <- body.groupUid.parseUid().map(uid => GroupUid(uid))
       password <- parsePasswordParam(request)
       _ <- accessResolver.canAccessToGroup(groupUid = groupUid, password = password)
 
@@ -54,7 +55,7 @@ class ExpenseController(
     request: Request
   ): IO[DomainError, Response] = {
     for {
-      expenseUid <- parseUidFromUrl(request)
+      expenseUid <- parseUidFromUrl(request).map(uid => ExpenseUid(uid))
       password <- parsePasswordParam(request)
       _ <- accessResolver.canAccessToExpense(expenseUid = expenseUid, password = password)
 
@@ -93,10 +94,10 @@ class ExpenseController(
 
   private def parsePaidBy(
     paidByUids: List[String]
-  ): IO[DomainError, List[UUID]] = {
+  ): IO[DomainError, List[UserReference]] = {
     ZIO.collectAll(
       paidByUids.map {
-        payer => payer.asUid()
+        payer => payer.parseUid().map(uid => MemberReference(MemberUid(uid)))
       }
     )
   }
@@ -105,21 +106,13 @@ class ExpenseController(
     isSplitEqually: Boolean,
     splitUids: List[String]
   ): IO[DomainError, Split] = {
-
-    if (!isSplitEqually && splitUids.isEmpty) {
-      return ZIO.fail(DomainError(message = "Split is not specified".some))
-    }
-
-    if (isSplitEqually && splitUids.nonEmpty) {
-      return ZIO.fail(DomainError(message = "Invalid split option specified".some))
-    }
-
     if (!isSplitEqually) {
       ZIO.collectAll(
-          splitUids
-            .map(uid => uid.asUid())
+          splitUids.map { uid =>
+            uid.parseUid().map(uid => MemberReference(MemberUid(uid)))
+          }
         )
-        .map(uids => SplitBetweenMembers(userUids = uids))
+        .map(uids => SplitBetweenMembers(members = uids))
     } else {
       ZIO.succeed(SplitBetweenAll)
     }

@@ -10,11 +10,17 @@ import zio.http.{string, *}
 object MemberRoutes {
 
   def routes() = Routes(
-    // TODO: refactor, could be done via PUT /group/uid
-    Method.POST / "member" / string("groupId") -> handler { (request: Request) =>
+    Method.POST / "member" -> handler { (request: Request) =>
       for {
         controller <- ZIO.service[MemberController]
-        response <- controller.postMember(request).mapError(_.toDomainResponse)
+        response <- controller.createMember(request).mapError(_.toDomainResponse)
+      } yield response
+    },
+
+    Method.DELETE / "member" / string("memberId") -> handler { (request: Request) =>
+      for {
+        controller <- ZIO.service[MemberController]
+        response <- controller.removeMember(request).mapError(_.toDomainResponse)
       } yield response
     }
   )

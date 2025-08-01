@@ -1,32 +1,37 @@
 package com.github.ai.split.domain.usecases
 
-import com.github.ai.split.api.request.PostGroupRequest
-import com.github.ai.split.entity.db.GroupEntity
+import com.github.ai.split.entity.db.{GroupEntity, GroupMemberEntity, GroupUid, MemberUid}
 import com.github.ai.split.data.db.dao.{GroupEntityDao, GroupMemberEntityDao}
 import com.github.ai.split.domain.PasswordService
 import com.github.ai.split.entity.{NewExpense, NewGroup}
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.some
-import zio.{IO, ZIO}
+import zio.*
+import zio.direct.*
 
 import java.util.UUID
 
 class AddGroupUseCase(
   private val passwordService: PasswordService,
   private val groupDao: GroupEntityDao,
-  private val groupMemberDao: GroupMemberEntityDao
+  private val groupMemberDao: GroupMemberEntityDao,
+  private val addMemberUserCase: AddMembersUseCase,
+  private val addExpenseUseCase: AddExpenseUseCase,
+  private val validateMemberUseCase: ValidateMemberNameUseCase,
+  private val validateExpenseUseCase: ValidateExpenseUseCase
 ) {
 
   def addGroup(
     newGroup: NewGroup
   ): IO[DomainError, GroupEntity] = {
-    // TODO: process members
-    for {
-      _ <- validateGroupData(newGroup)
+    defer {
+      validateData(newGroup).run
 
-      group <- groupDao.add(
+      val groupUid = GroupUid(UUID.randomUUID())
+
+      val group = groupDao.add(
         GroupEntity(
-          uid = UUID.randomUUID(),
+          uid = groupUid,
           title = newGroup.title,
           description = newGroup.description,
           passwordHash = if (newGroup.password.nonEmpty) {
@@ -35,23 +40,66 @@ class AddGroupUseCase(
             None
           }
         )
-      )
-    } yield group
+      ).run
+
+      val members = ZIO.collectAll(
+        newGroup.members.map { member =>
+          addMemberUserCase.addMember(
+            groupUid = groupUid,
+            name = member.name
+          )
+        }
+      ).run
+
+      val expenses = ZIO.collectAll(
+        newGroup.expenses.map { expense =>
+          addExpenseUseCase.addExpenseToGroup(
+            groupUid = groupUid,
+            newExpense = expense
+          )
+        }
+      ).run
+
+      group
+    }
   }
 
-  private def validateGroupData(data: NewGroup): IO[DomainError, Unit] = {
-    if (data.password.isBlank) {
-      return ZIO.fail(DomainError(message = "Specified password is empty".some))
-    }
+  private def validateData(newGroup: NewGroup): IO[DomainError, Unit] = {
+    defer {
+      if (newGroup.password.isBlank) {
+        ZIO.fail(DomainError(message = "Specified password is empty".some)).run
+      }
 
-    if (data.password.trim.length < 4) {
-      return ZIO.fail(DomainError(message = "Specified password is too weak".some))
-    }
+      if (newGroup.password.trim.length < 4) {
+        ZIO.fail(DomainError(message = "Specified password is too weak".some)).run
+      }
 
-    if (data.title.isBlank) {
-      return ZIO.fail(DomainError(message = "Group title is empty".some))
-    }
+      if (newGroup.title.isBlank) {
+        ZIO.fail(DomainError(message = "Group title is empty".some)).run
+      }
 
-    ZIO.succeed(())
+      if (newGroup.members.nonEmpty) {
+        validateMemberUseCase.validateNewMembers(
+          currentMemberNames = List.empty,
+          newMemberNames = newGroup.members.map(_.name)
+        ).run
+      }
+
+      if (newGroup.expenses.nonEmpty) {
+        // TODO: check expenses have valid names
+
+        ZIO.collectAll(
+          newGroup.expenses.map { expense =>
+            validateExpenseUseCase.validateExpenseData(
+              members = newGroup.members,
+              currentExpenses = List.empty,
+              expense = expense
+            )
+          }
+        ).run
+      }
+
+      ZIO.unit.run
+    }
   }
 }

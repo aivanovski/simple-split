@@ -2,7 +2,7 @@ package com.github.ai.split.data.db.repository
 
 import com.github.ai.split.data.db.dao.{ExpenseEntityDao, PaidByEntityDao, SplitBetweenEntityDao}
 import com.github.ai.split.entity.ExpenseWithRelations
-import com.github.ai.split.entity.db.ExpenseEntity
+import com.github.ai.split.entity.db.{ExpenseEntity, ExpenseUid, GroupUid}
 import com.github.ai.split.entity.exception.DomainError
 import zio.*
 
@@ -14,7 +14,7 @@ class ExpenseRepository(
   private val splitBetweenDao: SplitBetweenEntityDao
 ) {
 
-  def getByUid(uid: UUID): IO[DomainError, ExpenseWithRelations] = {
+  def getByUid(uid: ExpenseUid): IO[DomainError, ExpenseWithRelations] = {
     for {
       expense <- expenseDao.getByUid(uid)
       paidBy <- paidByDao.getByExpenseUid(uid)
@@ -22,19 +22,19 @@ class ExpenseRepository(
     } yield ExpenseWithRelations(expense, paidBy, splitBetween)
   }
 
-  def getEntitiesByGroupUids(groupUids: List[UUID]): IO[DomainError, List[ExpenseEntity]] = {
+  def getEntitiesByGroupUids(groupUids: List[GroupUid]): IO[DomainError, List[ExpenseEntity]] = {
     expenseDao.getByGroupUids(groupUids = groupUids)
   }
 
-  def getEntityByUid(uid: UUID): IO[DomainError, ExpenseEntity] = {
+  def getEntityByUid(uid: ExpenseUid): IO[DomainError, ExpenseEntity] = {
     expenseDao.getByUid(uid)
   }
 
-  def getEntitiesByGroupUid(groupUid: UUID): IO[DomainError, List[ExpenseEntity]] = {
+  def getEntitiesByGroupUid(groupUid: GroupUid): IO[DomainError, List[ExpenseEntity]] = {
     expenseDao.getByGroupUid(groupUid)
   }
 
-  def getByGroupUid(groupUid: UUID): IO[DomainError, List[ExpenseWithRelations]] = {
+  def getByGroupUid(groupUid: GroupUid): IO[DomainError, List[ExpenseWithRelations]] = {
     for {
       expenses <- expenseDao.getByGroupUid(groupUid)
       paidByAll <- paidByDao.getByGroupUid(groupUid)
@@ -76,7 +76,7 @@ class ExpenseRepository(
     } yield expense
   }
 
-  def deleteByUid(uid: UUID): IO[DomainError, Unit] = {
+  def deleteByUid(uid: ExpenseUid): IO[DomainError, Unit] = {
     for {
       _ <- paidByDao.removeByExpenseUid(uid)
       _ <- splitBetweenDao.removeByExpenseUid(uid)

@@ -1,14 +1,14 @@
 package com.github.ai.split.data.db.dao
 
-import com.github.ai.split.entity.db.GroupMemberEntity
+import com.github.ai.split.entity.db.{GroupMemberEntity, GroupUid, MemberUid, UserUid}
+import com.github.ai.split.entity.db.UserUid._
 import com.github.ai.split.entity.exception.DomainError
-import com.github.ai.split.utils.toDomainError
+import com.github.ai.split.utils.{some, toDomainError}
 import io.getquill.jdbczio.Quill
 import io.getquill.generic.*
 import io.getquill.*
 import zio.*
 
-import java.util.UUID
 import java.sql.SQLException
 
 class GroupMemberEntityDao(
@@ -17,6 +17,7 @@ class GroupMemberEntityDao(
 
   import quill._
 
+  // TODO: refactor
   def getAll(): IO[DomainError, List[GroupMemberEntity]] = {
     val query = quote {
       querySchema[GroupMemberEntity]("group_members")
@@ -26,11 +27,41 @@ class GroupMemberEntityDao(
       .mapError(_.toDomainError())
   }
 
-  def getByGroupUid(groupUid: UUID): IO[DomainError, List[GroupMemberEntity]] = {
+  def getByGroupUid(groupUid: GroupUid): IO[DomainError, List[GroupMemberEntity]] = {
+    val query = quote {
+      querySchema[GroupMemberEntity]("group_members")
+        .filter(_.groupUid == lift(groupUid))
+    }
+
+    run(query).mapError(_.toDomainError())
+  }
+
+  def getByUid(uid: MemberUid): IO[DomainError, GroupMemberEntity] = {
+    val query = quote {
+      querySchema[GroupMemberEntity]("group_members")
+        .filter(_.uid == lift(uid))
+    }
+
     for {
-      allMembers <- getAll()
-      groupMembers <- ZIO.succeed(allMembers.filter(_.groupUid == groupUid))
-    } yield groupMembers
+      members <- run(query).mapError(_.toDomainError())
+      member <- ZIO.fromOption(members.headOption).mapError { _ =>
+        DomainError(message = s"Failed to find member by uid: $uid".some)
+      }
+    } yield member
+  }
+
+  def getByUserUid(userUid: UserUid): IO[DomainError, GroupMemberEntity] = {
+    val query = quote {
+      querySchema[GroupMemberEntity]("group_members")
+        .filter(_.userUid == lift(userUid))
+    }
+
+    for {
+      members <- run(query).mapError(_.toDomainError())
+      member <- ZIO.fromOption(members.headOption).mapError { _ =>
+        DomainError(message = s"Failed to find member by user uid: $userUid".some)
+      }
+    } yield member
   }
 
   def add(member: GroupMemberEntity): IO[DomainError, GroupMemberEntity] = {
@@ -59,10 +90,24 @@ class GroupMemberEntityDao(
       .mapError(_.toDomainError())
   }
 
-  def removeByGroupUid(groupUid: UUID): IO[DomainError, Unit] = {
+  def removeByGroupUid(groupUid: GroupUid): IO[DomainError, Unit] = {
     val deleteQuery = quote {
       querySchema[GroupMemberEntity]("group_members")
         .filter(_.groupUid == lift(groupUid))
+        .delete
+    }
+
+    run(deleteQuery)
+      .map(_ => ())
+      .mapError(_.toDomainError())
+  }
+
+  def removeByUid(
+    uid: MemberUid
+  ): IO[DomainError, Unit] = {
+    val deleteQuery = quote {
+      querySchema[GroupMemberEntity]("group_members")
+        .filter(member => member.uid == lift(uid))
         .delete
     }
 

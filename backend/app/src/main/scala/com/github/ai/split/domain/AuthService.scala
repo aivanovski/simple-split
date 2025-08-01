@@ -5,7 +5,7 @@ import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.interfaces.DecodedJWT
 import com.github.ai.split.data.db.dao.UserEntityDao
-import com.github.ai.split.entity.db.UserEntity
+import com.github.ai.split.entity.db.{UserEntity, UserUid}
 import com.github.ai.split.entity.{AuthenticationContext, JwtData}
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.*
@@ -76,8 +76,8 @@ class AuthService(
 
   private def getUserByToken(token: DecodedJWT): IO[DomainError, UserEntity] = {
     for {
-      userUid <- token.getClaim(AuthService.USER_UID).asString().asUid()
-      user <- userDao.getByUid(userUid)
+      userUid <- token.getClaim(AuthService.USER_UID).asString().parseUid()
+      user <- userDao.getByUid(UserUid(userUid))
     } yield user
   }
 }

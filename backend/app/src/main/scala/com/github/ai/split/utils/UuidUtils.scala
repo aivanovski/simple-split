@@ -11,7 +11,7 @@ object UuidUtils {
 
 extension (str: String)
 
-  def asUid(): IO[DomainError, UUID] = {
+  def parseUid(): IO[DomainError, UUID] = {
     ZIO.attempt(UUID.fromString(str))
       .mapError(error => new DomainError(message = "Invalid UUID".some, cause = error.some))
   }

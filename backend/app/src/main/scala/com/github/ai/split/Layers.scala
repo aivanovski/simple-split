@@ -1,10 +1,10 @@
 package com.github.ai.split
 
 import com.github.ai.split.data.db.dao.{ExpenseEntityDao, GroupEntityDao, GroupMemberEntityDao, PaidByEntityDao, SplitBetweenEntityDao, UserEntityDao}
-import com.github.ai.split.data.db.repository.ExpenseRepository
+import com.github.ai.split.data.db.repository.{ExpenseRepository, GroupRepository}
 import com.github.ai.split.domain.{AccessResolverService, AuthService, PasswordService}
-import com.github.ai.split.domain.usecases.{AddExpenseUseCase, AddGroupUseCase, AddMemberUseCase, AddUserUseCase, AssembleExpenseUseCase, AssembleGroupResponseUseCase, AssembleGroupsResponseUseCase, CalculateSettlementUseCase, ConvertExpensesToTransactionsUseCase, FillTestDataUseCase, GetAllUsersUseCase, GetGroupByUidUseCase, UpdateExpenseUseCase, UpdateGroupUseCase}
-import com.github.ai.split.presentation.controllers.{ExpenseController, GroupController, MemberController, UserController}
+import com.github.ai.split.domain.usecases.{AddExpenseUseCase, AddGroupUseCase, AddMembersUseCase, AddUserUseCase, AssembleExpenseUseCase, AssembleGroupResponseUseCase, AssembleGroupsResponseUseCase, CalculateSettlementUseCase, ConvertExpensesToTransactionsUseCase, FillTestDataUseCase, GetAllUsersUseCase, GetGroupUseCase, RemoveMembersUseCase, ResolveUserReferencesUseCase, UpdateExpenseUseCase, UpdateGroupUseCase, ValidateExpenseUseCase, ValidateMemberNameUseCase}
+import com.github.ai.split.presentation.controllers.{ExpenseController, GroupController, MemberController}
 import zio.{ZIO, ZLayer}
 
 object Layers {
@@ -19,24 +19,28 @@ object Layers {
 
   // Repositories
   val expenseRepository = ZLayer.fromFunction(ExpenseRepository(_, _, _))
+  val groupRepository = ZLayer.fromFunction(GroupRepository(_, _, _))
 
   // Services
-  val authService = ZLayer.fromFunction(AuthService(_))
   val passwordService = ZLayer.succeed(PasswordService())
-  val accessResolverService = ZLayer.fromFunction(AccessResolverService(_, _, _))
+  val accessResolverService = ZLayer.fromFunction(AccessResolverService(_, _, _, _))
 
   // Use cases
   val addUserUseCase = ZLayer.fromFunction(AddUserUseCase(_))
   val getAllUsersUseCase = ZLayer.fromFunction(GetAllUsersUseCase(_))
-  val addGroupUseCase = ZLayer.fromFunction(AddGroupUseCase(_, _, _))
-  val getGroupByUidUseCase = ZLayer.fromFunction(GetGroupByUidUseCase(_))
-  val addMemberUseCase = ZLayer.fromFunction(AddMemberUseCase(_, _, _))
-  val addExpenseUseCase = ZLayer.fromFunction(AddExpenseUseCase(_, _, _))
+  val addGroupUseCase = ZLayer.fromFunction(AddGroupUseCase(_, _, _, _, _, _, _))
+  val getGroupByUidUseCase = ZLayer.fromFunction(GetGroupUseCase(_, _))
+  val addMemberUseCase = ZLayer.fromFunction(AddMembersUseCase(_, _, _, _, _))
+  val addExpenseUseCase = ZLayer.fromFunction(AddExpenseUseCase(_, _, _, _, _, _, _))
   val convertToTransactionsUseCase = ZLayer.succeed(ConvertExpensesToTransactionsUseCase())
   val calculateSettlementUseCase = ZLayer.succeed(CalculateSettlementUseCase())
-  val fillTestDataUseCase = ZLayer.fromFunction(FillTestDataUseCase(_, _, _, _, _, _, _))
-  val updateGroupUseCase = ZLayer.fromFunction(UpdateGroupUseCase(_, _, _, _, _, _, _))
-  val updateExpenseUseCase = ZLayer.fromFunction(UpdateExpenseUseCase(_, _, _, _, _))
+  val fillTestDataUseCase = ZLayer.fromFunction(FillTestDataUseCase(_, _, _, _, _, _, _, _))
+  val updateGroupUseCase = ZLayer.fromFunction(UpdateGroupUseCase(_, _, _, _, _, _, _, _))
+  val updateExpenseUseCase = ZLayer.fromFunction(UpdateExpenseUseCase(_, _, _, _, _, _, _))
+  val removeMembersUseCase = ZLayer.fromFunction(RemoveMembersUseCase(_, _, _, _))
+  val resolveUserReferencesUseCase = ZLayer.fromFunction(ResolveUserReferencesUseCase(_))
+  val validateMemberNameUseCase = ZLayer.fromFunction(ValidateMemberNameUseCase(_))
+  val validateExpenseUseCase = ZLayer.fromFunction(ValidateExpenseUseCase(_, _))
 
   // Response use cases
   val assembleGroupResponseUseCase = ZLayer.fromFunction(AssembleGroupResponseUseCase(_, _, _, _, _, _))
@@ -44,8 +48,7 @@ object Layers {
   val assembleExpenseUseCase = ZLayer.fromFunction(AssembleExpenseUseCase(_, _, _))
 
   // Controllers
-  val userController = ZLayer.fromFunction(UserController(_, _, _))
   val groupController = ZLayer.fromFunction(GroupController(_, _, _, _, _, _, _, _, _))
-  val memberController = ZLayer.fromFunction(MemberController(_, _, _, _, _))
+  val memberController = ZLayer.fromFunction(MemberController(_, _, _, _, _, _, _))
   val expenseController = ZLayer.fromFunction(ExpenseController(_, _, _, _))
 }

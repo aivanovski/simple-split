@@ -1,8 +1,9 @@
 package com.github.ai.split.domain
 
-import com.github.ai.split.data.db.dao.{GroupEntityDao}
+import com.github.ai.split.data.db.dao.{GroupEntityDao, GroupMemberEntityDao}
 import com.github.ai.split.data.db.repository.ExpenseRepository
 import com.github.ai.split.entity.exception.DomainError
+import com.github.ai.split.entity.db.{ExpenseUid, GroupUid, MemberUid, UserUid}
 import zio.{IO, ZIO}
 
 import java.util.UUID
@@ -10,11 +11,12 @@ import java.util.UUID
 class AccessResolverService(
   private val expenseRepository: ExpenseRepository,
   private val passwordService: PasswordService,
-  private val groupDao: GroupEntityDao
+  private val groupDao: GroupEntityDao,
+  private val groupMemberDao: GroupMemberEntityDao,
 ) {
 
   def canAccessToGroups(
-    groupUids: List[UUID],
+    groupUids: List[GroupUid],
     passwords: List[String]
   ): IO[DomainError, Unit] = {
     ZIO.collectAll(
@@ -25,7 +27,7 @@ class AccessResolverService(
   }
 
   def canAccessToExpense(
-    expenseUid: UUID,
+    expenseUid: ExpenseUid,
     password: String
   ): IO[DomainError, Unit] = {
     for {
@@ -35,11 +37,22 @@ class AccessResolverService(
   }
 
   def canAccessToGroup(
-    groupUid: UUID,
+    groupUid: GroupUid,
     password: String
   ): IO[DomainError, Unit] = {
     for {
       group <- groupDao.getByUid(groupUid)
+      _ <- isPasswordMatch(password = password, passwordHash = group.passwordHash)
+    } yield ()
+  }
+
+  def canAccessToMember(
+    memberUid: MemberUid,
+    password: String
+  ): IO[DomainError, Unit] = {
+    for {
+      member <- groupMemberDao.getByUid(uid = memberUid)
+      group <- groupDao.getByUid(uid = member.groupUid)
       _ <- isPasswordMatch(password = password, passwordHash = group.passwordHash)
     } yield ()
   }

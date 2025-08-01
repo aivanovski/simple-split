@@ -2,7 +2,7 @@ package com.github.ai.split.domain.usecases
 
 import com.github.ai.split.data.db.dao.UserEntityDao
 import com.github.ai.split.entity.NewUser
-import com.github.ai.split.entity.db.UserEntity
+import com.github.ai.split.entity.db.{UserEntity, UserUid}
 import com.github.ai.split.entity.exception.DomainError
 import zio.*
 
@@ -16,7 +16,7 @@ class AddUserUseCase(
     for {
       createdUser <- userDao.add(
         UserEntity(
-          uid = UUID.randomUUID(),
+          uid = UserUid(UUID.randomUUID()),
           name = user.name,
         )
       )

@@ -12,10 +12,10 @@ extension (exception: Throwable)
     writer.toString
   }
 
-extension (sqlException: SQLException)
+extension (exception: Throwable)
   def toDomainError(): DomainError = {
     DomainError(
-      message = sqlException.getMessage.some,
-      cause = sqlException.some
+      message = exception.getMessage.some,
+      cause = exception.some
     )
   }
