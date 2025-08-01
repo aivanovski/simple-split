@@ -8,6 +8,6 @@ data class ExpenseDto(
     val title: String,
     val description: String?,
     val amount: Double,
-    val paidBy: List<UserDto>,
-    val splitBetween: List<UserDto>
+    val paidBy: List<MemberDto>,
+    val splitBetween: List<MemberDto>
 )

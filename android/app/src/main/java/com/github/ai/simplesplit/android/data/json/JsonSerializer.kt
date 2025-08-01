@@ -3,19 +3,17 @@ package com.github.ai.simplesplit.android.data.json
 import arrow.core.Either
 import arrow.core.raise.either
 import com.github.ai.simplesplit.android.model.exception.ParsingException
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 class JsonSerializer {
 
-    val json = createJson()
-
-    private fun createJson(): Json {
-        return Json {
-            explicitNulls = false
-            ignoreUnknownKeys = true
-        }
+    @OptIn(ExperimentalSerializationApi::class)
+    val json = Json {
+        explicitNulls = false
+        ignoreUnknownKeys = true
     }
 
     inline fun <reified T> deserialize(text: String): Either<ParsingException, T> =

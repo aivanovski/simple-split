@@ -4,5 +4,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class PostMemberRequest(
-    val uid: String
+    val groupUid: String,
+    val name: String
 )
