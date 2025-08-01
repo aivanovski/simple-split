@@ -124,6 +124,17 @@ class ApiClient(
     )
   }
 
+  def deleteExpense(
+    expenseUid: String,
+    password: String = DefaultPassword
+  ): ApiResponse = {
+    client.request(
+      Request.delete(
+        path = s"$baseUrl/expense/$expenseUid?password=$password"
+      )
+    )
+  }
+
   private object Users {
     val Mickey = "00000000-0000-0000-0000-a00000000001"
     val Donald = "00000000-0000-0000-0000-a00000000002"

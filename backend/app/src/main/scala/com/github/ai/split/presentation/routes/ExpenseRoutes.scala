@@ -14,11 +14,18 @@ object ExpenseRoutes {
         response <- controller.createExpense(request).mapError(_.toDomainResponse)
       } yield response
     },
-    
+
     Method.PUT / "expense" / string("expenseId") -> Handler.fromFunctionZIO[Request] { (request: Request) =>
       for {
         controller <- ZIO.service[ExpenseController]
         response <- controller.updateExpense(request).mapError(_.toDomainResponse)
+      } yield response
+    },
+
+    Method.DELETE / "expense" / string("expenseId") -> Handler.fromFunctionZIO[Request] { (request: Request) =>
+      for {
+        controller <- ZIO.service[ExpenseController]
+        response <- controller.removeExpense(request).mapError(_.toDomainResponse)
       } yield response
     }
   )

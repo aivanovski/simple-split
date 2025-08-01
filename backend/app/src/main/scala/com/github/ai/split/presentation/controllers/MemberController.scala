@@ -23,7 +23,7 @@ class MemberController(
 
   def createMember(
     request: Request
-  ): ZIO[Any, DomainError, Response] = {
+  ): IO[DomainError, Response] = {
     for {
       password <- parsePasswordParam(request)
       body <- request.body.parse[PostMemberRequest]
@@ -40,7 +40,7 @@ class MemberController(
 
   def removeMember(
     request: Request
-  ): ZIO[Any, DomainError, Response] = {
+  ): IO[DomainError, Response] = {
     for {
       password <- parsePasswordParam(request)
       memberUid <- parseUidFromUrl(request).map(uid => MemberUid(uid))

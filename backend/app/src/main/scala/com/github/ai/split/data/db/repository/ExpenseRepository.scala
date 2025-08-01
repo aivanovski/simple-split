@@ -76,10 +76,8 @@ class ExpenseRepository(
     } yield expense
   }
 
-  def deleteByUid(uid: ExpenseUid): IO[DomainError, Unit] = {
+  def removeByUid(uid: ExpenseUid): IO[DomainError, Unit] = {
     for {
-      _ <- paidByDao.removeByExpenseUid(uid)
-      _ <- splitBetweenDao.removeByExpenseUid(uid)
       _ <- expenseDao.delete(uid)
     } yield ()
   }
