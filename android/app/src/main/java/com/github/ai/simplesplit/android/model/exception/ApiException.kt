@@ -4,11 +4,11 @@ import com.github.ai.split.api.ErrorMessageDto
 
 open class ApiException(
     message: String? = null,
-    cause: Exception? = null
+    cause: Throwable? = null
 ) : AppException(message, cause)
 
 class NetworkException(
-    cause: Exception
+    cause: Throwable
 ) : ApiException(cause = cause)
 
 class InvalidResponseException(

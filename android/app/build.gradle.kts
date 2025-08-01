@@ -125,9 +125,11 @@ dependencies {
     androidTestImplementation(libs.room.test)
 
     // Network
-    implementation(libs.ktor.client.core)
-    implementation(libs.ktor.client.okhttp)
-    implementation(libs.ktor.client.logging)
+    implementation(libs.ktorClientCore)
+    implementation(libs.ktorClientOkhttp)
+    implementation(libs.ktorClientLogging)
+    implementation(libs.ktorClientNegotiation)
+    implementation(libs.ktorSerializationJson)
 
     // Json
     implementation(libs.kotlinx.json)

@@ -7,6 +7,7 @@ import com.github.ai.simplesplit.android.data.json.JsonSerializer
 import com.github.ai.simplesplit.android.data.repository.ExpenseRepository
 import com.github.ai.simplesplit.android.data.repository.GroupCredentialsRepository
 import com.github.ai.simplesplit.android.data.repository.GroupRepository
+import com.github.ai.simplesplit.android.data.repository.MemberRepository
 import com.github.ai.simplesplit.android.presentation.core.ResourceProvider
 import com.github.ai.simplesplit.android.presentation.core.ResourceProviderImpl
 import com.github.ai.simplesplit.android.presentation.core.compose.navigation.Router
@@ -47,13 +48,14 @@ object AndroidAppModule {
 
         // Api
         singleOf(::JsonSerializer)
-        single { HttpClientFactory.createHttpClient() }
-        singleOf(::ApiClient)
+        single { HttpClientFactory.createHttpClient(get()) }
+        single { ApiClient(get(), baseUrl = "http://10.0.2.2:8080") } // TODO: move url to settings
 
         // Repositories
         singleOf(::GroupRepository)
         singleOf(::GroupCredentialsRepository)
         singleOf(::ExpenseRepository)
+        singleOf(::MemberRepository)
 
         // Interactors
         singleOf(::GroupsInteractor)
