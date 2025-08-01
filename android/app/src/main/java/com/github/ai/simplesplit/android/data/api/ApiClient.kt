@@ -7,6 +7,7 @@ import com.github.ai.split.api.request.PostExpenseRequest
 import com.github.ai.split.api.request.PostGroupRequest
 import com.github.ai.split.api.request.PostMemberRequest
 import com.github.ai.split.api.request.PutGroupRequest
+import com.github.ai.split.api.response.DeleteExpenseResponse
 import com.github.ai.split.api.response.DeleteMemberResponse
 import com.github.ai.split.api.response.GetGroupsResponse
 import com.github.ai.split.api.response.PostExpenseResponse
@@ -48,6 +49,15 @@ class ApiClient(
             type = RequestType.POST,
             url = "$baseUrl/expense?password=$password",
             body = Some(request)
+        )
+
+    suspend fun removeExpense(
+        password: String,
+        expenseUid: String
+    ): Either<ApiException, DeleteExpenseResponse> =
+        httpClient.sendRequest<Unit, DeleteExpenseResponse>(
+            type = RequestType.DELETE,
+            url = "$baseUrl/expense/$expenseUid?password=$password"
         )
 
     suspend fun putGroup(

@@ -1,6 +1,7 @@
 package com.github.ai.simplesplit.android.presentation.screens.groupDetails.cells.ui
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -32,12 +33,17 @@ import com.github.ai.simplesplit.android.presentation.screens.groupDetails.cells
 import com.github.ai.simplesplit.android.presentation.screens.groupDetails.cells.model.ExpenseCellModel
 import com.github.ai.simplesplit.android.presentation.screens.groupDetails.cells.viewModel.ExpenseCellViewModel
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ExpenseCell(viewModel: ExpenseCellViewModel) {
     val model = viewModel.model
 
     val onClick = rememberOnClickedCallback {
         viewModel.sendEvent(ExpenseCellEvent.OnClick(model.id))
+    }
+
+    val onLongClick = rememberOnClickedCallback {
+        viewModel.sendEvent(ExpenseCellEvent.OnLongClick(model.id))
     }
 
     Card(
@@ -54,8 +60,9 @@ fun ExpenseCell(viewModel: ExpenseCellViewModel) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(
-                    onClick = onClick
+                .combinedClickable(
+                    onClick = onClick,
+                    onLongClick = onLongClick
                 )
                 .padding(ElementMargin)
         ) {

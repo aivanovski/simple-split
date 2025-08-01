@@ -22,7 +22,7 @@ object HttpClientFactory {
                         Timber.d(message)
                     }
                 }
-                level = LogLevel.BODY
+                level = LogLevel.INFO
             }
         }
     }

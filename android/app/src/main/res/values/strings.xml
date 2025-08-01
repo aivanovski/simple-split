@@ -7,6 +7,7 @@
 
     <!-- Dialogs -->
     <string name="remove_group_confirmation_message">Do you really want to remove this group?</string>
+    <string name="remove_expense_confirmation_message">Do you really want to remove this expense?</string>
 
     <!-- Group Editor screen -->
     <string name="create_new_group">Create New Group</string>

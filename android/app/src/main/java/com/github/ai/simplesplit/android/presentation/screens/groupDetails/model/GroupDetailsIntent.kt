@@ -9,4 +9,9 @@ sealed class GroupDetailsIntent(
     data object ReloadData : GroupDetailsIntent()
     data object OnBackClick : GroupDetailsIntent()
     data object OnFabClick : GroupDetailsIntent()
+    data class OnExpenseClick(val expenseUid: String) : GroupDetailsIntent()
+    data class OnExpenseLongClick(val expenseUid: String) : GroupDetailsIntent()
+    data class OnEditExpenseClick(val expenseUid: String) : GroupDetailsIntent()
+    data class OnRemoveExpenseClick(val expenseUid: String) : GroupDetailsIntent()
+    data class OnRemoveExpenseConfirmed(val expenseUid: String) : GroupDetailsIntent()
 }
