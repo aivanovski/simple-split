@@ -30,7 +30,6 @@ import com.github.ai.simplesplit.android.presentation.screens.groupDetails.cells
 import com.github.ai.simplesplit.android.presentation.screens.groupDetails.cells.viewModel.ExpenseCellViewModel
 import com.github.ai.simplesplit.android.presentation.screens.groupDetails.cells.viewModel.SettlementCellViewModel
 import com.github.ai.simplesplit.android.utils.CellId
-import com.github.ai.simplesplit.android.utils.CellIdPayload
 import com.github.ai.simplesplit.android.utils.CellIdPayload.StringPayload
 import com.github.ai.simplesplit.android.utils.format
 import com.github.ai.split.api.GroupDto

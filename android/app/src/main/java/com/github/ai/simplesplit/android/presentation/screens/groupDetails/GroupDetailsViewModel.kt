@@ -120,9 +120,7 @@ class GroupDetailsViewModel(
         }.flowOn(Dispatchers.IO)
     }
 
-    private fun removeExpense(
-        expenseUid: String
-    ): Flow<GroupDetailsState> {
+    private fun removeExpense(expenseUid: String): Flow<GroupDetailsState> {
         return flow {
             emit(GroupDetailsState.Loading)
 
@@ -161,9 +159,7 @@ class GroupDetailsViewModel(
         }
     }
 
-    private fun showRemoveExpenseConfirmationDialog(
-        expenseUid: String
-    ) {
+    private fun showRemoveExpenseConfirmationDialog(expenseUid: String) {
         router.showDialog(
             Dialog.ConfirmationDialog(
                 args = ConfirmationDialogArgs(
@@ -197,9 +193,7 @@ class GroupDetailsViewModel(
         }
     }
 
-    private fun showData(
-        group: GroupDto
-    ): Flow<GroupDetailsState> {
+    private fun showData(group: GroupDto): Flow<GroupDetailsState> {
         return flow<GroupDetailsState> {
             val viewModels = cellFactory.createCells(
                 group = group,
