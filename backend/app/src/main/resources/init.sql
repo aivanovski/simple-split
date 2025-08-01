@@ -11,9 +11,9 @@ CREATE TABLE IF NOT EXISTS groups (
 );
 
 CREATE TABLE IF NOT EXISTS group_members (
+    uid UUID PRIMARY KEY,
     group_uid UUID NOT NULL REFERENCES groups(uid) ON DELETE CASCADE,
-    user_uid UUID NOT NULL,
-    PRIMARY KEY (group_uid, user_uid) -- Composite primary key to ensure uniqueness
+    user_uid UUID NOT NULL REFERENCES users(uid) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS expenses (
@@ -28,13 +28,13 @@ CREATE TABLE IF NOT EXISTS expenses (
 CREATE TABLE IF NOT EXISTS paid_by (
     expense_uid UUID NOT NULL REFERENCES expenses(uid) ON DELETE CASCADE,
     group_uid UUID NOT NULL,
-    user_uid UUID NOT NULL,
-    PRIMARY KEY (expense_uid, user_uid) -- Composite primary key to ensure uniqueness
+    member_uid UUID NOT NULL,
+    PRIMARY KEY (expense_uid, member_uid) -- Composite primary key to ensure uniqueness
 );
 
 CREATE TABLE IF NOT EXISTS split_between (
     expense_uid UUID NOT NULL REFERENCES expenses(uid) ON DELETE CASCADE,
     group_uid UUID NOT NULL,
-    user_uid UUID NOT NULL,
-    PRIMARY KEY (expense_uid, user_uid) -- Composite primary key to ensure uniqueness
+    member_uid UUID NOT NULL,
+    PRIMARY KEY (expense_uid, member_uid) -- Composite primary key to ensure uniqueness
 );

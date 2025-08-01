@@ -1,6 +1,6 @@
 package com.github.ai.split.data.db.dao
 
-import com.github.ai.split.entity.db.GroupEntity
+import com.github.ai.split.entity.db.{GroupEntity, GroupUid}
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.toDomainError
 import com.github.ai.split.utils.some
@@ -10,7 +10,6 @@ import io.getquill.*
 import zio.*
 
 import java.sql.SQLException
-import java.util.UUID
 
 class GroupEntityDao(
   quill: Quill.H2[SnakeCase]
@@ -27,7 +26,7 @@ class GroupEntityDao(
       .mapError(_.toDomainError())
   }
 
-  def getByUids(uids: List[UUID]): IO[DomainError, List[GroupEntity]] = {
+  def getByUids(uids: List[GroupUid]): IO[DomainError, List[GroupEntity]] = {
     val uidSet = uids.toSet
     
     val query = quote {
@@ -39,7 +38,7 @@ class GroupEntityDao(
       .mapError(_.toDomainError())
   }
 
-  def getByUid(uid: UUID): IO[DomainError, GroupEntity] = {
+  def getByUid(uid: GroupUid): IO[DomainError, GroupEntity] = {
     for {
       groups <- getAll()
       group <- ZIO.fromOption(groups.find(_.uid == uid))

@@ -9,4 +9,5 @@ case class GetGroupsResponse(
 
 object GetGroupsResponse {
   implicit val encoder: JsonEncoder[GetGroupsResponse] = DeriveJsonEncoder.gen[GetGroupsResponse]
+  implicit val decoder: JsonDecoder[GetGroupsResponse] = DeriveJsonDecoder.gen[GetGroupsResponse]
 }

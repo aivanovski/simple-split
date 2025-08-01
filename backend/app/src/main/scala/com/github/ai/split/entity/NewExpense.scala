@@ -1,12 +1,10 @@
 package com.github.ai.split.entity
 
-import java.util.UUID
-
 case class NewExpense(
   title: String,
   description: String,
   amount: Double,
-  paidBy: List[UUID],
+  paidBy: List[UserReference],
   split: Split
 )
 
@@ -15,5 +13,5 @@ sealed trait Split
 case object SplitBetweenAll extends Split
 
 case class SplitBetweenMembers(
-  userUids: List[UUID]
+  members: List[UserReference]
 ) extends Split

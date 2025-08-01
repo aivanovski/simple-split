@@ -1,72 +1,87 @@
 package com.github.ai.split.domain.usecases
 
 import com.github.ai.split.data.db.dao.{GroupMemberEntityDao, PaidByEntityDao, SplitBetweenEntityDao, UserEntityDao}
-import com.github.ai.split.data.db.repository.ExpenseRepository
-import com.github.ai.split.entity.{ExpenseWithRelations, Split, SplitBetweenAll, SplitBetweenMembers}
-import com.github.ai.split.entity.db.{ExpenseEntity, PaidByEntity, SplitBetweenEntity}
+import com.github.ai.split.data.db.repository.{ExpenseRepository, GroupRepository}
+import com.github.ai.split.entity.{ExpenseWithRelations, Split, SplitBetweenAll, SplitBetweenMembers, UserReference, Member}
+import com.github.ai.split.entity.db.{ExpenseEntity, ExpenseUid, GroupUid, MemberUid, PaidByEntity, SplitBetweenEntity}
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.some
+import com.github.ai.split.domain.usecases.ResolveUserReferencesUseCase
 import zio.*
 
-import java.util.UUID
-
 class UpdateExpenseUseCase(
+  private val groupRepository: GroupRepository,
   private val expenseRepository: ExpenseRepository,
   private val userDao: UserEntityDao,
   private val groupMemberDao: GroupMemberEntityDao,
   private val paidByDao: PaidByEntityDao,
-  private val splitBetweenDao: SplitBetweenEntityDao
+  private val splitBetweenDao: SplitBetweenEntityDao,
+  private val resolveUserReferencesUseCase: ResolveUserReferencesUseCase
 ) {
 
   def updateExpense(
-    expenseUid: UUID,
+    expenseUid: ExpenseUid,
     newTitle: Option[String],
     newDescription: Option[String],
     newAmount: Option[Double],
-    newPaidBy: Option[List[UUID]],
+    newPaidBy: Option[List[UserReference]],
     newSplit: Option[Split]
-  ): IO[DomainError, UUID] = {
+  ): IO[DomainError, ExpenseUid] = {
     for {
       expense <- expenseRepository.getByUid(uid = expenseUid)
 
-      _ <- isTitleValid(groupUid = expense.entity.groupUid, expenseUid = expenseUid, title = newTitle)
-      _ <- isAmountValid(amount = newAmount)
-      _ <- isPaidByValid(groupUid = expense.entity.groupUid, paidBy = newPaidBy)
-      _ <- isSplitValid(groupUid = expense.entity.groupUid, split = newSplit)
+      groupUid = expense.entity.groupUid
 
-      // TODO: update expense and other
+      members <- groupRepository.getMembers(groupUid)
+      _ <- isTitleValid(groupUid = groupUid, expenseUid = expenseUid, title = newTitle)
+      _ <- isAmountValid(amount = newAmount)
+      _ <- isPaidByValid(groupUid = groupUid, members = members, paidBy = newPaidBy)
+      _ <- isSplitValid(groupUid = groupUid, members = members, split = newSplit)
+
+      paidBy <- if (newPaidBy.isDefined) {
+        resolveUserReferencesUseCase.resolveReferences(
+          allMembers = members,
+          references = newPaidBy.getOrElse(List.empty)
+        ).map { payers =>
+          payers.map { payer =>
+            PaidByEntity(
+              groupUid = groupUid,
+              expenseUid = expense.entity.uid,
+              memberUid = payer.entity.uid
+            )
+          }
+        }
+      } else {
+        ZIO.succeed(expense.paidBy)
+      }
+
+      splitBetween <- if (newSplit.isDefined) {
+        val split = newSplit.get match {
+          case SplitBetweenAll => List.empty
+          case SplitBetweenMembers(references) => resolveUserReferencesUseCase.resolveReferences(
+            allMembers = members,
+            references = references
+          ).map { splitMembers =>
+            splitMembers.map { member =>
+              SplitBetweenEntity(
+                groupUid = groupUid,
+                expenseUid = expense.entity.uid,
+                memberUid = member.entity.uid
+              )
+            }
+          }
+        }
+
+        ZIO.succeed(List.empty)
+      } else {
+        ZIO.succeed(expense.splitBetween)
+      }
+
       _ <- {
         val isSplitBetweenAll = if (newSplit.isDefined) {
           newSplit.get == SplitBetweenAll
         } else {
           expense.entity.isSplitBetweenAll
-        }
-
-        val paidBy = if (newPaidBy.isDefined) {
-          newPaidBy.get.map { payerUid =>
-            PaidByEntity(
-              groupUid = expense.entity.groupUid,
-              expenseUid = expense.entity.uid,
-              userUid = payerUid
-            )
-          }
-        } else {
-          expense.paidBy
-        }
-
-        val splitBetween = if (newSplit.isDefined) {
-          newSplit.get match {
-            case SplitBetweenAll => List.empty
-            case SplitBetweenMembers(userUids) => userUids.map { userUid =>
-              SplitBetweenEntity(
-                groupUid = expense.entity.groupUid,
-                expenseUid = expense.entity.uid,
-                userUid = userUid
-              )
-            }
-          }
-        } else {
-          expense.splitBetween
         }
 
         val newExpense = ExpenseWithRelations(
@@ -88,8 +103,8 @@ class UpdateExpenseUseCase(
   }
 
   private def isTitleValid(
-    groupUid: UUID,
-    expenseUid: UUID,
+    groupUid: GroupUid,
+    expenseUid: ExpenseUid,
     title: Option[String]
   ): IO[DomainError, Unit] = {
     if (title.isEmpty) {
@@ -127,34 +142,28 @@ class UpdateExpenseUseCase(
   }
 
   private def isPaidByValid(
-    groupUid: UUID,
-    paidBy: Option[List[UUID]]
+    groupUid: GroupUid,
+    members: List[Member],
+    paidBy: Option[List[UserReference]]
   ): IO[DomainError, Unit] = {
     if (paidBy.isEmpty) {
       return ZIO.succeed(())
     }
 
-    val paidByUids = paidBy.getOrElse(List.empty)
-    if (paidByUids.size > 1 || paidByUids.isEmpty) {
+    val paidByRefs = paidBy.getOrElse(List.empty)
+    if (paidByRefs.size > 1 || paidByRefs.isEmpty) {
       return ZIO.fail(DomainError(message = "Wrong number of payers".some))
     }
 
-    for {
-      memberUids <- groupMemberDao.getByGroupUid(groupUid = groupUid).map(_.map(_.userUid).toSet)
-
-      _ <- {
-        val containsAllPayers = paidByUids.forall(uid => memberUids.contains(uid))
-        if (containsAllPayers) {
-          ZIO.succeed(())
-        } else {
-          ZIO.fail(DomainError(message = "Payer should be a member of group".some))
-        }
-      }
-    } yield ()
+    resolveUserReferencesUseCase.validateReferences(
+      allMembers = members,
+      references = paidByRefs
+    )
   }
 
   private def isSplitValid(
-    groupUid: UUID,
+    groupUid: GroupUid,
+    members: List[Member],
     split: Option[Split]
   ): IO[DomainError, Unit] = {
     if (split.isEmpty) {
@@ -163,20 +172,10 @@ class UpdateExpenseUseCase(
 
     split.get match {
       case SplitBetweenAll => ZIO.succeed(())
-      case SplitBetweenMembers(splitUids) => {
-        for {
-          memberUids <- groupMemberDao.getByGroupUid(groupUid = groupUid).map(_.map(_.userUid).toSet)
-
-          _ <- {
-            val containsAllSplittees = splitUids.forall(uid => memberUids.contains(uid))
-            if (containsAllSplittees) {
-              ZIO.succeed(())
-            } else {
-              ZIO.fail(DomainError(message = "Invalid split member".some))
-            }
-          }
-        } yield ()
-      }
+      case SplitBetweenMembers(references) => resolveUserReferencesUseCase.validateReferences(
+        allMembers = members,
+        references = references
+      )
     }
   }
 } 

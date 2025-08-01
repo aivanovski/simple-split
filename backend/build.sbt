@@ -41,6 +41,7 @@ lazy val app = project
       "dev.zio" %% "zio-streams" % zioVersion,
       "dev.zio" %% "zio-http" % zioHttp,
       "dev.zio" %% "zio-json" % zioJsonVersion,
+      "dev.zio" %% "zio-direct" % zioDirect,
 
       // Logging
       "dev.zio" %% "zio-logging" % "2.3.2",

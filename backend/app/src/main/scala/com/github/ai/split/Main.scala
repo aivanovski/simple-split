@@ -2,7 +2,7 @@ package com.github.ai.split
 
 import com.github.ai.split.domain.CliArgumentParser
 import com.github.ai.split.domain.usecases.FillTestDataUseCase
-import com.github.ai.split.presentation.routes.{ExpenseRoutes, GroupRoutes, MemberRoutes, UserRoutes}
+import com.github.ai.split.presentation.routes.{ExpenseRoutes, GroupRoutes, MemberRoutes}
 import io.getquill.SnakeCase
 import io.getquill.jdbczio.Quill
 import zio.*
@@ -12,8 +12,7 @@ import zio.logging.backend.SLF4J
 
 object Main extends ZIOAppDefault {
 
-  private val routes = UserRoutes.routes()
-    ++ GroupRoutes.routes()
+  private val routes = GroupRoutes.routes()
     ++ MemberRoutes.routes()
     ++ ExpenseRoutes.routes()
 
@@ -44,6 +43,10 @@ object Main extends ZIOAppDefault {
         Layers.fillTestDataUseCase,
         Layers.updateGroupUseCase,
         Layers.updateExpenseUseCase,
+        Layers.removeMembersUseCase,
+        Layers.resolveUserReferencesUseCase,
+        Layers.validateMemberNameUseCase,
+        Layers.validateExpenseUseCase,
 
         // Response assemblers use cases
         Layers.assembleGroupResponseUseCase,
@@ -53,16 +56,15 @@ object Main extends ZIOAppDefault {
         // Controllers
         Layers.memberController,
         Layers.groupController,
-        Layers.userController,
         Layers.expenseController,
 
         // Services
-        Layers.authService,
         Layers.passwordService,
         Layers.accessResolverService,
 
         // Repositories
         Layers.expenseRepository,
+        Layers.groupRepository,
 
         // Dao
         Layers.expenseDao,

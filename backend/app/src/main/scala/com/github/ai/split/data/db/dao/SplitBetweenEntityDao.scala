@@ -1,6 +1,6 @@
 package com.github.ai.split.data.db.dao
 
-import com.github.ai.split.entity.db.{PaidByEntity, SplitBetweenEntity}
+import com.github.ai.split.entity.db.{PaidByEntity, SplitBetweenEntity, ExpenseUid, GroupUid}
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.toDomainError
 import io.getquill.{SnakeCase, querySchema}
@@ -10,7 +10,6 @@ import io.getquill.*
 import zio.IO
 
 import java.sql.SQLException
-import java.util.UUID
 
 class SplitBetweenEntityDao(
   quill: Quill.H2[SnakeCase]
@@ -27,7 +26,7 @@ class SplitBetweenEntityDao(
       .mapError(_.toDomainError())
   }
 
-  def getByExpenseUid(expenseUid: UUID): IO[DomainError, List[SplitBetweenEntity]] = {
+  def getByExpenseUid(expenseUid: ExpenseUid): IO[DomainError, List[SplitBetweenEntity]] = {
     val query = quote {
       querySchema[SplitBetweenEntity]("split_between")
         .filter(_.expenseUid == lift(expenseUid))
@@ -37,7 +36,7 @@ class SplitBetweenEntityDao(
       .mapError(_.toDomainError())
   }
 
-  def getByGroupUid(groupUid: UUID): IO[DomainError, List[SplitBetweenEntity]] = {
+  def getByGroupUid(groupUid: GroupUid): IO[DomainError, List[SplitBetweenEntity]] = {
     val query = quote {
       querySchema[SplitBetweenEntity]("split_between")
         .filter(_.groupUid == lift(groupUid))
@@ -62,7 +61,7 @@ class SplitBetweenEntityDao(
       .mapError(_.toDomainError())
   }
 
-  def removeByExpenseUid(expenseUid: UUID): IO[DomainError, Unit] = {
+  def removeByExpenseUid(expenseUid: ExpenseUid): IO[DomainError, Unit] = {
     val deleteQuery = quote {
       querySchema[SplitBetweenEntity]("split_between")
         .filter(_.expenseUid == lift(expenseUid))

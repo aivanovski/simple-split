@@ -6,7 +6,7 @@ case class GroupDto(
   uid: String,
   title: String,
   description: String,
-  members: List[UserDto],
+  members: List[MemberDto],
   expenses: List[ExpenseDto],
   paybackTransactions: List[TransactionDto]
 )

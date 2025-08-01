@@ -1,10 +1,8 @@
 package com.github.ai.split.entity.db
 
-import java.util.UUID
-
 case class ExpenseEntity(
-  uid: UUID,
-  groupUid: UUID,
+  uid: ExpenseUid,
+  groupUid: GroupUid,
   title: String,
   description: String,
   amount: Double,

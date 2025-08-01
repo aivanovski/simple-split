@@ -2,6 +2,7 @@ package com.github.ai.split.domain.usecases
 
 import com.github.ai.split.data.db.dao.{GroupEntityDao, GroupMemberEntityDao}
 import com.github.ai.split.api.GroupDto
+import com.github.ai.split.entity.db.GroupUid
 import com.github.ai.split.data.db.repository.ExpenseRepository
 import com.github.ai.split.entity.exception.DomainError
 import zio.*
@@ -19,7 +20,7 @@ class AssembleGroupResponseUseCase(
 ) {
 
   def assembleGroupDto(
-    groupUid: UUID
+    groupUid: GroupUid
   ): IO[DomainError, GroupDto] = {
     for {
       userUidToUserMap <- getAllUsersUseCase.getUserUidToUserMap()
@@ -29,7 +30,7 @@ class AssembleGroupResponseUseCase(
       dto <- {
         val transactions = convertExpensesUseCase.convertToTransactions(
           expenses = expenses,
-          members = members.map(member => member.userUid)
+          members = members.map(member => member.uid)
         )
 
         toGroupDto(

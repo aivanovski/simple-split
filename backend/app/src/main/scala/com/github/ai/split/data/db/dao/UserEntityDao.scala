@@ -1,6 +1,6 @@
 package com.github.ai.split.data.db.dao
 
-import com.github.ai.split.entity.db.{GroupMemberEntity, UserEntity}
+import com.github.ai.split.entity.db.{GroupMemberEntity, GroupUid, UserEntity, UserUid}
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.toDomainError
 import com.github.ai.split.utils.some
@@ -8,8 +8,6 @@ import io.getquill.jdbczio.Quill
 import io.getquill.generic.*
 import io.getquill.*
 import zio.*
-
-import java.util.UUID
 
 class UserEntityDao(
   quill: Quill.H2[SnakeCase]
@@ -26,7 +24,7 @@ class UserEntityDao(
       .mapError(_.toDomainError())
   }
 
-  def getByGroupUid(groupUid: UUID): IO[DomainError, List[UserEntity]] = {
+  def getByGroupUid(groupUid: GroupUid): IO[DomainError, List[UserEntity]] = {
     val query = quote {
       for {
         member <- querySchema[GroupMemberEntity]("group_members")
@@ -40,7 +38,7 @@ class UserEntityDao(
     } yield members.map((member, user) => user)
   }
 
-  def findByUid(uid: UUID): IO[DomainError, Option[UserEntity]] = {
+  def findByUid(uid: UserUid): IO[DomainError, Option[UserEntity]] = {
     val query = quote {
       querySchema[UserEntity]("users")
         .filter(_.uid == lift(uid))
@@ -51,7 +49,30 @@ class UserEntityDao(
     } yield users.headOption
   }
 
-  def getByUid(uid: UUID): IO[DomainError, UserEntity] = {
+  def getByUids(uids: List[UserUid]): IO[DomainError, List[UserEntity]] = {
+    val uidSet = uids.toSet
+
+    val query = quote {
+      querySchema[UserEntity]("users")
+        .filter(usr => liftQuery(uidSet).contains(usr.uid))
+    }
+
+    for {
+      users <- run(query).mapError(_.toDomainError())
+      _ <- if (users.size != uids.size) {
+        val notFoundUids = users
+          .map(_.uid)
+          .filter(uid => !uids.contains(uid))
+          .mkString(", ")
+
+        ZIO.fail(DomainError(message = s"Failed to find users: $notFoundUids".some))
+      } else {
+        ZIO.succeed(())
+      }
+    } yield users
+  }
+
+  def getByUid(uid: UserUid): IO[DomainError, UserEntity] = {
     val query = quote {
       querySchema[UserEntity]("users")
         .filter(_.uid == lift(uid))
@@ -79,7 +100,7 @@ class UserEntityDao(
   }
 
   // TODO: remove function and refactor
-  def getUserUidToUserMap(): IO[DomainError, Map[UUID, UserEntity]] = {
+  def getUserUidToUserMap(): IO[DomainError, Map[UserUid, UserEntity]] = {
     for {
       users <- getAll()
     } yield {

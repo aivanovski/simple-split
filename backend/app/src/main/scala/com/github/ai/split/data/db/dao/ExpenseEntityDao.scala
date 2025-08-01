@@ -1,6 +1,6 @@
 package com.github.ai.split.data.db.dao
 
-import com.github.ai.split.entity.db.{ExpenseEntity, UserEntity}
+import com.github.ai.split.entity.db.{ExpenseEntity, ExpenseUid, GroupUid, UserEntity}
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.toDomainError
 import com.github.ai.split.utils.some
@@ -9,8 +9,6 @@ import io.getquill.jdbczio.Quill
 import io.getquill.generic.*
 import io.getquill.*
 import zio.*
-
-import java.util.UUID
 
 class ExpenseEntityDao(
   quill: Quill.H2[SnakeCase]
@@ -27,7 +25,7 @@ class ExpenseEntityDao(
       .mapError(_.toDomainError())
   }
 
-  def getByUid(uid: UUID): IO[DomainError, ExpenseEntity] = {
+  def getByUid(uid: ExpenseUid): IO[DomainError, ExpenseEntity] = {
     val query = quote {
       querySchema[ExpenseEntity]("expenses")
         .filter(_.uid == lift(uid))
@@ -41,7 +39,7 @@ class ExpenseEntityDao(
     } yield expense
   }
 
-  def getByUids(uids: List[UUID]): IO[DomainError, List[ExpenseEntity]] = {
+  def getByUids(uids: List[ExpenseUid]): IO[DomainError, List[ExpenseEntity]] = {
     val uidSet = uids.toSet
 
     val query = quote {
@@ -53,7 +51,7 @@ class ExpenseEntityDao(
       .mapError(_.toDomainError())
   }
 
-  def getByGroupUids(groupUids: List[UUID]): IO[DomainError, List[ExpenseEntity]] = {
+  def getByGroupUids(groupUids: List[GroupUid]): IO[DomainError, List[ExpenseEntity]] = {
     val groupUidSet = groupUids.toSet
 
     val query = quote {
@@ -64,9 +62,9 @@ class ExpenseEntityDao(
     run(query)
       .mapError(_.toDomainError())
   }
-  
 
-  def getByGroupUid(groupUid: UUID): IO[DomainError, List[ExpenseEntity]] = {
+
+  def getByGroupUid(groupUid: GroupUid): IO[DomainError, List[ExpenseEntity]] = {
     val query = quote {
       querySchema[ExpenseEntity]("expenses")
         .filter(_.groupUid == lift(groupUid))
@@ -99,7 +97,7 @@ class ExpenseEntityDao(
       .mapError(_.toDomainError())
   }
 
-  def delete(uid: UUID): IO[DomainError, Unit] = {
+  def delete(uid: ExpenseUid): IO[DomainError, Unit] = {
     val deleteQuery = quote {
       querySchema[ExpenseEntity]("expenses")
         .filter(_.uid == lift(uid))

@@ -15,7 +15,7 @@ extension (body: Body) {
       text <- body.asString.mapError(error => new DomainError(cause = error.some))
 
       dto <- ZIO.fromEither(
-        text.fromJson[T](decoder)
+        text.fromJson[T](using decoder)
           .left.map(error => new DomainError(message = error.some))
       )
     yield dto
@@ -42,7 +42,7 @@ extension (request: Request) {
 def parseUidFromUrl(request: Request): IO[DomainError, UUID] = {
   for {
     groupUidStr <- request.getLastUrlParameter()
-    groupUid <- groupUidStr.asUid()
+    groupUid <- groupUidStr.parseUid()
   } yield groupUid
 }
 

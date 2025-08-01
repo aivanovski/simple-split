@@ -7,8 +7,8 @@ case class ExpenseDto(
   title: String,
   description: Option[String],
   amount: Double,
-  paidBy: List[UserDto],
-  splitBetween: List[UserDto]
+  paidBy: List[MemberDto],
+  splitBetween: List[MemberDto]
 )
 
 object ExpenseDto {
