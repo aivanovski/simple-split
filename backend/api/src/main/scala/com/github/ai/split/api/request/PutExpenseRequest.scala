@@ -14,4 +14,4 @@ case class PutExpenseRequest(
 
 object PutExpenseRequest {
   implicit val decoder: JsonDecoder[PutExpenseRequest] = DeriveJsonDecoder.gen[PutExpenseRequest]
-} 
+}

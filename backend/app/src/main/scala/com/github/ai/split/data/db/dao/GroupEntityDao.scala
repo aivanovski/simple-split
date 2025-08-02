@@ -28,7 +28,7 @@ class GroupEntityDao(
 
   def getByUids(uids: List[GroupUid]): IO[DomainError, List[GroupEntity]] = {
     val uidSet = uids.toSet
-    
+
     val query = quote {
       querySchema[GroupEntity]("groups")
         .filter(gr => liftQuery(uidSet).contains(gr.uid))
@@ -41,7 +41,8 @@ class GroupEntityDao(
   def getByUid(uid: GroupUid): IO[DomainError, GroupEntity] = {
     for {
       groups <- getAll()
-      group <- ZIO.fromOption(groups.find(_.uid == uid))
+      group <- ZIO
+        .fromOption(groups.find(_.uid == uid))
         .mapError(_ => DomainError(message = s"Failed to find group by uid: $uid".some))
     } yield group
   }

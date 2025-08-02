@@ -1,9 +1,36 @@
 package com.github.ai.split
 
-import com.github.ai.split.data.db.dao.{ExpenseEntityDao, GroupEntityDao, GroupMemberEntityDao, PaidByEntityDao, SplitBetweenEntityDao, UserEntityDao}
+import com.github.ai.split.data.db.dao.{
+  ExpenseEntityDao,
+  GroupEntityDao,
+  GroupMemberEntityDao,
+  PaidByEntityDao,
+  SplitBetweenEntityDao,
+  UserEntityDao
+}
 import com.github.ai.split.data.db.repository.{ExpenseRepository, GroupRepository}
 import com.github.ai.split.domain.{AccessResolverService, AuthService, PasswordService}
-import com.github.ai.split.domain.usecases.{AddExpenseUseCase, AddGroupUseCase, AddMembersUseCase, AddUserUseCase, AssembleExpenseUseCase, AssembleGroupResponseUseCase, AssembleGroupsResponseUseCase, CalculateSettlementUseCase, ConvertExpensesToTransactionsUseCase, FillTestDataUseCase, GetAllUsersUseCase, GetGroupUseCase, RemoveExpenseUseCase, RemoveMembersUseCase, ResolveUserReferencesUseCase, UpdateExpenseUseCase, UpdateGroupUseCase, ValidateExpenseUseCase, ValidateMemberNameUseCase}
+import com.github.ai.split.domain.usecases.{
+  AddExpenseUseCase,
+  AddGroupUseCase,
+  AddMembersUseCase,
+  AddUserUseCase,
+  AssembleExpenseUseCase,
+  AssembleGroupResponseUseCase,
+  AssembleGroupsResponseUseCase,
+  CalculateSettlementUseCase,
+  ConvertExpensesToTransactionsUseCase,
+  FillTestDataUseCase,
+  GetAllUsersUseCase,
+  GetGroupUseCase,
+  RemoveExpenseUseCase,
+  RemoveMembersUseCase,
+  ResolveUserReferencesUseCase,
+  UpdateExpenseUseCase,
+  UpdateGroupUseCase,
+  ValidateExpenseUseCase,
+  ValidateMemberNameUseCase
+}
 import com.github.ai.split.presentation.controllers.{ExpenseController, GroupController, MemberController}
 import zio.{ZIO, ZLayer}
 

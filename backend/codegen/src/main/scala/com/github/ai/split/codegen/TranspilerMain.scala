@@ -38,7 +38,8 @@ object TranspilerMain extends ZIOAppDefault {
   private def findScalaFiles(
     rootPath: String
   ): IO[AppError, List[FilePath]] = {
-    ZIO.attempt {
+    ZIO
+      .attempt {
         val scalaFiles = ListBuffer[File]()
         val queue = mutable.Queue[File]()
 
@@ -99,7 +100,8 @@ object TranspilerMain extends ZIOAppDefault {
   }
 
   private def readFile(file: FilePath): IO[AppError, String] = {
-    ZIO.attempt {
+    ZIO
+      .attempt {
         val source = Source.fromFile(file.toJavaFile())
         try source.mkString
         finally source.close()
@@ -111,7 +113,8 @@ object TranspilerMain extends ZIOAppDefault {
     file: FilePath,
     content: String
   ): IO[AppError, FilePath] = {
-    ZIO.attempt {
+    ZIO
+      .attempt {
         val parent = file.toJavaFile().getParentFile
         if (!parent.exists()) {
           parent.mkdirs()
@@ -121,8 +124,7 @@ object TranspilerMain extends ZIOAppDefault {
         try {
           pw.write(content)
           pw.flush()
-        }
-        finally pw.close()
+        } finally pw.close()
       }
       .map(_ => file)
       .mapError(IOError)

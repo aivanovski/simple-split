@@ -2,8 +2,26 @@ package com.github.ai.split.domain.usecases
 
 import com.github.ai.split.data.db.dao.{GroupEntityDao, GroupMemberEntityDao, UserEntityDao}
 import com.github.ai.split.data.db.repository.{ExpenseRepository, GroupRepository}
-import com.github.ai.split.entity.{ExpenseWithRelations, Member, MemberReference, NameReference, NewExpense, SplitBetweenAll, SplitBetweenMembers, UserReference}
-import com.github.ai.split.entity.db.{ExpenseEntity, ExpenseUid, GroupMemberEntity, GroupUid, MemberUid, PaidByEntity, SplitBetweenEntity, UserEntity}
+import com.github.ai.split.entity.{
+  ExpenseWithRelations,
+  Member,
+  MemberReference,
+  NameReference,
+  NewExpense,
+  SplitBetweenAll,
+  SplitBetweenMembers,
+  UserReference
+}
+import com.github.ai.split.entity.db.{
+  ExpenseEntity,
+  ExpenseUid,
+  GroupMemberEntity,
+  GroupUid,
+  MemberUid,
+  PaidByEntity,
+  SplitBetweenEntity,
+  UserEntity
+}
 import com.github.ai.split.utils.*
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.domain.usecases.{ResolveUserReferencesUseCase, ValidateExpenseUseCase}
@@ -31,26 +49,32 @@ class AddExpenseUseCase(
       val members = groupRepository.getMembers(groupUid).run
       val expenses = expenseRepository.getEntitiesByGroupUid(groupUid).run
 
-      validateExpenseUseCase.validateExpenseData(
-        members = members,
-        currentExpenses = expenses,
-        expense = newExpense
-      ).run
+      validateExpenseUseCase
+        .validateExpenseData(
+          members = members,
+          currentExpenses = expenses,
+          expense = newExpense
+        )
+        .run
 
       val expenseUid = ExpenseUid(UUID.randomUUID())
 
-      val paidByMembers = resolveUserUseCase.resolveReferences(
-        allMembers = members,
-        references = newExpense.paidBy
-      ).run
+      val paidByMembers = resolveUserUseCase
+        .resolveReferences(
+          allMembers = members,
+          references = newExpense.paidBy
+        )
+        .run
 
-      val splitMembers = resolveUserUseCase.resolveReferences(
-        allMembers = members,
-        references = newExpense.split match {
-          case SplitBetweenMembers(references) => references
-          case SplitBetweenAll => List.empty
-        }
-      ).run
+      val splitMembers = resolveUserUseCase
+        .resolveReferences(
+          allMembers = members,
+          references = newExpense.split match {
+            case SplitBetweenMembers(references) => references
+            case SplitBetweenAll => List.empty
+          }
+        )
+        .run
 
       val splitBetween = splitMembers.map { splitMember =>
         SplitBetweenEntity(
@@ -68,20 +92,22 @@ class AddExpenseUseCase(
         )
       }
 
-      val expense = expenseRepository.add(
-        ExpenseWithRelations(
-          entity = ExpenseEntity(
-            uid = expenseUid,
-            groupUid = groupUid,
-            title = newExpense.title,
-            description = newExpense.description,
-            amount = newExpense.amount,
-            isSplitBetweenAll = newExpense.split == SplitBetweenAll
-          ),
-          paidBy = paidBy,
-          splitBetween = splitBetween
+      val expense = expenseRepository
+        .add(
+          ExpenseWithRelations(
+            entity = ExpenseEntity(
+              uid = expenseUid,
+              groupUid = groupUid,
+              title = newExpense.title,
+              description = newExpense.description,
+              amount = newExpense.amount,
+              isSplitBetweenAll = newExpense.split == SplitBetweenAll
+            ),
+            paidBy = paidBy,
+            splitBetween = splitBetween
+          )
         )
-      ).run
+        .run
 
       expense.entity
     }

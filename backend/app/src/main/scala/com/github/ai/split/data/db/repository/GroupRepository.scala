@@ -16,15 +16,18 @@ class GroupRepository(
 
   def getMembers(groupUid: GroupUid): IO[DomainError, List[Member]] = {
     defer {
-      val userUidToUserMap = userDao.getByGroupUid(groupUid).run
+      val userUidToUserMap = userDao
+        .getByGroupUid(groupUid)
+        .run
         .map(user => (user.uid, user))
         .toMap
 
       val members = groupMemberDao.getByGroupUid(groupUid).run
 
-      members.
-        map { member =>
-          userUidToUserMap.get(member.userUid)
+      members
+        .map { member =>
+          userUidToUserMap
+            .get(member.userUid)
             .map(user => Member(user = user, entity = member))
         }
         .filter(member => member.isDefined)

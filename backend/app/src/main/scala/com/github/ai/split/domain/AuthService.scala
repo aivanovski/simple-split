@@ -27,7 +27,8 @@ class AuthService(
     val jwtData = JwtData.DEFAULT
     val expires = clock.millis() + TimeUnit.DAYS.toMillis(30)
 
-    JWT.create()
+    JWT
+      .create()
       .withAudience(jwtData.audience)
       .withIssuer(jwtData.issuer)
       .withClaim(AuthService.USER_UID, user.uid.toString)
@@ -59,14 +60,16 @@ class AuthService(
   private def decodeJwtToken(token: String): IO[DomainError, DecodedJWT] = {
     val jwtData = JwtData.DEFAULT
 
-    val verifier = JWT.require(Algorithm.HMAC256(jwtData.secret))
+    val verifier = JWT
+      .require(Algorithm.HMAC256(jwtData.secret))
       .withAudience(jwtData.audience)
       .withIssuer(jwtData.issuer)
       .build()
 
     // TODO: check expiration
 
-    ZIO.fromTry(
+    ZIO
+      .fromTry(
         Try {
           verifier.verify(token)
         }
@@ -87,9 +90,11 @@ object AuthService {
 
   val authenticationContext: HandlerAspect[AuthService, AuthenticationContext] =
     HandlerAspect.interceptIncomingHandler(Handler.fromFunctionZIO[Request] { request =>
-      ZIO.serviceWithZIO[AuthService] { authService =>
+      ZIO
+        .serviceWithZIO[AuthService] { authService =>
           for
-            header <- ZIO.fromOption(request.headers.get("Authorization"))
+            header <- ZIO
+              .fromOption(request.headers.get("Authorization"))
               .mapError(_ => DomainError(message = "Failed to get auth header".some))
 
             user <- authService.validateAuthHeader(header)

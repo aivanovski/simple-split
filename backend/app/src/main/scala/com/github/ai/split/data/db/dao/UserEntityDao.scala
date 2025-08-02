@@ -59,16 +59,17 @@ class UserEntityDao(
 
     for {
       users <- run(query).mapError(_.toDomainError())
-      _ <- if (users.size != uids.size) {
-        val notFoundUids = users
-          .map(_.uid)
-          .filter(uid => !uids.contains(uid))
-          .mkString(", ")
+      _ <-
+        if (users.size != uids.size) {
+          val notFoundUids = users
+            .map(_.uid)
+            .filter(uid => !uids.contains(uid))
+            .mkString(", ")
 
-        ZIO.fail(DomainError(message = s"Failed to find users: $notFoundUids".some))
-      } else {
-        ZIO.succeed(())
-      }
+          ZIO.fail(DomainError(message = s"Failed to find users: $notFoundUids".some))
+        } else {
+          ZIO.succeed(())
+        }
     } yield users
   }
 
@@ -80,11 +81,12 @@ class UserEntityDao(
 
     for {
       users <- run(query).mapError(_.toDomainError())
-      user <- if (users.nonEmpty) {
-        ZIO.succeed(users.head)
-      } else {
-        ZIO.fail(DomainError(message = s"Failed to find user by uid: $uid".some))
-      }
+      user <-
+        if (users.nonEmpty) {
+          ZIO.succeed(users.head)
+        } else {
+          ZIO.fail(DomainError(message = s"Failed to find user by uid: $uid".some))
+        }
     } yield user
   }
 
@@ -104,9 +106,7 @@ class UserEntityDao(
     for {
       users <- getAll()
     } yield {
-      users
-        .map { user => user.uid -> user }
-        .toMap
+      users.map { user => user.uid -> user }.toMap
     }
   }
 }

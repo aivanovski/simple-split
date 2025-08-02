@@ -10,7 +10,7 @@ class ConvertExpensesToTransactionsUseCase {
 
   def convertToTransactions(
     expenses: List[ExpenseWithRelations],
-    members: List[MemberUid],
+    members: List[MemberUid]
   ): List[Transaction] =
     convertToTransactions(
       expenses = expenses.map(_.entity),
@@ -35,7 +35,8 @@ class ConvertExpensesToTransactionsUseCase {
       val splitUserUids = if (expense.isSplitBetweenAll) {
         members
       } else {
-        expenseUidToSplitBetweenMap.getOrElse(expense.uid, List.empty)
+        expenseUidToSplitBetweenMap
+          .getOrElse(expense.uid, List.empty)
           .map(split => split.memberUid)
       }
 

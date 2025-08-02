@@ -56,11 +56,13 @@ class ResolveUserReferencesUseCase(
   ): IO[DomainError, Member] = {
     reference match {
       case MemberReference(uid) =>
-        ZIO.fromOption(memberUidToMemberMap.get(uid))
+        ZIO
+          .fromOption(memberUidToMemberMap.get(uid))
           .mapError(_ => DomainError(message = s"Invalid member uid: $uid".some))
 
       case NameReference(name) =>
-        ZIO.fromOption(memberNameToMemberMap.get(name))
+        ZIO
+          .fromOption(memberNameToMemberMap.get(name))
           .mapError(_ => DomainError(message = s"Invalid member uid: $name".some))
     }
   }

@@ -1,6 +1,12 @@
 package com.github.ai.split.presentation.controllers
 
-import com.github.ai.split.domain.usecases.{AddMembersUseCase, AddUserUseCase, AssembleGroupResponseUseCase, GetGroupUseCase, RemoveMembersUseCase}
+import com.github.ai.split.domain.usecases.{
+  AddMembersUseCase,
+  AddUserUseCase,
+  AssembleGroupResponseUseCase,
+  GetGroupUseCase,
+  RemoveMembersUseCase
+}
 import com.github.ai.split.api.request.PostMemberRequest
 import com.github.ai.split.api.response.{DeleteMemberResponse, PostMemberResponse}
 import com.github.ai.split.domain.AccessResolverService

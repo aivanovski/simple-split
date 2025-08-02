@@ -2,7 +2,17 @@ package com.github.ai.split.utils
 
 import com.github.ai.split.entity.{ExpenseWithRelations, Transaction}
 import com.github.ai.split.api.{ExpenseDto, GroupDto, TransactionDto, MemberDto}
-import com.github.ai.split.entity.db.{ExpenseEntity, ExpenseUid, GroupEntity, GroupMemberEntity, MemberUid, PaidByEntity, SplitBetweenEntity, UserEntity, UserUid}
+import com.github.ai.split.entity.db.{
+  ExpenseEntity,
+  ExpenseUid,
+  GroupEntity,
+  GroupMemberEntity,
+  MemberUid,
+  PaidByEntity,
+  SplitBetweenEntity,
+  UserEntity,
+  UserUid
+}
 import com.github.ai.split.entity.exception.DomainError
 import zio.*
 import zio.direct.*
@@ -70,10 +80,12 @@ def toMemberDtos(
 ): IO[DomainError, List[MemberDto]] = {
   ZIO.collectAll(
     memberUids.map { memberUid =>
-      val userOption = memberUidToUserUidMap.get(memberUid)
+      val userOption = memberUidToUserUidMap
+        .get(memberUid)
         .flatMap(userUid => userUidToUserMap.get(userUid))
 
-      ZIO.fromOption(userOption)
+      ZIO
+        .fromOption(userOption)
         .map(user =>
           MemberDto(
             uid = memberUid.toString,

@@ -38,4 +38,3 @@ extension (exception: DomainError) {
     else getRootCauseOrSelf(error.getCause)
   }
 }
-

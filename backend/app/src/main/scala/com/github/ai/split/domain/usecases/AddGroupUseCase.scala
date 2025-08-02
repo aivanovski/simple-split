@@ -29,36 +29,42 @@ class AddGroupUseCase(
 
       val groupUid = GroupUid(UUID.randomUUID())
 
-      val group = groupDao.add(
-        GroupEntity(
-          uid = groupUid,
-          title = newGroup.title,
-          description = newGroup.description,
-          passwordHash = if (newGroup.password.nonEmpty) {
-            passwordService.hashPassword(newGroup.password).some
-          } else {
-            None
+      val group = groupDao
+        .add(
+          GroupEntity(
+            uid = groupUid,
+            title = newGroup.title,
+            description = newGroup.description,
+            passwordHash = if (newGroup.password.nonEmpty) {
+              passwordService.hashPassword(newGroup.password).some
+            } else {
+              None
+            }
+          )
+        )
+        .run
+
+      val members = ZIO
+        .collectAll(
+          newGroup.members.map { member =>
+            addMemberUserCase.addMember(
+              groupUid = groupUid,
+              name = member.name
+            )
           }
         )
-      ).run
+        .run
 
-      val members = ZIO.collectAll(
-        newGroup.members.map { member =>
-          addMemberUserCase.addMember(
-            groupUid = groupUid,
-            name = member.name
-          )
-        }
-      ).run
-
-      val expenses = ZIO.collectAll(
-        newGroup.expenses.map { expense =>
-          addExpenseUseCase.addExpenseToGroup(
-            groupUid = groupUid,
-            newExpense = expense
-          )
-        }
-      ).run
+      val expenses = ZIO
+        .collectAll(
+          newGroup.expenses.map { expense =>
+            addExpenseUseCase.addExpenseToGroup(
+              groupUid = groupUid,
+              newExpense = expense
+            )
+          }
+        )
+        .run
 
       group
     }
@@ -79,24 +85,28 @@ class AddGroupUseCase(
       }
 
       if (newGroup.members.nonEmpty) {
-        validateMemberUseCase.validateNewMembers(
-          currentMemberNames = List.empty,
-          newMemberNames = newGroup.members.map(_.name)
-        ).run
+        validateMemberUseCase
+          .validateNewMembers(
+            currentMemberNames = List.empty,
+            newMemberNames = newGroup.members.map(_.name)
+          )
+          .run
       }
 
       if (newGroup.expenses.nonEmpty) {
         // TODO: check expenses have valid names
 
-        ZIO.collectAll(
-          newGroup.expenses.map { expense =>
-            validateExpenseUseCase.validateExpenseData(
-              members = newGroup.members,
-              currentExpenses = List.empty,
-              expense = expense
-            )
-          }
-        ).run
+        ZIO
+          .collectAll(
+            newGroup.expenses.map { expense =>
+              validateExpenseUseCase.validateExpenseData(
+                members = newGroup.members,
+                currentExpenses = List.empty,
+                expense = expense
+              )
+            }
+          )
+          .run
       }
 
       ZIO.unit.run

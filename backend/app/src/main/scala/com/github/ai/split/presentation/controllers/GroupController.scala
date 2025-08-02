@@ -2,8 +2,27 @@ package com.github.ai.split.presentation.controllers
 
 import com.github.ai.split.api.{NewExpenseDto, UserNameDto}
 import com.github.ai.split.domain.AccessResolverService
-import com.github.ai.split.domain.usecases.{AddExpenseUseCase, AddGroupUseCase, AddMembersUseCase, AddUserUseCase, AssembleGroupResponseUseCase, AssembleGroupsResponseUseCase, GetAllUsersUseCase, UpdateGroupUseCase}
-import com.github.ai.split.entity.{Member, NameReference, NewExpense, NewGroup, NewUser, Split, SplitBetweenAll, SplitBetweenMembers, UserReference}
+import com.github.ai.split.domain.usecases.{
+  AddExpenseUseCase,
+  AddGroupUseCase,
+  AddMembersUseCase,
+  AddUserUseCase,
+  AssembleGroupResponseUseCase,
+  AssembleGroupsResponseUseCase,
+  GetAllUsersUseCase,
+  UpdateGroupUseCase
+}
+import com.github.ai.split.entity.{
+  Member,
+  NameReference,
+  NewExpense,
+  NewGroup,
+  NewUser,
+  Split,
+  SplitBetweenAll,
+  SplitBetweenMembers,
+  UserReference
+}
 import com.github.ai.split.api.request.{PostGroupRequest, PutGroupRequest}
 import com.github.ai.split.api.response.{GetGroupsResponse, PostGroupResponse, PutGroupResponse}
 import com.github.ai.split.data.db.dao.GroupMemberEntityDao
@@ -52,7 +71,8 @@ class GroupController(
       newMembers <- {
         val newMembers = data.members.getOrElse(List.empty)
         if (newMembers.nonEmpty) {
-          ZIO.collectAll(
+          ZIO
+            .collectAll(
               newMembers.map(member => member.uid.parseUid().map(uid => UserUid(uid)))
             )
             .map(uids => Some(uids))
@@ -84,7 +104,8 @@ class GroupController(
       )
 
       newGroup <- {
-        val newUsers = data.members.getOrElse(List.empty)
+        val newUsers = data.members
+          .getOrElse(List.empty)
           .map(member => NewUser(name = member.name))
 
         addGroupUseCase.addGroup(
@@ -107,7 +128,8 @@ class GroupController(
   ): IO[DomainError, List[NewExpense]] = {
     val newExpenses = expenses.map { expense =>
       val isSplitBetweenAll = expense.isSplitBetweenAll.getOrElse(true)
-      val splitMembers = expense.splitBetween.getOrElse(List.empty)
+      val splitMembers = expense.splitBetween
+        .getOrElse(List.empty)
         .map(splitMember => NameReference(name = splitMember.name))
 
       NewExpense(
@@ -125,7 +147,8 @@ class GroupController(
   private def parseUids(request: Request): IO[DomainError, List[UUID]] = {
     for {
       uids <- {
-        val uids = request.url.queryParamOrElse("ids", "")
+        val uids = request.url
+          .queryParamOrElse("ids", "")
           .split(",")
           .toList
           .map(id => id.parseUid())
@@ -140,7 +163,8 @@ class GroupController(
   }
 
   private def parsePasswords(request: Request): IO[DomainError, List[String]] = {
-    val passwords = request.url.queryParamOrElse("passwords", "")
+    val passwords = request.url
+      .queryParamOrElse("passwords", "")
       .split(",")
       .toList
 
