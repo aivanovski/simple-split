@@ -9,4 +9,4 @@ case class PutExpenseResponse(
 
 object PutExpenseResponse {
   implicit val encoder: JsonEncoder[PutExpenseResponse] = DeriveJsonEncoder.gen[PutExpenseResponse]
-} 
+}

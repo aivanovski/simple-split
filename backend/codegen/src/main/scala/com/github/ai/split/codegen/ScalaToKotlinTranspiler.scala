@@ -28,7 +28,8 @@ class ScalaToKotlinTranspiler {
   }
 
   private def parsePackageName(input: String): IO[AppError, String] = {
-    val packageName = packageRegex.findFirstMatchIn(input)
+    val packageName = packageRegex
+      .findFirstMatchIn(input)
       .map(m => m.group(1).trim)
 
     if (packageName.isDefined) ZIO.succeed(packageName.getOrElse(""))
@@ -36,15 +37,14 @@ class ScalaToKotlinTranspiler {
   }
 
   private def parseImports(input: String): IO[AppError, List[String]] = {
-    val imports = importRegex.findAllIn(input)
-      .map { line => line }
-      .toList
+    val imports = importRegex.findAllIn(input).map { line => line }.toList
 
     ZIO.succeed(imports)
   }
 
   private def parseClassName(input: String): IO[AppError, String] = {
-    val className = caseClassRegex.findFirstMatchIn(input)
+    val className = caseClassRegex
+      .findFirstMatchIn(input)
       .map(m => m.group(1).trim)
 
     if (className.isDefined) ZIO.succeed(className.getOrElse(""))
@@ -52,7 +52,8 @@ class ScalaToKotlinTranspiler {
   }
 
   private def parseFields(input: String): IO[AppError, List[String]] = {
-    val allFields = caseClassRegex.findFirstMatchIn(input)
+    val allFields = caseClassRegex
+      .findFirstMatchIn(input)
       .map(m => m.group(2).trim)
 
     if (allFields.isDefined) ZIO.succeed(allFields.getOrElse("").trim.split(",").toList)
@@ -62,10 +63,9 @@ class ScalaToKotlinTranspiler {
   private def transpileImports(imports: List[String]): IO[AppError, List[String]] = {
     val transpiledImports = imports.map(line => transpileImport(line))
 
-    ZIO.collectAll(transpiledImports)
-      .map(lines =>
-        List("import kotlinx.serialization.Serializable") ++ lines.flatten
-      )
+    ZIO
+      .collectAll(transpiledImports)
+      .map(lines => List("import kotlinx.serialization.Serializable") ++ lines.flatten)
   }
 
   private def transpileImport(line: String): IO[AppError, List[String]] = {
@@ -74,7 +74,6 @@ class ScalaToKotlinTranspiler {
       return ZIO.succeed(List.empty)
     }
 
-
     if (trimmedLine.contains("{") || trimmedLine.contains("}")) {
       val bracketStartIdx = trimmedLine.indexOf("{")
       val bracketEndIdx = trimmedLine.lastIndexOf("}")
@@ -82,7 +81,8 @@ class ScalaToKotlinTranspiler {
         return ZIO.fail(ScalaSyntaxError(message = s"Unable to transpile '$line'"))
       }
 
-      val typeNames = trimmedLine.substring(bracketStartIdx + 1, bracketEndIdx)
+      val typeNames = trimmedLine
+        .substring(bracketStartIdx + 1, bracketEndIdx)
         .split(" ")
         .map(name => name.replaceAll(",", ""))
 
@@ -105,7 +105,8 @@ class ScalaToKotlinTranspiler {
       .replaceAll("var", "")
       .trim
 
-    val nameAndType = fieldRegex.findFirstMatchIn(cleanedField)
+    val nameAndType = fieldRegex
+      .findFirstMatchIn(cleanedField)
       .map(m => (m.group(1), m.group(2)))
 
     if (nameAndType.isEmpty) {
@@ -123,7 +124,8 @@ class ScalaToKotlinTranspiler {
       }
 
       val genericType = fieldType.substring(0, bracketStartIdx)
-      val parameterType = fieldType.substring(bracketStartIdx + 1, bracketEndIdx)
+      val parameterType = fieldType
+        .substring(bracketStartIdx + 1, bracketEndIdx)
         .replaceAll("\\[", "<")
         .replaceAll("]", ">")
 
@@ -136,9 +138,7 @@ class ScalaToKotlinTranspiler {
         )
       } else {
         ZIO.succeed(
-          Field(
-            name = fieldName,
-            fieldType = fieldType.replaceAll("\\[", "<").replaceAll("]", ">"))
+          Field(name = fieldName, fieldType = fieldType.replaceAll("\\[", "<").replaceAll("]", ">"))
         )
       }
     } else {

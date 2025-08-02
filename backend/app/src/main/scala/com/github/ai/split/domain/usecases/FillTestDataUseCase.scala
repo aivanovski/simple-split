@@ -1,10 +1,28 @@
 package com.github.ai.split.domain.usecases
 
-import com.github.ai.split.data.db.dao.{ExpenseEntityDao, GroupEntityDao, GroupMemberEntityDao, PaidByEntityDao, SplitBetweenEntityDao, UserEntityDao}
+import com.github.ai.split.data.db.dao.{
+  ExpenseEntityDao,
+  GroupEntityDao,
+  GroupMemberEntityDao,
+  PaidByEntityDao,
+  SplitBetweenEntityDao,
+  UserEntityDao
+}
 import com.github.ai.split.domain.PasswordService
 import com.github.ai.split.data.db.repository.GroupRepository
 import com.github.ai.split.entity.{MemberReference, NameReference, Split, SplitBetweenAll, SplitBetweenMembers}
-import com.github.ai.split.entity.db.{ExpenseEntity, ExpenseUid, GroupEntity, GroupMemberEntity, GroupUid, MemberUid, PaidByEntity, SplitBetweenEntity, UserEntity, UserUid}
+import com.github.ai.split.entity.db.{
+  ExpenseEntity,
+  ExpenseUid,
+  GroupEntity,
+  GroupMemberEntity,
+  GroupUid,
+  MemberUid,
+  PaidByEntity,
+  SplitBetweenEntity,
+  UserEntity,
+  UserUid
+}
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.some
 import zio.{IO, ZIO}
@@ -35,23 +53,24 @@ class FillTestDataUseCase(
       // TODO: rewrite check
       existingUsers <- userDao.getAll().catchAll(_ => ZIO.succeed(List.empty))
 
-      _ <- if (existingUsers.nonEmpty) {
-        ZIO.logInfo("Database already contains test data")
-      } else {
-        val groups = List(
-          createTripToDisneyLandGroup(),
-          createCoffeeShopRegularsGroup(),
-          createFamilyDinnerGroup(),
-          createBookClubGroup(),
-          createSportsTeamGroup()
-        )
+      _ <-
+        if (existingUsers.nonEmpty) {
+          ZIO.logInfo("Database already contains test data")
+        } else {
+          val groups = List(
+            createTripToDisneyLandGroup(),
+            createCoffeeShopRegularsGroup(),
+            createFamilyDinnerGroup(),
+            createBookClubGroup(),
+            createSportsTeamGroup()
+          )
 
-        for {
-          _ <- insertUsers()
-          _ <- insertGroups(groups)
-          _ <- ZIO.logInfo("Test data inserted successfully")
-        } yield ()
-      }
+          for {
+            _ <- insertUsers()
+            _ <- insertGroups(groups)
+            _ <- ZIO.logInfo("Test data inserted successfully")
+          } yield ()
+        }
     } yield ()
   }
 
@@ -89,7 +108,6 @@ class FillTestDataUseCase(
         )
       )
 
-
       _ <- {
         val members = group.members.map { member =>
           GroupMemberEntity(
@@ -103,12 +121,11 @@ class FillTestDataUseCase(
       }
 
       _ <- ZIO.collectAll(
-        group.expenses.map {
-          expense =>
-            insertExpense(
-              groupUid = group.uid,
-              expense = expense
-            )
+        group.expenses.map { expense =>
+          insertExpense(
+            groupUid = group.uid,
+            expense = expense
+          )
         }
       )
     } yield ()
@@ -160,7 +177,8 @@ class FillTestDataUseCase(
       _ <- {
         expense.split match {
           case SplitBetweenMembers(references) => {
-            ZIO.collectAll(
+            ZIO
+              .collectAll(
                 references
                   .map { reference =>
                     val name = reference.asInstanceOf[NameReference].name
@@ -172,8 +190,8 @@ class FillTestDataUseCase(
                       ZIO.fail(DomainError(message = s"Failed to resolve member by name: $name".some))
                     }
                   }
-
-              ).map { memberUids =>
+              )
+              .map { memberUids =>
                 memberUids.map { memberUid =>
                   SplitBetweenEntity(
                     groupUid = groupUid,

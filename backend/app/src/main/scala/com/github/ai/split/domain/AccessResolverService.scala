@@ -12,15 +12,17 @@ class AccessResolverService(
   private val expenseRepository: ExpenseRepository,
   private val passwordService: PasswordService,
   private val groupDao: GroupEntityDao,
-  private val groupMemberDao: GroupMemberEntityDao,
+  private val groupMemberDao: GroupMemberEntityDao
 ) {
 
   def canAccessToGroups(
     groupUids: List[GroupUid],
     passwords: List[String]
   ): IO[DomainError, Unit] = {
-    ZIO.collectAll(
-        groupUids.zip(passwords)
+    ZIO
+      .collectAll(
+        groupUids
+          .zip(passwords)
           .map((groupUid, password) => canAccessToGroup(groupUid, password))
       )
       .map(_ => ())

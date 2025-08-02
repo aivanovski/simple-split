@@ -1,7 +1,13 @@
 package com.github.ai.split.presentation.controllers
 
 import com.github.ai.split.utils.*
-import com.github.ai.split.domain.usecases.{AddExpenseUseCase, AssembleExpenseUseCase, AssembleGroupResponseUseCase, RemoveExpenseUseCase, UpdateExpenseUseCase}
+import com.github.ai.split.domain.usecases.{
+  AddExpenseUseCase,
+  AssembleExpenseUseCase,
+  AssembleGroupResponseUseCase,
+  RemoveExpenseUseCase,
+  UpdateExpenseUseCase
+}
 import com.github.ai.split.api.request.{PostExpenseRequest, PutExpenseRequest}
 import com.github.ai.split.api.response.{DeleteExpenseResponse, PostExpenseResponse, PutExpenseResponse}
 import com.github.ai.split.data.db.repository.ExpenseRepository
@@ -9,7 +15,14 @@ import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.domain.AccessResolverService
 import com.github.ai.split.entity.db.{ExpenseUid, GroupUid, MemberUid}
 import com.github.ai.split.utils.parsePasswordParam
-import com.github.ai.split.entity.{MemberReference, NewExpense, Split, SplitBetweenAll, SplitBetweenMembers, UserReference}
+import com.github.ai.split.entity.{
+  MemberReference,
+  NewExpense,
+  Split,
+  SplitBetweenAll,
+  SplitBetweenMembers,
+  UserReference
+}
 import zio.*
 import zio.http.*
 import zio.json.*
@@ -66,23 +79,25 @@ class ExpenseController(
 
       data <- request.body.parse[PutExpenseRequest]
 
-      newPaidBy <- if (data.paidBy.isDefined) {
-        parsePaidBy(
-          paidByUids = data.paidBy.getOrElse(List.empty).map(_.uid)
-        ).map(paidBy => Some(paidBy))
-      } else {
-        ZIO.succeed(None)
-      }
+      newPaidBy <-
+        if (data.paidBy.isDefined) {
+          parsePaidBy(
+            paidByUids = data.paidBy.getOrElse(List.empty).map(_.uid)
+          ).map(paidBy => Some(paidBy))
+        } else {
+          ZIO.succeed(None)
+        }
 
-      newSplit <- if (data.splitBetween.isDefined || data.isSplitBetweenAll.isDefined) {
-        parseSplit(
-          isSplitEqually = data.isSplitBetweenAll.getOrElse(false),
-          splitUids = data.splitBetween.getOrElse(List.empty).map(_.uid)
-        )
-          .map(split => Some(split))
-      } else {
-        ZIO.succeed(None)
-      }
+      newSplit <-
+        if (data.splitBetween.isDefined || data.isSplitBetweenAll.isDefined) {
+          parseSplit(
+            isSplitEqually = data.isSplitBetweenAll.getOrElse(false),
+            splitUids = data.splitBetween.getOrElse(List.empty).map(_.uid)
+          )
+            .map(split => Some(split))
+        } else {
+          ZIO.succeed(None)
+        }
 
       _ <- updateExpenseUseCase.updateExpense(
         expenseUid = expenseUid,
@@ -118,8 +133,8 @@ class ExpenseController(
     paidByUids: List[String]
   ): IO[DomainError, List[UserReference]] = {
     ZIO.collectAll(
-      paidByUids.map {
-        payer => payer.parseUid().map(uid => MemberReference(MemberUid(uid)))
+      paidByUids.map { payer =>
+        payer.parseUid().map(uid => MemberReference(MemberUid(uid)))
       }
     )
   }
@@ -129,7 +144,8 @@ class ExpenseController(
     splitUids: List[String]
   ): IO[DomainError, Split] = {
     if (!isSplitEqually) {
-      ZIO.collectAll(
+      ZIO
+        .collectAll(
           splitUids.map { uid =>
             uid.parseUid().map(uid => MemberReference(MemberUid(uid)))
           }

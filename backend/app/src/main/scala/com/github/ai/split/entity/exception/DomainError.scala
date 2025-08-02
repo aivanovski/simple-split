@@ -4,6 +4,6 @@ class DomainError(
   val message: Option[String] = None,
   val cause: Option[Throwable] = None
 ) extends Exception(
-  message.orNull,
-  cause.orNull
-)
+      message.orNull,
+      cause.orNull
+    )

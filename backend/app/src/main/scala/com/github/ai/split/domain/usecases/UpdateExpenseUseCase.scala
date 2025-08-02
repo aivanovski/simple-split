@@ -2,7 +2,14 @@ package com.github.ai.split.domain.usecases
 
 import com.github.ai.split.data.db.dao.{GroupMemberEntityDao, PaidByEntityDao, SplitBetweenEntityDao, UserEntityDao}
 import com.github.ai.split.data.db.repository.{ExpenseRepository, GroupRepository}
-import com.github.ai.split.entity.{ExpenseWithRelations, Split, SplitBetweenAll, SplitBetweenMembers, UserReference, Member}
+import com.github.ai.split.entity.{
+  ExpenseWithRelations,
+  Split,
+  SplitBetweenAll,
+  SplitBetweenMembers,
+  UserReference,
+  Member
+}
 import com.github.ai.split.entity.db.{ExpenseEntity, ExpenseUid, GroupUid, MemberUid, PaidByEntity, SplitBetweenEntity}
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.some
@@ -38,44 +45,51 @@ class UpdateExpenseUseCase(
       _ <- isPaidByValid(groupUid = groupUid, members = members, paidBy = newPaidBy)
       _ <- isSplitValid(groupUid = groupUid, members = members, split = newSplit)
 
-      paidBy <- if (newPaidBy.isDefined) {
-        resolveUserReferencesUseCase.resolveReferences(
-          allMembers = members,
-          references = newPaidBy.getOrElse(List.empty)
-        ).map { payers =>
-          payers.map { payer =>
-            PaidByEntity(
-              groupUid = groupUid,
-              expenseUid = expense.entity.uid,
-              memberUid = payer.entity.uid
+      paidBy <-
+        if (newPaidBy.isDefined) {
+          resolveUserReferencesUseCase
+            .resolveReferences(
+              allMembers = members,
+              references = newPaidBy.getOrElse(List.empty)
             )
-          }
-        }
-      } else {
-        ZIO.succeed(expense.paidBy)
-      }
-
-      splitBetween <- if (newSplit.isDefined) {
-        val split = newSplit.get match {
-          case SplitBetweenAll => List.empty
-          case SplitBetweenMembers(references) => resolveUserReferencesUseCase.resolveReferences(
-            allMembers = members,
-            references = references
-          ).map { splitMembers =>
-            splitMembers.map { member =>
-              SplitBetweenEntity(
-                groupUid = groupUid,
-                expenseUid = expense.entity.uid,
-                memberUid = member.entity.uid
-              )
+            .map { payers =>
+              payers.map { payer =>
+                PaidByEntity(
+                  groupUid = groupUid,
+                  expenseUid = expense.entity.uid,
+                  memberUid = payer.entity.uid
+                )
+              }
             }
-          }
+        } else {
+          ZIO.succeed(expense.paidBy)
         }
 
-        ZIO.succeed(List.empty)
-      } else {
-        ZIO.succeed(expense.splitBetween)
-      }
+      splitBetween <-
+        if (newSplit.isDefined) {
+          val split = newSplit.get match {
+            case SplitBetweenAll => List.empty
+            case SplitBetweenMembers(references) =>
+              resolveUserReferencesUseCase
+                .resolveReferences(
+                  allMembers = members,
+                  references = references
+                )
+                .map { splitMembers =>
+                  splitMembers.map { member =>
+                    SplitBetweenEntity(
+                      groupUid = groupUid,
+                      expenseUid = expense.entity.uid,
+                      memberUid = member.entity.uid
+                    )
+                  }
+                }
+          }
+
+          ZIO.succeed(List.empty)
+        } else {
+          ZIO.succeed(expense.splitBetween)
+        }
 
       _ <- {
         val isSplitBetweenAll = if (newSplit.isDefined) {
@@ -172,10 +186,11 @@ class UpdateExpenseUseCase(
 
     split.get match {
       case SplitBetweenAll => ZIO.succeed(())
-      case SplitBetweenMembers(references) => resolveUserReferencesUseCase.validateReferences(
-        allMembers = members,
-        references = references
-      )
+      case SplitBetweenMembers(references) =>
+        resolveUserReferencesUseCase.validateReferences(
+          allMembers = members,
+          references = references
+        )
     }
   }
-} 
+}

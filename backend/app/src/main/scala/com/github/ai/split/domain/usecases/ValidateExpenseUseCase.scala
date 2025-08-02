@@ -2,7 +2,17 @@ package com.github.ai.split.domain.usecases
 
 import com.github.ai.split.data.db.repository.{ExpenseRepository, GroupRepository}
 import com.github.ai.split.entity.db.ExpenseEntity
-import com.github.ai.split.entity.{Member, Split, SplitBetweenMembers, SplitBetweenAll, MemberReference, NameReference, NewExpense, NewUser, UserReference}
+import com.github.ai.split.entity.{
+  Member,
+  Split,
+  SplitBetweenMembers,
+  SplitBetweenAll,
+  MemberReference,
+  NameReference,
+  NewExpense,
+  NewUser,
+  UserReference
+}
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.some
 import zio.*
@@ -10,7 +20,7 @@ import zio.direct.*
 
 class ValidateExpenseUseCase(
   private val expenseRepository: ExpenseRepository,
-  private val groupRepository: GroupRepository,
+  private val groupRepository: GroupRepository
 ) {
 
   def validateExpenseData(
@@ -43,11 +53,12 @@ class ValidateExpenseUseCase(
     paidBy: List[UserReference]
   ): IO[DomainError, Unit] = {
     for {
-      _ <- if (paidBy.isEmpty) {
-        ZIO.fail(DomainError(message = "Payer is not specified".some))
-      } else {
-        ZIO.unit
-      }
+      _ <-
+        if (paidBy.isEmpty) {
+          ZIO.fail(DomainError(message = "Payer is not specified".some))
+        } else {
+          ZIO.unit
+        }
 
       _ <- ZIO.collectAll(
         paidBy.map { payer =>
@@ -68,11 +79,13 @@ class ValidateExpenseUseCase(
             ZIO.fail(DomainError(message = "No split members".some)).run
           }
 
-          ZIO.collectAll(
-            splitMembers.map { memberReference =>
-              resolveReference(members = members, reference = memberReference)
-            }
-          ).run
+          ZIO
+            .collectAll(
+              splitMembers.map { memberReference =>
+                resolveReference(members = members, reference = memberReference)
+              }
+            )
+            .run
         }
 
         case _ =>

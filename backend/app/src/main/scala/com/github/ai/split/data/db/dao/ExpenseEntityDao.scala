@@ -33,9 +33,11 @@ class ExpenseEntityDao(
 
     for {
       expenses <- run(query).mapError(_.toDomainError())
-      expense <- ZIO.fromOption(
-        expenses.find(_.uid == uid)
-      ).mapError(_ => DomainError(message = s"Failed to find expense by uid: $uid".some))
+      expense <- ZIO
+        .fromOption(
+          expenses.find(_.uid == uid)
+        )
+        .mapError(_ => DomainError(message = s"Failed to find expense by uid: $uid".some))
     } yield expense
   }
 
@@ -62,7 +64,6 @@ class ExpenseEntityDao(
     run(query)
       .mapError(_.toDomainError())
   }
-
 
   def getByGroupUid(groupUid: GroupUid): IO[DomainError, List[ExpenseEntity]] = {
     val query = quote {

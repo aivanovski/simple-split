@@ -13,7 +13,7 @@ class RemoveMembersUseCase(
   private val groupDao: GroupEntityDao,
   private val groupMemberDao: GroupMemberEntityDao,
   private val paidByDao: PaidByEntityDao,
-  private val splitBetweenDao: SplitBetweenEntityDao,
+  private val splitBetweenDao: SplitBetweenEntityDao
 ) {
 
   def removeMemberByUids(

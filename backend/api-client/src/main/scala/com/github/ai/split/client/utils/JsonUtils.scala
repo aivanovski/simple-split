@@ -10,11 +10,11 @@ extension (response: Response) {
     defer {
       val jsonBody = response.body.asString.run
 
-      ZIO.fromEither(
-        jsonBody.fromJson[T](using decoder)
-          .left.map(errorMessage => Exception(errorMessage))
-      ).run
+      ZIO
+        .fromEither(
+          jsonBody.fromJson[T](using decoder).left.map(errorMessage => Exception(errorMessage))
+        )
+        .run
     }
   }
 }
-

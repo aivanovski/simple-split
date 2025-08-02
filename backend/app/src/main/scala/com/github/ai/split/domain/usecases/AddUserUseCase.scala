@@ -17,7 +17,7 @@ class AddUserUseCase(
       createdUser <- userDao.add(
         UserEntity(
           uid = UserUid(UUID.randomUUID()),
-          name = user.name,
+          name = user.name
         )
       )
     } yield createdUser

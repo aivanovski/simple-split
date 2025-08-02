@@ -22,6 +22,28 @@ jobs:
       - name: Run ktlint
         run: cd android && ./ktlint --editorconfig=".editorconfig"
 
+  check-scala-code-format:
+    name: Check Scala code format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup SBT
+        uses: sbt/setup-sbt@v1
+
+      - name: Cache Dependencies
+        uses: coursier/cache-action@v6
+
+      - name: Run scalafmt check
+        run: cd backend && sbt scalafmtCheck
+
   build-android-app:
     name: Build Android app
     needs: [ check-kotlin-code-format ]
@@ -43,8 +65,9 @@ jobs:
           name: app-debug.apk
           path: ./android/app/build/outputs/apk/debug/app-debug.apk
 
-  build-backend:
+  build-backend-app:
     name: Build Backend app
+    needs: [ check-scala-code-format ]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources

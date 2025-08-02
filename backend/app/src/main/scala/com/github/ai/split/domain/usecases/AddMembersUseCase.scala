@@ -25,25 +25,31 @@ class AddMembersUseCase(
     defer {
       val members = groupRepository.getMembers(groupUid).run
 
-      validateMemberUseCase.validateNewMembers(
-        currentMemberNames = members.map(_.user.name),
-        newMemberNames = List(name)
-      ).run
-
-      val user = userDao.add(
-        UserEntity(
-          uid = UserUid(UUID.randomUUID()),
-          name = name
+      validateMemberUseCase
+        .validateNewMembers(
+          currentMemberNames = members.map(_.user.name),
+          newMemberNames = List(name)
         )
-      ).run
+        .run
 
-      groupMemberDao.add(
-        GroupMemberEntity(
-          uid = MemberUid(UUID.randomUUID()),
-          groupUid = groupUid,
-          userUid = user.uid
+      val user = userDao
+        .add(
+          UserEntity(
+            uid = UserUid(UUID.randomUUID()),
+            name = name
+          )
         )
-      ).run
+        .run
+
+      groupMemberDao
+        .add(
+          GroupMemberEntity(
+            uid = MemberUid(UUID.randomUUID()),
+            groupUid = groupUid,
+            userUid = user.uid
+          )
+        )
+        .run
     }
   }
 
@@ -94,10 +100,12 @@ class AddMembersUseCase(
       }
 
       val userNames = users.map(_.name)
-      validateMemberUseCase.validateNewMembers(
-        groupUid = groupUid,
-        newMemberNames = userNames
-      ).run
+      validateMemberUseCase
+        .validateNewMembers(
+          groupUid = groupUid,
+          newMemberNames = userNames
+        )
+        .run
     }
   }
 }

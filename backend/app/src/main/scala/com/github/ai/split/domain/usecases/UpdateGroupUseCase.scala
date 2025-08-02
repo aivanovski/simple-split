@@ -1,6 +1,12 @@
 package com.github.ai.split.domain.usecases
 
-import com.github.ai.split.data.db.dao.{GroupEntityDao, GroupMemberEntityDao, PaidByEntityDao, SplitBetweenEntityDao, UserEntityDao}
+import com.github.ai.split.data.db.dao.{
+  GroupEntityDao,
+  GroupMemberEntityDao,
+  PaidByEntityDao,
+  SplitBetweenEntityDao,
+  UserEntityDao
+}
 import com.github.ai.split.domain.usecases.AddMembersUseCase
 import com.github.ai.split.domain.PasswordService
 import com.github.ai.split.entity.db.{GroupEntity, GroupMemberEntity, GroupUid, MemberUid, UserUid}
@@ -35,21 +41,23 @@ class UpdateGroupUseCase(
         currentMembers = currentMembers,
         newMemberUids = newMemberUids
       )
-      _ <- if (membersToAdd.nonEmpty) {
-        addMemberUseCase.canAddMembers(groupUid = groupUid, userUids = membersToAdd)
-      } else {
-        ZIO.succeed(())
-      }
+      _ <-
+        if (membersToAdd.nonEmpty) {
+          addMemberUseCase.canAddMembers(groupUid = groupUid, userUids = membersToAdd)
+        } else {
+          ZIO.succeed(())
+        }
 
       membersToRemove <- getMembersToRemove(
         currentMembers = currentMembers,
         newMemberUids = newMemberUids
       )
-      _ <- if (membersToRemove.nonEmpty) {
-        removeMembersUseCase.canRemoveMembers(groupUid = groupUid, memberUids = membersToRemove)
-      } else {
-        ZIO.succeed(())
-      }
+      _ <-
+        if (membersToRemove.nonEmpty) {
+          removeMembersUseCase.canRemoveMembers(groupUid = groupUid, memberUids = membersToRemove)
+        } else {
+          ZIO.succeed(())
+        }
 
       _ <- updateMembers(groupUid = groupUid, newMembersOption = newMemberUids)
 
@@ -92,10 +100,11 @@ class UpdateGroupUseCase(
 
     val newUids = newMemberUids.getOrElse(List.empty).toSet
 
-    ZIO.succeed(currentMembers
-      .filter(member => !newUids.contains(member.userUid))
-      .map(_.uid)
-      .distinct
+    ZIO.succeed(
+      currentMembers
+        .filter(member => !newUids.contains(member.userUid))
+        .map(_.uid)
+        .distinct
     )
   }
 
