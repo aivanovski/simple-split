@@ -34,9 +34,7 @@ class ExpenseEntityDao(
     for {
       expenses <- run(query).mapError(_.toDomainError())
       expense <- ZIO
-        .fromOption(
-          expenses.find(_.uid == uid)
-        )
+        .fromOption(expenses.find(_.uid == uid))
         .mapError(_ => DomainError(message = s"Failed to find expense by uid: $uid".some))
     } yield expense
   }

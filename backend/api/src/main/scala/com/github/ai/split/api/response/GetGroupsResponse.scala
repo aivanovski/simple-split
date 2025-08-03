@@ -1,10 +1,11 @@
 package com.github.ai.split.api.response
 
-import com.github.ai.split.api.GroupDto
+import com.github.ai.split.api.{GetGroupErrorDto, GroupDto}
 import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
 
 case class GetGroupsResponse(
-  groups: List[GroupDto]
+  groups: List[GroupDto],
+  errors: List[GetGroupErrorDto]
 )
 
 object GetGroupsResponse {

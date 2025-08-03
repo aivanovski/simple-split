@@ -2,11 +2,14 @@ package com.github.ai.split.domain
 
 import com.github.ai.split.data.db.dao.{GroupEntityDao, GroupMemberEntityDao}
 import com.github.ai.split.data.db.repository.ExpenseRepository
+import com.github.ai.split.entity.{Access, AccessResolutionResult}
+import com.github.ai.split.entity.Access.{DENIED, GRANTED}
+import com.github.ai.split.entity.Reason.NOT_FOUND
 import com.github.ai.split.entity.exception.DomainError
+import com.github.ai.split.utils.some
 import com.github.ai.split.entity.db.{ExpenseUid, GroupUid, MemberUid, UserUid}
-import zio.{IO, ZIO}
-
-import java.util.UUID
+import zio.*
+import zio.direct.*
 
 class AccessResolverService(
   private val expenseRepository: ExpenseRepository,
@@ -18,45 +21,74 @@ class AccessResolverService(
   def canAccessToGroups(
     groupUids: List[GroupUid],
     passwords: List[String]
-  ): IO[DomainError, Unit] = {
-    ZIO
-      .collectAll(
-        groupUids
-          .zip(passwords)
-          .map((groupUid, password) => canAccessToGroup(groupUid, password))
-      )
-      .map(_ => ())
+  ): IO[DomainError, List[AccessResolutionResult[GroupUid]]] = {
+    val uidsAndPasswords = groupUids.zip(passwords)
+
+    for {
+      result <- ZIO
+        .collectAll(
+          uidsAndPasswords
+            .map { (groupUid, password) =>
+              groupDao
+                .findByUid(groupUid)
+                .map {
+                  case Some(group) =>
+                    AccessResolutionResult(
+                      uid = groupUid,
+                      access = if (passwordService.isPasswordMatch(password, group.passwordHash.getOrElse(""))) {
+                        GRANTED
+                      } else {
+                        DENIED
+                      },
+                      reason = None
+                    )
+                  case None =>
+                    AccessResolutionResult(
+                      uid = groupUid,
+                      access = DENIED,
+                      reason = Some(NOT_FOUND)
+                    )
+                }
+            }
+        )
+    } yield result
   }
 
   def canAccessToExpense(
     expenseUid: ExpenseUid,
     password: String
   ): IO[DomainError, Unit] = {
-    for {
-      expense <- expenseRepository.getEntityByUid(uid = expenseUid)
-      _ <- canAccessToGroup(groupUid = expense.groupUid, password = password)
-    } yield ()
+    defer {
+      val expense = expenseRepository.getEntityByUid(uid = expenseUid).run
+      canAccessToGroup(groupUid = expense.groupUid, password = password).run
+
+      ()
+    }
   }
 
   def canAccessToGroup(
     groupUid: GroupUid,
     password: String
   ): IO[DomainError, Unit] = {
-    for {
-      group <- groupDao.getByUid(groupUid)
-      _ <- isPasswordMatch(password = password, passwordHash = group.passwordHash)
-    } yield ()
+    defer {
+      val group = groupDao.getByUid(groupUid).run
+      isPasswordMatch(password = password, passwordHash = group.passwordHash).run
+
+      ()
+    }
   }
 
   def canAccessToMember(
     memberUid: MemberUid,
     password: String
   ): IO[DomainError, Unit] = {
-    for {
-      member <- groupMemberDao.getByUid(uid = memberUid)
-      group <- groupDao.getByUid(uid = member.groupUid)
-      _ <- isPasswordMatch(password = password, passwordHash = group.passwordHash)
-    } yield ()
+    defer {
+      val member = groupMemberDao.getByUid(uid = memberUid).run
+      val group = groupDao.getByUid(uid = member.groupUid).run
+      isPasswordMatch(password = password, passwordHash = group.passwordHash).run
+
+      ()
+    }
   }
 
   private def isPasswordMatch(
@@ -64,12 +96,18 @@ class AccessResolverService(
     passwordHash: Option[String]
   ): IO[DomainError, Unit] = {
     if (password.isEmpty && passwordHash.isEmpty) {
-      ZIO.succeed(())
+      ZIO.unit
     } else {
-      passwordService.verifyPassword(
+      val isMatch = passwordService.isPasswordMatch(
         password = password,
         hashedPassword = passwordHash.getOrElse("")
       )
+
+      if (isMatch) {
+        ZIO.unit
+      } else {
+        ZIO.fail(DomainError(message = "Password doesn't match".some))
+      }
     }
   }
 }
