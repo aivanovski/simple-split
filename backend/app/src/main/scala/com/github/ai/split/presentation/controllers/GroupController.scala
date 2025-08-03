@@ -1,6 +1,6 @@
 package com.github.ai.split.presentation.controllers
 
-import com.github.ai.split.api.{NewExpenseDto, UserNameDto}
+import com.github.ai.split.api.{GetGroupErrorDto, NewExpenseDto, UserNameDto}
 import com.github.ai.split.domain.AccessResolverService
 import com.github.ai.split.domain.usecases.{
   AddExpenseUseCase,
@@ -13,19 +13,17 @@ import com.github.ai.split.domain.usecases.{
   UpdateGroupUseCase
 }
 import com.github.ai.split.entity.{
-  Member,
   NameReference,
   NewExpense,
   NewGroup,
   NewUser,
-  Split,
   SplitBetweenAll,
   SplitBetweenMembers,
   UserReference
 }
 import com.github.ai.split.api.request.{PostGroupRequest, PutGroupRequest}
 import com.github.ai.split.api.response.{GetGroupsResponse, PostGroupResponse, PutGroupResponse}
-import com.github.ai.split.data.db.dao.GroupMemberEntityDao
+import com.github.ai.split.entity.Access.{DENIED, GRANTED}
 import com.github.ai.split.entity.db.{ExpenseEntity, GroupMemberEntity, GroupUid, UserEntity, UserUid}
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.{parse, parsePasswordParam, parseUid, parseUidFromUrl, some}
@@ -53,10 +51,25 @@ class GroupController(
     for {
       groupUids <- parseUids(request).map(uids => uids.map(GroupUid(_)))
       passwords <- parsePasswords(request)
-      _ <- accessResolver.canAccessToGroups(groupUids = groupUids, passwords = passwords)
+      uidsAndAccesses <- accessResolver.canAccessToGroups(groupUids = groupUids, passwords = passwords)
+
+      grantedGroupsUids = uidsAndAccesses
+        .filter(result => result.access == GRANTED)
+        .map(result => result.uid)
+
+      deniedGroupUids = uidsAndAccesses
+        .filter(result => result.access == DENIED)
+        .map(result => result.uid)
 
       groups <- assembleGroupsUseCase.assembleGroupDtos(uids = groupUids)
-    } yield Response.json(GetGroupsResponse(groups).toJsonPretty)
+      errors <- ZIO
+        .succeed(deniedGroupUids.map { uid =>
+          GetGroupErrorDto(
+            uid = uid.toString,
+            message = "Not found"
+          )
+        })
+    } yield Response.json(GetGroupsResponse(groups, errors).toJsonPretty)
   }
 
   def updateGroup(

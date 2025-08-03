@@ -10,12 +10,7 @@ class PasswordService {
   def hashPassword(password: String): String =
     BCrypt.hashpw(password, BCrypt.gensalt())
 
-  def verifyPassword(password: String, hashedPassword: String): IO[DomainError, Unit] = {
-    val isMatch = BCrypt.checkpw(password, hashedPassword)
-    if (isMatch) {
-      ZIO.succeed(())
-    } else {
-      ZIO.fail(DomainError(message = "Password doesn't match".some))
-    }
+  def isPasswordMatch(password: String, hashedPassword: String): Boolean = {
+    BCrypt.checkpw(password, hashedPassword)
   }
 }
