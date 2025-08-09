@@ -21,10 +21,10 @@ import com.github.ai.simplesplit.android.presentation.core.compose.TextSize
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.CellViewModel
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.model.ButtonCellModel
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.model.SpaceCellModel
-import com.github.ai.simplesplit.android.presentation.core.compose.cells.model.TextCellModel
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.ui.ButtonCell
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.ui.SpaceCell
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.ui.TextCell
+import com.github.ai.simplesplit.android.presentation.core.compose.cells.ui.newTextCell
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.viewModel.ButtonCellViewModel
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.viewModel.SpaceCellViewModel
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.viewModel.TextCellViewModel
@@ -103,13 +103,9 @@ fun ConfirmationDialogScreenPreview() {
 private fun newConfirmationDialogState() =
     ConfirmationDialogState(
         cellViewModels = listOf(
-            TextCellViewModel(
-                TextCellModel(
-                    id = "message",
-                    text = stringResource(R.string.remove_group_confirmation_message),
-                    textSize = TextSize.TITLE_LARGE,
-                    textColor = AppTheme.theme.colors.primaryText
-                )
+            newTextCell(
+                text = stringResource(R.string.remove_group_confirmation_message),
+                textSize = TextSize.TITLE_LARGE
             ),
             SpaceCellViewModel(
                 SpaceCellModel(

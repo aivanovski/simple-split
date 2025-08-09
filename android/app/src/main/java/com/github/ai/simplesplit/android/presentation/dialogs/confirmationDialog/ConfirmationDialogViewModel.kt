@@ -1,5 +1,6 @@
 package com.github.ai.simplesplit.android.presentation.dialogs.confirmationDialog
 
+import com.github.ai.simplesplit.android.presentation.core.compose.TextColor
 import com.github.ai.simplesplit.android.presentation.core.compose.TextSize
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.CellEvent
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.CellEventProvider
@@ -59,7 +60,7 @@ class ConfirmationDialogViewModel(
                     id = "message",
                     text = args.message,
                     textSize = TextSize.TITLE_MEDIUM,
-                    textColor = theme.colors.primaryText
+                    textColor = TextColor.PRIMARY
                 )
             ),
             SpaceCellViewModel(

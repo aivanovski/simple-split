@@ -6,6 +6,8 @@ import androidx.compose.material3.Divider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.model.DividerCellModel
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.viewModel.DividerCellViewModel
 import com.github.ai.simplesplit.android.presentation.core.compose.preview.ElementSpace
@@ -36,7 +38,7 @@ fun DividerCellPreview() {
 }
 
 @Composable
-fun newDividerCell(padding: androidx.compose.ui.unit.Dp = androidx.compose.ui.unit.Dp(16f)) =
+fun newDividerCell(padding: Dp = 0.dp) =
     DividerCellViewModel(
         model = DividerCellModel(
             id = "divider_id",

@@ -11,6 +11,8 @@ import com.github.ai.simplesplit.android.presentation.core.mvi.CellsMviViewModel
 import com.github.ai.simplesplit.android.presentation.core.mvi.nonStateAction
 import com.github.ai.simplesplit.android.presentation.dialogs.Dialog
 import com.github.ai.simplesplit.android.presentation.dialogs.confirmationDialog.model.ConfirmationDialogArgs
+import com.github.ai.simplesplit.android.presentation.dialogs.expenseDetails.model.ExpenseDetailsAction
+import com.github.ai.simplesplit.android.presentation.dialogs.expenseDetails.model.ExpenseDetailsDialogArgs
 import com.github.ai.simplesplit.android.presentation.dialogs.menuDialog.model.MenuDialogArgs
 import com.github.ai.simplesplit.android.presentation.dialogs.menuDialog.model.MenuItem
 import com.github.ai.simplesplit.android.presentation.screens.Screen
@@ -54,7 +56,7 @@ class GroupDetailsViewModel(
                 nonStateAction { navigateToNewExpenseScreen() }
 
             is GroupDetailsIntent.OnExpenseClick ->
-                nonStateAction { } // TODO:
+                nonStateAction { showExpenseDetailsDialog(intent.expenseUid) }
 
             is GroupDetailsIntent.OnExpenseLongClick ->
                 nonStateAction { showExpenseMenuDialog(intent.expenseUid) }
@@ -159,6 +161,31 @@ class GroupDetailsViewModel(
 
             emitAll(showData(group))
         }.flowOn(Dispatchers.IO)
+    }
+
+    private fun showExpenseDetailsDialog(expenseUid: String) {
+        val expense = data.expenses
+            .firstOrNull { expense -> expense.uid == expenseUid }
+            ?: return
+
+        router.showDialog(
+            Dialog.ExpenseDetails(
+                ExpenseDetailsDialogArgs(
+                    expense = expense
+                )
+            )
+        )
+        router.setResultListener(Dialog.ExpenseDetails::class) { action ->
+            if (action is ExpenseDetailsAction) {
+                when (action) {
+                    ExpenseDetailsAction.EDIT ->
+                        sendIntent(GroupDetailsIntent.OnEditExpenseClick(expenseUid))
+
+                    ExpenseDetailsAction.REMOVE ->
+                        sendIntent(GroupDetailsIntent.OnRemoveExpenseClick(expenseUid))
+                }
+            }
+        }
     }
 
     private fun showExpenseMenuDialog(expenseUid: String) {

@@ -6,8 +6,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
+import com.github.ai.simplesplit.android.presentation.core.compose.TextColor
 import com.github.ai.simplesplit.android.presentation.core.compose.TextSize
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.model.TextCellModel
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.viewModel.TextCellViewModel
@@ -15,9 +15,9 @@ import com.github.ai.simplesplit.android.presentation.core.compose.preview.Eleme
 import com.github.ai.simplesplit.android.presentation.core.compose.preview.ThemedPreview
 import com.github.ai.simplesplit.android.presentation.core.compose.preview.longText
 import com.github.ai.simplesplit.android.presentation.core.compose.preview.shortText
-import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppTheme
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.ElementMargin
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.LightTheme
+import com.github.ai.simplesplit.android.presentation.core.compose.toColor
 import com.github.ai.simplesplit.android.presentation.core.compose.toTextStyle
 
 @Composable
@@ -26,7 +26,7 @@ fun TextCell(viewModel: TextCellViewModel) {
 
     Text(
         text = model.text,
-        color = model.textColor,
+        color = model.textColor.toColor(),
         style = model.textSize.toTextStyle(),
         modifier = Modifier
             .fillMaxWidth()
@@ -45,24 +45,24 @@ fun TextCellPreview() {
         Column {
             ElementSpace()
             TextCell(
-                newTextCellViewModel(
+                newTextCell(
                     textSize = TextSize.TITLE_LARGE
                 )
             )
             TextCell(
-                newTextCellViewModel()
+                newTextCell()
             )
             ElementSpace()
             TextCell(
-                newTextCellViewModel(
+                newTextCell(
                     text = longText()
                 )
             )
             ElementSpace()
             TextCell(
-                newTextCellViewModel(
+                newTextCell(
                     text = "Error message",
-                    textColor = AppTheme.theme.colors.errorText
+                    textColor = TextColor.ERROR
                 )
             )
         }
@@ -70,10 +70,10 @@ fun TextCellPreview() {
 }
 
 @Composable
-fun newTextCellViewModel(
+fun newTextCell(
     text: String = shortText(),
     textSize: TextSize = TextSize.BODY_LARGE,
-    textColor: Color = AppTheme.theme.colors.primaryText
+    textColor: TextColor = TextColor.PRIMARY
 ) = TextCellViewModel(
     model = TextCellModel(
         id = "id",

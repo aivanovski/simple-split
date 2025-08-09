@@ -16,6 +16,9 @@ import com.github.ai.simplesplit.android.presentation.core.compose.theme.ThemePr
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.ThemeProviderImpl
 import com.github.ai.simplesplit.android.presentation.dialogs.confirmationDialog.ConfirmationDialogViewModel
 import com.github.ai.simplesplit.android.presentation.dialogs.confirmationDialog.model.ConfirmationDialogArgs
+import com.github.ai.simplesplit.android.presentation.dialogs.expenseDetails.ExpenseDetailsDialogCellFactory
+import com.github.ai.simplesplit.android.presentation.dialogs.expenseDetails.ExpenseDetailsDialogViewModel
+import com.github.ai.simplesplit.android.presentation.dialogs.expenseDetails.model.ExpenseDetailsDialogArgs
 import com.github.ai.simplesplit.android.presentation.dialogs.menuDialog.MenuDialogViewModel
 import com.github.ai.simplesplit.android.presentation.dialogs.menuDialog.model.MenuDialogArgs
 import com.github.ai.simplesplit.android.presentation.screens.expenseEditor.ExpenseEditorInteractor
@@ -65,6 +68,7 @@ object AndroidAppModule {
 
         // CellFactories
         singleOf(::GroupDetailsCellFactory)
+        singleOf(::ExpenseDetailsDialogCellFactory)
 
         // Router
         singleOf(::RouterImpl).bind(Router::class)
@@ -113,6 +117,13 @@ object AndroidAppModule {
         }
         factory { (args: ConfirmationDialogArgs) ->
             ConfirmationDialogViewModel(
+                get(),
+                get(),
+                args
+            )
+        }
+        factory { (args: ExpenseDetailsDialogArgs) ->
+            ExpenseDetailsDialogViewModel(
                 get(),
                 get(),
                 args
