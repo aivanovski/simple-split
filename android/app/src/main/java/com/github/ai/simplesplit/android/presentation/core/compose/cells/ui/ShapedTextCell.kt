@@ -60,25 +60,25 @@ fun TitleCellPreview() {
         Column {
             ElementSpace()
             ShapedTextCell(
-                newTextCell(
+                newShapedTextCell(
                     textSize = TextSize.TITLE_LARGE,
                     shape = CornersShape.TOP
                 )
             )
             ShapedTextCell(
-                newTextCell(
+                newShapedTextCell(
                     shape = CornersShape.BOTTOM
                 )
             )
             ElementSpace()
             ShapedTextCell(
-                newTextCell(
+                newShapedTextCell(
                     text = longText()
                 )
             )
             ElementSpace()
             ShapedTextCell(
-                newTextCell(
+                newShapedTextCell(
                     text = "Error message"
                 )
             )
@@ -87,9 +87,9 @@ fun TitleCellPreview() {
 }
 
 @Composable
-fun newTextCell(
+fun newShapedTextCell(
     text: String = shortText(),
-    textSize: TextSize = TextSize.BODY_LARGE,
+    textSize: TextSize = TextSize.BODY_MEDIUM,
     textColor: Color = AppTheme.theme.colors.primaryText,
     shape: CornersShape = CornersShape.ALL
 ) = ShapedTextCellViewModel(

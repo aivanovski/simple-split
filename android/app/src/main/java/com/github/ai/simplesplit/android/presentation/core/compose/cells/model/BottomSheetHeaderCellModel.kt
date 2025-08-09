@@ -1,14 +1,16 @@
 package com.github.ai.simplesplit.android.presentation.core.compose.cells.model
 
 import androidx.compose.runtime.Immutable
-import com.github.ai.simplesplit.android.presentation.core.compose.TextColor
+import androidx.compose.ui.graphics.vector.ImageVector
 import com.github.ai.simplesplit.android.presentation.core.compose.TextSize
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.CellModel
 
 @Immutable
-data class TextCellModel(
+data class BottomSheetHeaderCellModel(
     override val id: String,
-    val text: String,
-    val textSize: TextSize,
-    val textColor: TextColor
+    val title: String,
+    val description: String,
+    val titleTextSize: TextSize,
+    val descriptionTextSize: TextSize,
+    val icon: ImageVector
 ) : CellModel

@@ -38,7 +38,7 @@ class GroupEditorInteractor(
                         password = credentials.password,
                         request = PostMemberRequest(
                             groupUid = credentials.groupUid,
-                            name = membersToAdd.first()
+                            name = member
                         )
                     ).bind()
                 }

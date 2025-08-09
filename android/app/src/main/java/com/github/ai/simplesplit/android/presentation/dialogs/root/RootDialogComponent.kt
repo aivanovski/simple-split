@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelStoreOwner
 import com.github.ai.simplesplit.android.presentation.core.compose.navigation.DialogComponent
 import com.github.ai.simplesplit.android.presentation.dialogs.Dialog
 import com.github.ai.simplesplit.android.presentation.dialogs.confirmationDialog.ConfirmationDialogComponent
+import com.github.ai.simplesplit.android.presentation.dialogs.expenseDetails.ExpenseDetailsDialogComponent
 import com.github.ai.simplesplit.android.presentation.dialogs.menuDialog.MenuDialogComponent
 
 class RootDialogComponent(
@@ -21,6 +22,12 @@ class RootDialogComponent(
             )
 
             is Dialog.ConfirmationDialog -> ConfirmationDialogComponent(
+                viewModelStoreOwner = viewModelStoreOwner,
+                lifecycle = lifecycle,
+                args = dialog.args
+            )
+
+            is Dialog.ExpenseDetails -> ExpenseDetailsDialogComponent(
                 viewModelStoreOwner = viewModelStoreOwner,
                 lifecycle = lifecycle,
                 args = dialog.args

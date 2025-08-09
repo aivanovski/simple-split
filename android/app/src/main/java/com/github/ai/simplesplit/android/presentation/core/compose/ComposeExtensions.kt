@@ -3,6 +3,7 @@ package com.github.ai.simplesplit.android.presentation.core.compose
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppTheme
@@ -45,4 +46,12 @@ fun TextSize.toTextStyle(): TextStyle =
         TextSize.BODY_LARGE -> AppTheme.theme.typography.bodyLarge
         TextSize.BODY_MEDIUM -> AppTheme.theme.typography.bodyMedium
         TextSize.BODY_SMALL -> AppTheme.theme.typography.bodySmall
+    }
+
+@Composable
+fun TextColor.toColor(): Color =
+    when (this) {
+        TextColor.PRIMARY -> AppTheme.theme.colors.primaryText
+        TextColor.SECONDARY -> AppTheme.theme.colors.secondaryText
+        TextColor.ERROR -> AppTheme.theme.colors.errorText
     }
