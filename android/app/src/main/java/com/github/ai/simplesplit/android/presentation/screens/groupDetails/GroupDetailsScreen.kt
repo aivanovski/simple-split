@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.github.ai.simplesplit.android.presentation.core.compose.CenteredBox
 import com.github.ai.simplesplit.android.presentation.core.compose.TopBar
+import com.github.ai.simplesplit.android.presentation.core.compose.TopBarMenuItem
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.CellViewModel
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.ui.DividerCell
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.ui.EmptyMessageCell
@@ -33,6 +34,7 @@ import com.github.ai.simplesplit.android.presentation.core.compose.cells.viewMod
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.viewModel.ShapedTextCellViewModel
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.viewModel.SpaceCellViewModel
 import com.github.ai.simplesplit.android.presentation.core.compose.preview.ThemedScreenPreview
+import com.github.ai.simplesplit.android.presentation.core.compose.rememberCallback
 import com.github.ai.simplesplit.android.presentation.core.compose.rememberOnClickedCallback
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppTheme
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.LightTheme
@@ -42,6 +44,7 @@ import com.github.ai.simplesplit.android.presentation.screens.groupDetails.cells
 import com.github.ai.simplesplit.android.presentation.screens.groupDetails.cells.viewModel.SettlementCellViewModel
 import com.github.ai.simplesplit.android.presentation.screens.groupDetails.model.GroupDetailsIntent
 import com.github.ai.simplesplit.android.presentation.screens.groupDetails.model.GroupDetailsState
+import com.github.ai.simplesplit.android.utils.StringUtils
 
 @Composable
 fun GroupDetailsScreen(viewModel: GroupDetailsViewModel) {
@@ -66,12 +69,18 @@ private fun GroupDetailsScreen(
         onIntent.invoke(GroupDetailsIntent.OnFabClick)
     }
 
+    val onMenuItemClick = rememberCallback { _: TopBarMenuItem ->
+        onIntent.invoke(GroupDetailsIntent.OnMenuClick)
+    }
+
     Scaffold(
         topBar = {
             TopBar(
-                title = "",
+                title = StringUtils.EMPTY,
                 isBackVisible = true,
-                onBackClick = onBackClick
+                onBackClick = onBackClick,
+                menuItems = listOf(TopBarMenuItem.MENU),
+                onMenuItemClick = onMenuItemClick
             )
         },
         floatingActionButton = {
@@ -81,7 +90,7 @@ private fun GroupDetailsScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
-                        contentDescription = "Add expense"
+                        contentDescription = null
                     )
                 }
             }

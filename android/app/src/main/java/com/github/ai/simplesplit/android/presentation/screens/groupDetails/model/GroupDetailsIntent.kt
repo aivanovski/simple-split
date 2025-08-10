@@ -7,8 +7,13 @@ sealed class GroupDetailsIntent(
 ) : MviIntent {
     data object Initialize : GroupDetailsIntent()
     data object ReloadData : GroupDetailsIntent()
+    data object ReloadDataInBackground : GroupDetailsIntent()
     data object OnBackClick : GroupDetailsIntent()
     data object OnFabClick : GroupDetailsIntent()
+    data object OnMenuClick : GroupDetailsIntent()
+    data object OnEditGroupClick : GroupDetailsIntent()
+    data object OnRemoveGroupClick : GroupDetailsIntent()
+    data object OnRemoveGroupConfirmed : GroupDetailsIntent()
     data class OnExpenseClick(val expenseUid: String) : GroupDetailsIntent()
     data class OnExpenseLongClick(val expenseUid: String) : GroupDetailsIntent()
     data class OnEditExpenseClick(val expenseUid: String) : GroupDetailsIntent()

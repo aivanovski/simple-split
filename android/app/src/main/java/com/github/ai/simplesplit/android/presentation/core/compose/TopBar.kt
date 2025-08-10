@@ -7,11 +7,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.vector.ImageVector
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppIcons
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppTheme
 
 enum class TopBarMenuItem {
-    DONE
+    DONE,
+    MENU
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -50,23 +52,28 @@ fun TopBar(
         actions = {
             if (menuItems.isNotEmpty()) {
                 for (menuItem in menuItems) {
-                    when (menuItem) {
-                        TopBarMenuItem.DONE -> {
-                            IconButton(
-                                onClick = {
-                                    onMenuItemClick?.invoke(menuItem)
-                                }
-                            ) {
-                                Icon(
-                                    imageVector = AppIcons.Check,
-                                    tint = AppTheme.theme.colors.primaryIcon,
-                                    contentDescription = null
-                                )
-                            }
+                    val icon = menuItem.getImageVector()
+
+                    IconButton(
+                        onClick = {
+                            onMenuItemClick?.invoke(menuItem)
                         }
+                    ) {
+                        Icon(
+                            imageVector = icon,
+                            tint = AppTheme.theme.colors.primaryIcon,
+                            contentDescription = null
+                        )
                     }
                 }
             }
         }
     )
+}
+
+private fun TopBarMenuItem.getImageVector(): ImageVector {
+    return when (this) {
+        TopBarMenuItem.DONE -> AppIcons.Check
+        TopBarMenuItem.MENU -> AppIcons.Menu
+    }
 }
