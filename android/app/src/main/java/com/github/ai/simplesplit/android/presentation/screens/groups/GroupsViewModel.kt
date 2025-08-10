@@ -13,6 +13,7 @@ import com.github.ai.simplesplit.android.presentation.dialogs.confirmationDialog
 import com.github.ai.simplesplit.android.presentation.dialogs.menuDialog.model.MenuDialogArgs
 import com.github.ai.simplesplit.android.presentation.dialogs.menuDialog.model.MenuItem
 import com.github.ai.simplesplit.android.presentation.screens.Screen
+import com.github.ai.simplesplit.android.presentation.screens.checkoutGroup.model.CheckoutGroupArgs
 import com.github.ai.simplesplit.android.presentation.screens.groupDetails.model.GroupDetailsArgs
 import com.github.ai.simplesplit.android.presentation.screens.groupEditor.model.GroupEditorArgs
 import com.github.ai.simplesplit.android.presentation.screens.groupEditor.model.GroupEditorMode
@@ -21,6 +22,7 @@ import com.github.ai.simplesplit.android.presentation.screens.groups.cells.model
 import com.github.ai.simplesplit.android.presentation.screens.groups.model.GroupsData
 import com.github.ai.simplesplit.android.presentation.screens.groups.model.GroupsIntent
 import com.github.ai.simplesplit.android.presentation.screens.groups.model.GroupsState
+import com.github.ai.simplesplit.android.utils.StringUtils
 import com.github.ai.simplesplit.android.utils.getErrorMessage
 import com.github.ai.simplesplit.android.utils.getStringOrNull
 import com.github.ai.simplesplit.android.utils.mutableStateFlow
@@ -72,8 +74,8 @@ class GroupsViewModel(
             is GroupsIntent.OnGroupLongClick ->
                 nonStateAction { showGroupMenuDialog(intent.groupUid) }
 
-            is GroupsIntent.OnAddGroupClick ->
-                nonStateAction { navigateToNewGroupScreen() }
+            is GroupsIntent.OnAddButtonClick ->
+                nonStateAction { showAddGroupMenuDialog() }
 
             is GroupsIntent.OnEditGroupClick ->
                 nonStateAction { navigateToGroupEditor(intent.groupUid) }
@@ -82,6 +84,12 @@ class GroupsViewModel(
                 nonStateAction { showRemoveConfirmationDialog(intent.groupUid) }
 
             is GroupsIntent.OnRemoveGroupConfirmed -> removeGroup(intent.groupUid)
+
+            is GroupsIntent.OnCreateGroupClick ->
+                nonStateAction { navigateToNewGroupScreen() }
+
+            is GroupsIntent.OnAddGroupByUrlClick ->
+                nonStateAction { navigateToCheckoutGroupScreen() }
         }
     }
 
@@ -178,6 +186,42 @@ class GroupsViewModel(
         )
     }
 
+    private fun navigateToCheckoutGroupScreen() {
+        router.navigateTo(
+            Screen.CheckoutGroup(
+                CheckoutGroupArgs(
+                    url = StringUtils.EMPTY
+                )
+            )
+        )
+    }
+
+    private fun showAddGroupMenuDialog() {
+        router.showDialog(
+            Dialog.MenuDialog(
+                MenuDialogArgs(
+                    items = listOf(
+                        MenuItem(
+                            icon = Icon.ADD,
+                            text = resourceProvider.getString(R.string.create_new_group),
+                            actionId = MenuActions.CREATE_GROUP
+                        ),
+                        MenuItem(
+                            icon = Icon.LINK,
+                            text = resourceProvider.getString(R.string.add_by_url),
+                            actionId = MenuActions.ADD_GROUP_BY_URL
+                        )
+                    )
+                )
+            )
+        )
+        router.setResultListener(Dialog.MenuDialog::class) { item ->
+            if (item is MenuItem) {
+                onAddMenuItemClicked(actionId = item.actionId)
+            }
+        }
+    }
+
     private fun showGroupMenuDialog(groupUid: String) {
         router.showDialog(
             Dialog.MenuDialog(
@@ -199,7 +243,7 @@ class GroupsViewModel(
         )
         router.setResultListener(Dialog.MenuDialog::class) { item ->
             if (item is MenuItem) {
-                onMenuItemClicked(
+                onGroupMenuItemClicked(
                     actionId = item.actionId,
                     groupUid = groupUid
                 )
@@ -225,17 +269,22 @@ class GroupsViewModel(
         }
     }
 
-    private fun onMenuItemClicked(
+    private fun onGroupMenuItemClicked(
         actionId: Int,
         groupUid: String
     ) {
         when (actionId) {
-            MenuActions.EDIT_GROUP ->
-                sendIntent(GroupsIntent.OnEditGroupClick(groupUid = groupUid))
+            MenuActions.EDIT_GROUP -> sendIntent(GroupsIntent.OnEditGroupClick(groupUid))
+            MenuActions.REMOVE_GROUP -> sendIntent(GroupsIntent.OnRemoveGroupClick(groupUid))
+            else -> throw IllegalArgumentException("Illegal actionId: $actionId")
+        }
+    }
 
-            MenuActions.REMOVE_GROUP -> {
-                sendIntent(GroupsIntent.OnRemoveGroupClick(groupUid = groupUid))
-            }
+    private fun onAddMenuItemClicked(actionId: Int) {
+        when (actionId) {
+            MenuActions.CREATE_GROUP -> sendIntent(GroupsIntent.OnCreateGroupClick)
+            MenuActions.ADD_GROUP_BY_URL -> sendIntent(GroupsIntent.OnAddGroupByUrlClick)
+            else -> throw IllegalArgumentException("Illegal actionId: $actionId")
         }
     }
 
@@ -246,5 +295,7 @@ class GroupsViewModel(
     object MenuActions {
         const val EDIT_GROUP = 100
         const val REMOVE_GROUP = 101
+        const val CREATE_GROUP = 102
+        const val ADD_GROUP_BY_URL = 103
     }
 }

@@ -9,6 +9,7 @@ import com.arkivanov.essenty.backhandler.BackCallback
 import com.github.ai.simplesplit.android.presentation.core.ViewModelFactory
 import com.github.ai.simplesplit.android.presentation.core.ViewModelStoreOwnerImpl
 import com.github.ai.simplesplit.android.presentation.screens.Screen
+import com.github.ai.simplesplit.android.presentation.screens.checkoutGroup.CheckoutGroupScreenComponent
 import com.github.ai.simplesplit.android.presentation.screens.expenseEditor.ExpenseEditorScreenComponent
 import com.github.ai.simplesplit.android.presentation.screens.groupDetails.GroupDetailsScreenComponent
 import com.github.ai.simplesplit.android.presentation.screens.groupEditor.GroupEditorScreenComponent
@@ -67,6 +68,11 @@ class RootScreenComponent(
             )
 
             is Screen.ExpenseEditor -> ExpenseEditorScreenComponent(
+                context = childContext,
+                args = screen.args
+            )
+
+            is Screen.CheckoutGroup -> CheckoutGroupScreenComponent(
                 context = childContext,
                 args = screen.args
             )

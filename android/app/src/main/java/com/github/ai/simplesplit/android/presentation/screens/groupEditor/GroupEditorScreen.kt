@@ -68,7 +68,7 @@ private fun GroupEditorScreen(
     Scaffold(
         topBar = {
             TopBar(
-                title = stringResource(R.string.create_new_group),
+                title = stringResource(R.string.create_new_group_title),
                 isBackVisible = true,
                 onBackClick = onBackClick,
                 menuItems = listOf(TopBarMenuItem.DONE), // TODO: move to state

@@ -14,6 +14,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.github.ai.simplesplit.android.R
 import com.github.ai.simplesplit.android.presentation.core.compose.CenteredBox
 import com.github.ai.simplesplit.android.presentation.core.compose.TopBar
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.CellViewModel
@@ -43,13 +45,13 @@ private fun GroupsScreen(
     onIntent: (intent: GroupsIntent) -> Unit
 ) {
     val onFabClick = rememberOnClickedCallback {
-        onIntent.invoke(GroupsIntent.OnAddGroupClick)
+        onIntent.invoke(GroupsIntent.OnAddButtonClick)
     }
 
     Scaffold(
         topBar = {
             TopBar(
-                title = "Groups",
+                title = stringResource(R.string.groups),
                 isBackVisible = false
             )
         },
