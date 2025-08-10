@@ -9,10 +9,12 @@ import com.github.ai.split.domain.usecases.{
   AddUserUseCase,
   AssembleGroupResponseUseCase,
   AssembleGroupsResponseUseCase,
+  ExportGroupDataUseCase,
   GetAllUsersUseCase,
   UpdateGroupUseCase
 }
 import com.github.ai.split.entity.{
+  FileExtension,
   NameReference,
   NewExpense,
   NewGroup,
@@ -24,12 +26,14 @@ import com.github.ai.split.entity.{
 import com.github.ai.split.api.request.{PostGroupRequest, PutGroupRequest}
 import com.github.ai.split.api.response.{GetGroupsResponse, PostGroupResponse, PutGroupResponse}
 import com.github.ai.split.entity.Access.{DENIED, GRANTED}
+import com.github.ai.split.entity.FileExtension.{CSV, HTML}
 import com.github.ai.split.entity.db.{ExpenseEntity, GroupMemberEntity, GroupUid, UserEntity, UserUid}
 import com.github.ai.split.entity.exception.DomainError
-import com.github.ai.split.utils.{parse, parsePasswordParam, parseUid, parseUidFromUrl, some}
+import com.github.ai.split.utils.{getLastUrlParameter, parse, parsePasswordParam, parseUid, parseUidFromUrl, some}
 import zio.{IO, ZIO}
-import zio.http.{Request, Response}
+import zio.http.{Body, Charsets, Header, Headers, MediaType, Request, Response, Status}
 import zio.json.*
+import zio.direct.*
 
 import java.util.UUID
 
@@ -42,7 +46,8 @@ class GroupController(
   private val getAllUsersUseCase: GetAllUsersUseCase,
   private val assembleGroupUseCase: AssembleGroupResponseUseCase,
   private val assembleGroupsUseCase: AssembleGroupsResponseUseCase,
-  private val updateGroupUseCase: UpdateGroupUseCase
+  private val updateGroupUseCase: UpdateGroupUseCase,
+  private val exportDataUseCase: ExportGroupDataUseCase
 ) {
 
   def getGroups(
@@ -61,7 +66,7 @@ class GroupController(
         .filter(result => result.access == DENIED)
         .map(result => result.uid)
 
-      groups <- assembleGroupsUseCase.assembleGroupDtos(uids = groupUids)
+      groups <- assembleGroupsUseCase.assembleGroupDtos(uids = grantedGroupsUids)
       errors <- ZIO
         .succeed(deniedGroupUids.map { uid =>
           GetGroupErrorDto(
@@ -136,6 +141,37 @@ class GroupController(
     } yield Response.json(PostGroupResponse(groupDto).toJsonPretty)
   }
 
+  def exportGroup(
+    request: Request
+  ): IO[DomainError, Response] = {
+    defer {
+      val password = parsePasswordParam(request).run
+      val (groupUid, extension) = parseGroupUidAndExtension(request).run
+      accessResolver.canAccessToGroup(groupUid = groupUid, password = password).run
+
+      val data = extension match
+        case CSV => exportDataUseCase.exportDataToCsv(groupUid).run
+        case HTML => exportDataUseCase.exportDataToHtml(groupUid).run
+
+      val headers = extension match
+        case CSV =>
+          List(
+            Header.Custom(MediaType.text.csv.mainType, Charsets.Utf8.name()),
+            Header.Custom("Content-Disposition", s"attachment; filename=\"${data.fileName}\"")
+          )
+        case HTML =>
+          List(
+            Header.Custom(MediaType.text.html.mainType, Charsets.Utf8.name())
+          )
+
+      Response(
+        status = Status.Ok,
+        headers = Headers(headers),
+        body = Body.fromString(data.content)
+      )
+    }
+  }
+
   private def parseNewExpenses(
     expenses: List[NewExpenseDto]
   ): IO[DomainError, List[NewExpense]] = {
@@ -182,5 +218,32 @@ class GroupController(
       .toList
 
     ZIO.succeed(passwords)
+  }
+
+  private def parseGroupUidAndExtension(
+    request: Request
+  ): IO[DomainError, (GroupUid, FileExtension)] = {
+    for {
+      text <- request.getLastUrlParameter()
+
+      values = text.split("\\.").toList
+
+      _ <-
+        if (values.size != 2) {
+          ZIO.fail(DomainError(message = "Invalid url".some))
+        } else {
+          ZIO.succeed(())
+        }
+
+      uid <- values.head.parseUid()
+
+      extensionStr = values(1)
+
+      extension <- ZIO
+        .fromOption(
+          FileExtension.fromString(extensionStr.toUpperCase)
+        )
+        .mapError(_ => DomainError(message = s"Invalid extension: $extensionStr".some))
+    } yield (GroupUid(uid), extension)
   }
 }
