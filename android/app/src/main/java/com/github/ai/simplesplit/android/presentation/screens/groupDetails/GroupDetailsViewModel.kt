@@ -23,6 +23,8 @@ import com.github.ai.simplesplit.android.presentation.screens.groupDetails.cells
 import com.github.ai.simplesplit.android.presentation.screens.groupDetails.model.GroupDetailsArgs
 import com.github.ai.simplesplit.android.presentation.screens.groupDetails.model.GroupDetailsIntent
 import com.github.ai.simplesplit.android.presentation.screens.groupDetails.model.GroupDetailsState
+import com.github.ai.simplesplit.android.presentation.screens.groupEditor.model.GroupEditorArgs
+import com.github.ai.simplesplit.android.presentation.screens.groupEditor.model.GroupEditorMode
 import com.github.ai.simplesplit.android.utils.getErrorMessage
 import com.github.ai.simplesplit.android.utils.getStringOrNull
 import com.github.ai.simplesplit.android.utils.mutableStateFlow
@@ -47,11 +49,22 @@ class GroupDetailsViewModel(
 
     private var data by mutableStateFlow(args.group)
 
+    override fun start() {
+        super.start()
+        sendIntent(GroupDetailsIntent.ReloadData)
+    }
+
     override fun handleIntent(intent: GroupDetailsIntent): Flow<GroupDetailsState> {
         return when (intent) {
             GroupDetailsIntent.Initialize -> loadData(args.group.uid, args.password)
+
             GroupDetailsIntent.ReloadData -> loadData(args.group.uid, args.password)
+
+            GroupDetailsIntent.ReloadDataInBackground ->
+                loadData(args.group.uid, args.password, isShowLoading = false)
+
             GroupDetailsIntent.OnBackClick -> nonStateAction { navigateBack() }
+
             GroupDetailsIntent.OnFabClick ->
                 nonStateAction { navigateToNewExpenseScreen() }
 
@@ -62,12 +75,23 @@ class GroupDetailsViewModel(
                 nonStateAction { showExpenseMenuDialog(intent.expenseUid) }
 
             is GroupDetailsIntent.OnEditExpenseClick ->
-                nonStateAction { navigateToEditExpenseScreen(intent.expenseUid) }
+                nonStateAction { navigateToExpenseEditor(intent.expenseUid) }
 
             is GroupDetailsIntent.OnRemoveExpenseClick ->
                 nonStateAction { showRemoveExpenseConfirmationDialog(intent.expenseUid) }
 
             is GroupDetailsIntent.OnRemoveExpenseConfirmed -> removeExpense(intent.expenseUid)
+
+            GroupDetailsIntent.OnRemoveGroupConfirmed -> removeGroup(args.group.uid)
+
+            is GroupDetailsIntent.OnMenuClick ->
+                nonStateAction { showGroupMenuDialog() }
+
+            GroupDetailsIntent.OnEditGroupClick ->
+                nonStateAction { navigateToGroupEditor() }
+
+            GroupDetailsIntent.OnRemoveGroupClick ->
+                nonStateAction { showRemoveGroupConfirmationDialog() }
         }
     }
 
@@ -100,7 +124,7 @@ class GroupDetailsViewModel(
         }
     }
 
-    private fun navigateToEditExpenseScreen(expenseUid: String) {
+    private fun navigateToExpenseEditor(expenseUid: String) {
         router.navigateTo(
             Screen.ExpenseEditor(
                 ExpenseEditorArgs(
@@ -117,16 +141,34 @@ class GroupDetailsViewModel(
         }
     }
 
+    private fun navigateToGroupEditor() {
+        val creds = GroupCredentials(
+            groupUid = args.group.uid,
+            password = args.password
+        )
+
+        router.navigateTo(
+            Screen.GroupEditor(
+                GroupEditorArgs(
+                    mode = GroupEditorMode.EditGroup(creds)
+                )
+            )
+        )
+    }
+
     private fun navigateBack() {
         router.exit()
     }
 
     private fun loadData(
         groupUid: String,
-        password: String
+        password: String,
+        isShowLoading: Boolean = true
     ): Flow<GroupDetailsState> {
         return flow {
-            emit(GroupDetailsState.Loading)
+            if (isShowLoading) {
+                emit(GroupDetailsState.Loading)
+            }
 
             val getGroupResult = interactor.getGroup(
                 groupUid = groupUid,
@@ -163,6 +205,16 @@ class GroupDetailsViewModel(
         }.flowOn(Dispatchers.IO)
     }
 
+    private fun removeGroup(groupUid: String): Flow<GroupDetailsState> {
+        return flow<GroupDetailsState> {
+            emit(GroupDetailsState.Loading)
+
+            interactor.removeGroup(groupUid)
+
+            router.exit()
+        }.flowOn(Dispatchers.IO)
+    }
+
     private fun showExpenseDetailsDialog(expenseUid: String) {
         val expense = data.expenses
             .firstOrNull { expense -> expense.uid == expenseUid }
@@ -188,8 +240,8 @@ class GroupDetailsViewModel(
         }
     }
 
-    private fun showExpenseMenuDialog(expenseUid: String) {
-        val items = MenuAction.entries.map { entry ->
+    private fun showGroupMenuDialog() {
+        val items = GroupMenuAction.entries.map { entry ->
             MenuItem(
                 icon = entry.icon,
                 text = resourceProvider.getString(entry.resourceId),
@@ -200,8 +252,33 @@ class GroupDetailsViewModel(
         router.showDialog(Dialog.MenuDialog(MenuDialogArgs(items)))
         router.setResultListener(Dialog.MenuDialog::class) { item ->
             if (item is MenuItem) {
-                onMenuItemClicked(
-                    action = MenuAction.entries.first { action -> action.ordinal == item.actionId },
+                onGroupMenuItemClicked(
+                    action = GroupMenuAction.entries.first { action ->
+                        action.ordinal == item.actionId
+                    }
+                )
+            }
+        }
+    }
+
+    private fun showExpenseMenuDialog(expenseUid: String) {
+        val items = ExpenseMenuAction.entries.map { entry ->
+            MenuItem(
+                icon = entry.icon,
+                text = resourceProvider.getString(entry.resourceId),
+                actionId = entry.ordinal
+            )
+        }
+
+        router.showDialog(Dialog.MenuDialog(MenuDialogArgs(items)))
+        router.setResultListener(Dialog.MenuDialog::class) { item ->
+            if (item is MenuItem) {
+                val action = ExpenseMenuAction.entries.first { action ->
+                    action.ordinal == item.actionId
+                }
+
+                onExpenseMenuItemClicked(
+                    action = action,
                     expenseUid = expenseUid
                 )
             }
@@ -226,16 +303,41 @@ class GroupDetailsViewModel(
         }
     }
 
-    private fun onMenuItemClicked(
-        action: MenuAction,
+    private fun showRemoveGroupConfirmationDialog() {
+        router.showDialog(
+            Dialog.ConfirmationDialog(
+                args = ConfirmationDialogArgs(
+                    message = resourceProvider.getString(
+                        R.string.remove_group_confirmation_message
+                    ),
+                    buttonTitle = resourceProvider.getString(R.string.remove)
+                )
+            )
+        )
+        router.setResultListener(Dialog.ConfirmationDialog::class) { isConfirmed ->
+            if (isConfirmed is Boolean && isConfirmed == true) {
+                sendIntent(GroupDetailsIntent.OnRemoveGroupConfirmed)
+            }
+        }
+    }
+
+    private fun onGroupMenuItemClicked(action: GroupMenuAction) {
+        when (action) {
+            GroupMenuAction.EDIT_GROUP -> sendIntent(GroupDetailsIntent.OnEditGroupClick)
+            GroupMenuAction.REMOVE_GROUP -> sendIntent(GroupDetailsIntent.OnRemoveGroupClick)
+        }
+    }
+
+    private fun onExpenseMenuItemClicked(
+        action: ExpenseMenuAction,
         expenseUid: String
     ) {
         when (action) {
-            MenuAction.EDIT_EXPENSE -> {
+            ExpenseMenuAction.EDIT_EXPENSE -> {
                 sendIntent(GroupDetailsIntent.OnEditExpenseClick(expenseUid))
             }
 
-            MenuAction.REMOVE_EXPENSE -> {
+            ExpenseMenuAction.REMOVE_EXPENSE -> {
                 sendIntent(GroupDetailsIntent.OnRemoveExpenseClick(expenseUid))
             }
         }
@@ -256,7 +358,15 @@ class GroupDetailsViewModel(
         return cellId.parseCellId()?.payload?.getStringOrNull()
     }
 
-    enum class MenuAction(
+    enum class GroupMenuAction(
+        val icon: Icon,
+        @StringRes val resourceId: Int
+    ) {
+        EDIT_GROUP(Icon.EDIT, R.string.edit),
+        REMOVE_GROUP(Icon.REMOVE, R.string.remove)
+    }
+
+    enum class ExpenseMenuAction(
         val icon: Icon,
         @StringRes val resourceId: Int
     ) {

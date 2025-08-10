@@ -49,10 +49,8 @@ private fun CheckoutGroupScreen(
         onIntent.invoke(CheckoutGroupIntent.OnBackClick)
     }
 
-    val onMenuItemClick = rememberCallback { menuItem: TopBarMenuItem ->
-        when (menuItem) {
-            TopBarMenuItem.DONE -> onIntent.invoke(CheckoutGroupIntent.OnDoneClick)
-        }
+    val onMenuItemClick = rememberCallback { _: TopBarMenuItem ->
+        onIntent.invoke(CheckoutGroupIntent.OnDoneClick)
     }
 
     Scaffold(

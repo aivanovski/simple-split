@@ -55,10 +55,8 @@ private fun ExpenseEditorScreen(
         onIntent.invoke(ExpenseEditorIntent.OnBackClick)
     }
 
-    val onMenuItemClick = rememberCallback { menuItem: TopBarMenuItem ->
-        when (menuItem) {
-            TopBarMenuItem.DONE -> onIntent.invoke(ExpenseEditorIntent.OnDoneClick)
-        }
+    val onMenuItemClick = rememberCallback { _: TopBarMenuItem ->
+        onIntent.invoke(ExpenseEditorIntent.OnDoneClick)
     }
 
     Scaffold(

@@ -59,10 +59,8 @@ private fun GroupEditorScreen(
         onIntent.invoke(GroupEditorIntent.OnBackClick)
     }
 
-    val onMenuItemClick = rememberCallback { menuItem: TopBarMenuItem ->
-        when (menuItem) {
-            TopBarMenuItem.DONE -> onIntent.invoke(GroupEditorIntent.OnDoneClick)
-        }
+    val onMenuItemClick = rememberCallback { _: TopBarMenuItem ->
+        onIntent.invoke(GroupEditorIntent.OnDoneClick)
     }
 
     Scaffold(
@@ -71,7 +69,7 @@ private fun GroupEditorScreen(
                 title = stringResource(R.string.create_new_group_title),
                 isBackVisible = true,
                 onBackClick = onBackClick,
-                menuItems = listOf(TopBarMenuItem.DONE), // TODO: move to state
+                menuItems = listOf(TopBarMenuItem.DONE),
                 onMenuItemClick = onMenuItemClick
             )
         }
