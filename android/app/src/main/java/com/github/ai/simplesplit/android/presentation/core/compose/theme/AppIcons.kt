@@ -3,6 +3,7 @@ package com.github.ai.simplesplit.android.presentation.core.compose.theme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBackIos
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AddLink
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -18,6 +19,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 object AppIcons {
     val ArrowBack = Icons.AutoMirrored.Filled.ArrowBackIos
     val Add = Icons.Filled.Add
+    val Link = Icons.Filled.AddLink
     val Check = Icons.Outlined.Check
     val Menu = Icons.Filled.MoreVert
     val Settings = Icons.Filled.Settings
@@ -32,11 +34,15 @@ object AppIcons {
 
 enum class Icon {
     EDIT,
-    REMOVE
+    REMOVE,
+    ADD,
+    LINK
 }
 
 fun Icon.toImageVector(): ImageVector =
     when (this) {
         Icon.EDIT -> AppIcons.Edit
         Icon.REMOVE -> AppIcons.Remove
+        Icon.ADD -> AppIcons.Add
+        Icon.LINK -> AppIcons.Link
     }

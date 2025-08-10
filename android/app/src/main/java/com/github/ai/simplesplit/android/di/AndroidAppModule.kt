@@ -8,6 +8,7 @@ import com.github.ai.simplesplit.android.data.repository.ExpenseRepository
 import com.github.ai.simplesplit.android.data.repository.GroupCredentialsRepository
 import com.github.ai.simplesplit.android.data.repository.GroupRepository
 import com.github.ai.simplesplit.android.data.repository.MemberRepository
+import com.github.ai.simplesplit.android.domain.usecase.ParseGroupUrlUseCase
 import com.github.ai.simplesplit.android.presentation.core.ResourceProvider
 import com.github.ai.simplesplit.android.presentation.core.ResourceProviderImpl
 import com.github.ai.simplesplit.android.presentation.core.compose.navigation.Router
@@ -21,6 +22,9 @@ import com.github.ai.simplesplit.android.presentation.dialogs.expenseDetails.Exp
 import com.github.ai.simplesplit.android.presentation.dialogs.expenseDetails.model.ExpenseDetailsDialogArgs
 import com.github.ai.simplesplit.android.presentation.dialogs.menuDialog.MenuDialogViewModel
 import com.github.ai.simplesplit.android.presentation.dialogs.menuDialog.model.MenuDialogArgs
+import com.github.ai.simplesplit.android.presentation.screens.checkoutGroup.CheckoutGroupInteractor
+import com.github.ai.simplesplit.android.presentation.screens.checkoutGroup.CheckoutGroupViewModel
+import com.github.ai.simplesplit.android.presentation.screens.checkoutGroup.model.CheckoutGroupArgs
 import com.github.ai.simplesplit.android.presentation.screens.expenseEditor.ExpenseEditorInteractor
 import com.github.ai.simplesplit.android.presentation.screens.expenseEditor.ExpenseEditorViewModel
 import com.github.ai.simplesplit.android.presentation.screens.expenseEditor.model.ExpenseEditorArgs
@@ -52,7 +56,7 @@ object AndroidAppModule {
         // Api
         singleOf(::JsonSerializer)
         single { HttpClientFactory.createHttpClient(get()) }
-        single { ApiClient(get(), baseUrl = "http://10.0.2.2:8080") } // TODO: move url to settings
+        single { ApiClient(get()) }
 
         // Repositories
         singleOf(::GroupRepository)
@@ -60,11 +64,15 @@ object AndroidAppModule {
         singleOf(::ExpenseRepository)
         singleOf(::MemberRepository)
 
+        // UseCases
+        singleOf(::ParseGroupUrlUseCase)
+
         // Interactors
         singleOf(::GroupsInteractor)
         singleOf(::GroupDetailsInteractor)
         singleOf(::GroupEditorInteractor)
         singleOf(::ExpenseEditorInteractor)
+        singleOf(::CheckoutGroupInteractor)
 
         // CellFactories
         singleOf(::GroupDetailsCellFactory)
@@ -101,6 +109,14 @@ object AndroidAppModule {
         }
         factory { (args: ExpenseEditorArgs) ->
             ExpenseEditorViewModel(
+                get(),
+                get(),
+                get(),
+                args
+            )
+        }
+        factory { (args: CheckoutGroupArgs) ->
+            CheckoutGroupViewModel(
                 get(),
                 get(),
                 get(),

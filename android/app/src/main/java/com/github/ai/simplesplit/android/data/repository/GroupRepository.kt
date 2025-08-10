@@ -1,7 +1,9 @@
 package com.github.ai.simplesplit.android.data.repository
 
 import arrow.core.Either
+import arrow.core.raise.either
 import com.github.ai.simplesplit.android.data.api.ApiClient
+import com.github.ai.simplesplit.android.model.exception.ApiException
 import com.github.ai.simplesplit.android.model.exception.AppException
 import com.github.ai.split.api.GroupDto
 import com.github.ai.split.api.request.PostGroupRequest
@@ -16,11 +18,19 @@ class GroupRepository(
         uid: String,
         password: String
     ): Either<AppException, GroupDto> =
-        api.getGroups(
-            uids = listOf(uid),
-            passwords = listOf(password)
-        )
-            .map { response -> response.groups.first() }
+        either {
+            val response = api.getGroups(
+                uids = listOf(uid),
+                passwords = listOf(password)
+            ).bind()
+
+            if (response.groups.isNotEmpty()) {
+                response.groups.first()
+            } else {
+                val error = response.errors.firstOrNull()?.message ?: "Group not found"
+                raise(ApiException(error))
+            }
+        }
 
     suspend fun getGroups(
         uids: List<String>,

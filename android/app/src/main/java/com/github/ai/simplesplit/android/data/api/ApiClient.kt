@@ -20,7 +20,7 @@ import io.ktor.client.HttpClient
 
 class ApiClient(
     private val httpClient: HttpClient,
-    private val baseUrl: String
+    private val baseUrl: String = SERVER_URL
 ) {
 
     suspend fun getGroups(
@@ -102,4 +102,8 @@ class ApiClient(
             type = RequestType.DELETE,
             url = "$baseUrl/member/$memberUid?password=$password"
         )
+
+    companion object {
+        const val SERVER_URL = "http://10.0.2.2:8080"
+    }
 }
