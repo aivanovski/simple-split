@@ -2,6 +2,7 @@ package com.github.ai.split
 
 import com.github.ai.split.domain.CliArgumentParser
 import com.github.ai.split.domain.usecases.FillTestDataUseCase
+import com.github.ai.split.entity.CliArguments
 import com.github.ai.split.presentation.routes.{ExpenseRoutes, ExportRoutes, GroupRoutes, MemberRoutes}
 import io.getquill.SnakeCase
 import io.getquill.jdbczio.Quill
@@ -17,21 +18,36 @@ object Main extends ZIOAppDefault {
     ++ MemberRoutes.routes()
     ++ ExpenseRoutes.routes()
 
-  override val bootstrap: ZLayer[Any, Nothing, Unit] =
+  override val bootstrap: ZLayer[Any, Nothing, Unit] = {
     Runtime.removeDefaultLoggers >>> SLF4J.slf4j(LogFormat.colored)
+  }
 
-  override def run: ZIO[ZIOAppArgs, Throwable, Unit] = {
-    val application = for {
+  private def application() = {
+    for {
       fillTestDataUseCase <- ZIO.service[FillTestDataUseCase]
-      _ <- fillTestDataUseCase.createTestData()
+      arguments <- ZIO.service[CliArguments]
+
+      _ <-
+        if (arguments.isPopulateTestData) {
+          fillTestDataUseCase.createTestData()
+        } else {
+          ZIO.succeed(())
+        }
+
       _ <- Server.serve(routes)
     } yield ()
+  }
 
+  override def run: ZIO[ZIOAppArgs, Throwable, Unit] = {
     for {
       arguments <- CliArgumentParser().parse()
-      _ <- ZIO.logInfo(s"Starting application with arguments: $arguments")
+      _ <- ZIO.logInfo(s"Starting application with arguments:")
+      _ <- ZIO.logInfo(arguments.toReadableString())
 
-      _ <- application.provide(
+      _ <- application().provide(
+        // Application arguments
+        ZLayer.succeed(arguments),
+
         // Use-Cases
         Layers.addUserUseCase,
         Layers.getAllUsersUseCase,
@@ -80,7 +96,11 @@ object Main extends ZIOAppDefault {
         // Others
         Server.defaultWithPort(8080),
         Quill.H2.fromNamingStrategy(SnakeCase),
-        Quill.DataSource.fromPrefix("h2db")
+        if (arguments.isUseInMemoryDatabase) {
+          Quill.DataSource.fromPrefix("test-h2db")
+        } else {
+          Quill.DataSource.fromPrefix("h2db")
+        }
       )
     } yield ()
   }
