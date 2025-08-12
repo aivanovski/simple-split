@@ -2,9 +2,8 @@ package com.github.ai.split.data.db.repository
 
 import com.github.ai.split.data.db.dao.{GroupEntityDao, GroupMemberEntityDao, UserEntityDao}
 import com.github.ai.split.entity.db.GroupUid
-import com.github.ai.split.entity.Member
+import com.github.ai.split.entity.{GroupWithMembers, Member}
 import com.github.ai.split.entity.exception.DomainError
-import com.github.ai.split.utils.some
 import zio.*
 import zio.direct.*
 
@@ -13,6 +12,17 @@ class GroupRepository(
   private val groupDao: GroupEntityDao,
   private val groupMemberDao: GroupMemberEntityDao
 ) {
+
+  def getByUid(groupUid: GroupUid): IO[DomainError, GroupWithMembers] = {
+    defer {
+      val group = groupDao.getByUid(groupUid).run
+
+      GroupWithMembers(
+        entity = group,
+        members = getMembers(groupUid).run
+      )
+    }
+  }
 
   def getMembers(groupUid: GroupUid): IO[DomainError, List[Member]] = {
     defer {

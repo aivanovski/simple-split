@@ -2,7 +2,7 @@ package com.github.ai.split
 
 import com.github.ai.split.domain.CliArgumentParser
 import com.github.ai.split.domain.usecases.FillTestDataUseCase
-import com.github.ai.split.presentation.routes.{ExpenseRoutes, GroupRoutes, MemberRoutes}
+import com.github.ai.split.presentation.routes.{ExpenseRoutes, ExportRoutes, GroupRoutes, MemberRoutes}
 import io.getquill.SnakeCase
 import io.getquill.jdbczio.Quill
 import zio.*
@@ -13,6 +13,7 @@ import zio.logging.backend.SLF4J
 object Main extends ZIOAppDefault {
 
   private val routes = GroupRoutes.routes()
+    ++ ExportRoutes.routes()
     ++ MemberRoutes.routes()
     ++ ExpenseRoutes.routes()
 
@@ -48,6 +49,7 @@ object Main extends ZIOAppDefault {
         Layers.validateMemberNameUseCase,
         Layers.validateExpenseUseCase,
         Layers.removeExpenseUseCase,
+        Layers.exportGroupDataUseCase,
 
         // Response assemblers use cases
         Layers.assembleGroupResponseUseCase,
