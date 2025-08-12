@@ -20,6 +20,7 @@ import com.github.ai.split.domain.usecases.{
   AssembleGroupsResponseUseCase,
   CalculateSettlementUseCase,
   ConvertExpensesToTransactionsUseCase,
+  ExportGroupDataUseCase,
   FillTestDataUseCase,
   GetAllUsersUseCase,
   GetGroupUseCase,
@@ -69,6 +70,7 @@ object Layers {
   val validateMemberNameUseCase = ZLayer.fromFunction(ValidateMemberNameUseCase(_))
   val validateExpenseUseCase = ZLayer.fromFunction(ValidateExpenseUseCase(_, _))
   val removeExpenseUseCase = ZLayer.fromFunction(RemoveExpenseUseCase(_))
+  val exportGroupDataUseCase = ZLayer.fromFunction(ExportGroupDataUseCase(_, _))
 
   // Response use cases
   val assembleGroupResponseUseCase = ZLayer.fromFunction(AssembleGroupResponseUseCase(_, _, _, _, _, _))
@@ -76,7 +78,7 @@ object Layers {
   val assembleExpenseUseCase = ZLayer.fromFunction(AssembleExpenseUseCase(_, _, _))
 
   // Controllers
-  val groupController = ZLayer.fromFunction(GroupController(_, _, _, _, _, _, _, _, _))
+  val groupController = ZLayer.fromFunction(GroupController(_, _, _, _, _, _, _, _, _, _))
   val memberController = ZLayer.fromFunction(MemberController(_, _, _, _, _, _, _))
   val expenseController = ZLayer.fromFunction(ExpenseController(_, _, _, _, _, _, _))
 }
