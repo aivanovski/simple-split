@@ -17,7 +17,8 @@ class CliArgumentParser {
   private def parseArguments(args: Array[String]): IO[DomainError, CliArguments] = {
     ZIO.foldLeft(args)(CliArguments()) { (acc, arg) =>
       arg match {
-        case "--use-test-db" => ZIO.succeed(acc.copy(isUseTestDatabase = true))
+        case "--in-memory-db" => ZIO.succeed(acc.copy(isUseInMemoryDatabase = true))
+        case "--populate-data" => ZIO.succeed(acc.copy(isPopulateTestData = true))
         case arg =>
           ZIO.fail(DomainError(message = s"Unexpected argument: $arg".some))
       }

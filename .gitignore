@@ -69,3 +69,6 @@ yarn.lock
 kls_database.db
 out/
 
+# Development and application files
+backend/app-data
+backend/dev-data
