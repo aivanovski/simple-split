@@ -55,7 +55,7 @@ object AndroidAppModule {
 
         // Api
         singleOf(::JsonSerializer)
-        single { HttpClientFactory.createHttpClient(get()) }
+        single { HttpClientFactory.createHttpClient(get(), isSslVerificationEnabled = true) }
         single { ApiClient(get()) }
 
         // Repositories
