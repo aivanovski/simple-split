@@ -1,7 +1,7 @@
 package com.github.ai.split.client
 
 import com.github.ai.split.api.{NewExpenseDto, UserNameDto, UserUidDto}
-import com.github.ai.split.api.request.{PostExpenseRequest, PostGroupRequest, PostMemberRequest}
+import com.github.ai.split.api.request.{PostExpenseRequest, PostGroupRequest, PostMemberRequest, PutGroupRequest}
 import zio.*
 import zio.json.*
 import zio.http.*
@@ -131,6 +131,28 @@ class ApiClient(
     client.request(
       Request.delete(
         path = s"$baseUrl/expense/$expenseUid?password=$password"
+      )
+    )
+  }
+
+  def updateGroup(
+    groupUid: String,
+    title: Option[String] = None,
+    password: Option[String] = None,
+    description: Option[String] = None,
+    currentPassword: String = DefaultPassword
+  ): ApiResponse = {
+    client.request(
+      Request.put(
+        path = s"$baseUrl/group/$groupUid?password=$currentPassword",
+        body = Body.fromString(
+          PutGroupRequest(
+            title = title,
+            password = password,
+            description = description,
+            members = None
+          ).toJsonPretty
+        )
       )
     )
   }

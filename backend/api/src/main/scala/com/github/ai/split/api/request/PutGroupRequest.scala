@@ -1,7 +1,7 @@
 package com.github.ai.split.api.request
 
 import com.github.ai.split.api.UserUidDto
-import zio.json.{DeriveJsonDecoder, JsonDecoder}
+import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
 
 case class PutGroupRequest(
   title: Option[String],
@@ -11,5 +11,6 @@ case class PutGroupRequest(
 )
 
 object PutGroupRequest {
+  implicit val encoder: JsonEncoder[PutGroupRequest] = DeriveJsonEncoder.gen[PutGroupRequest]
   implicit val decoder: JsonDecoder[PutGroupRequest] = DeriveJsonDecoder.gen[PutGroupRequest]
 }
