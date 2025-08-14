@@ -7,7 +7,6 @@ import com.github.ai.simplesplit.android.presentation.core.compose.cells.model.M
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.model.MenuCellModel
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.viewModel.MenuCellViewModel
 import com.github.ai.simplesplit.android.presentation.core.compose.navigation.Router
-import com.github.ai.simplesplit.android.presentation.core.compose.theme.toImageVector
 import com.github.ai.simplesplit.android.presentation.core.mvi.CellsMviViewModel
 import com.github.ai.simplesplit.android.presentation.dialogs.Dialog
 import com.github.ai.simplesplit.android.presentation.dialogs.menuDialog.model.MenuDialogArgs
@@ -63,7 +62,7 @@ class MenuDialogViewModel(
         return items.mapIndexed { index, item ->
             val model = MenuCellModel(
                 id = CellId("menu_item", IntPayload(item.actionId)).format(),
-                icon = item.icon.toImageVector(),
+                icon = item.icon.vector,
                 title = item.text
             )
 

@@ -22,7 +22,7 @@ import com.github.ai.simplesplit.android.presentation.core.compose.cells.CellVie
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.ui.SpaceCell
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.viewModel.SpaceCellViewModel
 import com.github.ai.simplesplit.android.presentation.core.compose.rememberOnClickedCallback
-import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppIcons
+import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppIcon
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppTheme
 import com.github.ai.simplesplit.android.presentation.screens.groups.cells.ui.GroupCell
 import com.github.ai.simplesplit.android.presentation.screens.groups.cells.viewModel.GroupCellViewModel
@@ -61,7 +61,7 @@ private fun GroupsScreen(
                     onClick = onFabClick
                 ) {
                     Icon(
-                        imageVector = AppIcons.Add,
+                        imageVector = AppIcon.ADD.vector,
                         contentDescription = null
                     )
                 }

@@ -4,6 +4,8 @@ import arrow.core.Either
 import arrow.core.raise.either
 import com.github.ai.simplesplit.android.data.repository.GroupCredentialsRepository
 import com.github.ai.simplesplit.android.data.repository.GroupRepository
+import com.github.ai.simplesplit.android.domain.usecase.CreateExportUrlUseCase
+import com.github.ai.simplesplit.android.domain.usecase.CreateGroupUrlUseCase
 import com.github.ai.simplesplit.android.model.db.GroupCredentials
 import com.github.ai.simplesplit.android.model.exception.AppException
 import com.github.ai.simplesplit.android.presentation.screens.groups.model.GroupsData
@@ -11,7 +13,9 @@ import kotlinx.coroutines.flow.Flow
 
 class GroupsInteractor(
     private val groupRepository: GroupRepository,
-    private val credentialsRepository: GroupCredentialsRepository
+    private val credentialsRepository: GroupCredentialsRepository,
+    private val exportUrlUseCase: CreateExportUrlUseCase,
+    private val groupUrlUseCase: CreateGroupUrlUseCase
 ) {
 
     suspend fun loadData(): Either<AppException, GroupsData> =
@@ -45,4 +49,10 @@ class GroupsInteractor(
         }
 
     fun getGroupCredentialsFlow(): Flow<List<GroupCredentials>> = credentialsRepository.getAllFlow()
+
+    fun createExportToCsvUrl(credentials: GroupCredentials): String =
+        exportUrlUseCase.createUrl(credentials)
+
+    fun createShareUrl(credentials: GroupCredentials): String =
+        groupUrlUseCase.createUrl(credentials)
 }

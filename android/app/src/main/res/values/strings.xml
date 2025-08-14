@@ -4,6 +4,7 @@
     <!-- Common -->
     <string name="edit">Edit</string>
     <string name="remove">Remove</string>
+    <string name="share">Share</string>
     <string name="field_required_error">This field is required</string>
     <string name="generic_error_message">An error occurred. Please try again.</string>
 
@@ -31,6 +32,7 @@
     <string name="no_expenses_message">No expenses yet in this group. Add the first expense to get started!</string>
     <string name="expenses">Expenses</string>
     <string name="no_debts_yet">No debts yet</string>
+    <string name="export_as_csv_file">Export as CSV file</string>
 
     <!-- Expense Editor screen -->
     <string name="add_expense">Add Expense</string>

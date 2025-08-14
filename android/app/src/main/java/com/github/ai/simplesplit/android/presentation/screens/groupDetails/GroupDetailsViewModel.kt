@@ -6,7 +6,7 @@ import com.github.ai.simplesplit.android.model.db.GroupCredentials
 import com.github.ai.simplesplit.android.presentation.core.ResourceProvider
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.CellEvent
 import com.github.ai.simplesplit.android.presentation.core.compose.navigation.Router
-import com.github.ai.simplesplit.android.presentation.core.compose.theme.Icon
+import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppIcon
 import com.github.ai.simplesplit.android.presentation.core.mvi.CellsMviViewModel
 import com.github.ai.simplesplit.android.presentation.core.mvi.nonStateAction
 import com.github.ai.simplesplit.android.presentation.dialogs.Dialog
@@ -25,6 +25,7 @@ import com.github.ai.simplesplit.android.presentation.screens.groupDetails.model
 import com.github.ai.simplesplit.android.presentation.screens.groupDetails.model.GroupDetailsState
 import com.github.ai.simplesplit.android.presentation.screens.groupEditor.model.GroupEditorArgs
 import com.github.ai.simplesplit.android.presentation.screens.groupEditor.model.GroupEditorMode
+import com.github.ai.simplesplit.android.presentation.screens.root.model.StartActivityEvent
 import com.github.ai.simplesplit.android.utils.getErrorMessage
 import com.github.ai.simplesplit.android.utils.getStringOrNull
 import com.github.ai.simplesplit.android.utils.mutableStateFlow
@@ -92,6 +93,12 @@ class GroupDetailsViewModel(
 
             GroupDetailsIntent.OnRemoveGroupClick ->
                 nonStateAction { showRemoveGroupConfirmationDialog() }
+
+            is GroupDetailsIntent.OpenUrl ->
+                nonStateAction { router.startActivity(StartActivityEvent.OpenUrl(intent.url)) }
+
+            is GroupDetailsIntent.ShareGroupUrl ->
+                nonStateAction { router.startActivity(StartActivityEvent.ShareUrl(intent.url)) }
         }
     }
 
@@ -252,11 +259,8 @@ class GroupDetailsViewModel(
         router.showDialog(Dialog.MenuDialog(MenuDialogArgs(items)))
         router.setResultListener(Dialog.MenuDialog::class) { item ->
             if (item is MenuItem) {
-                onGroupMenuItemClicked(
-                    action = GroupMenuAction.entries.first { action ->
-                        action.ordinal == item.actionId
-                    }
-                )
+                val action = GroupMenuAction.entries.first { it.ordinal == item.actionId }
+                onGroupMenuItemClicked(action = action)
             }
         }
     }
@@ -325,6 +329,27 @@ class GroupDetailsViewModel(
         when (action) {
             GroupMenuAction.EDIT_GROUP -> sendIntent(GroupDetailsIntent.OnEditGroupClick)
             GroupMenuAction.REMOVE_GROUP -> sendIntent(GroupDetailsIntent.OnRemoveGroupClick)
+            GroupMenuAction.EXPORT_TO_CSV -> {
+                val url = interactor.createExportToCsvUrl(
+                    GroupCredentials(
+                        groupUid = args.group.uid,
+                        password = args.password
+                    )
+                )
+
+                sendIntent(GroupDetailsIntent.OpenUrl(url))
+            }
+
+            GroupMenuAction.SHARE_LINK -> {
+                val url = interactor.createShareUrl(
+                    GroupCredentials(
+                        groupUid = args.group.uid,
+                        password = args.password
+                    )
+                )
+
+                sendIntent(GroupDetailsIntent.ShareGroupUrl(url))
+            }
         }
     }
 
@@ -359,18 +384,20 @@ class GroupDetailsViewModel(
     }
 
     enum class GroupMenuAction(
-        val icon: Icon,
+        val icon: AppIcon,
         @StringRes val resourceId: Int
     ) {
-        EDIT_GROUP(Icon.EDIT, R.string.edit),
-        REMOVE_GROUP(Icon.REMOVE, R.string.remove)
+        EDIT_GROUP(AppIcon.EDIT, R.string.edit),
+        REMOVE_GROUP(AppIcon.REMOVE, R.string.remove),
+        EXPORT_TO_CSV(AppIcon.EXPORT, R.string.export_as_csv_file),
+        SHARE_LINK(AppIcon.SHARE, R.string.share)
     }
 
     enum class ExpenseMenuAction(
-        val icon: Icon,
+        val icon: AppIcon,
         @StringRes val resourceId: Int
     ) {
-        EDIT_EXPENSE(Icon.EDIT, R.string.edit),
-        REMOVE_EXPENSE(Icon.REMOVE, R.string.remove)
+        EDIT_EXPENSE(AppIcon.EDIT, R.string.edit),
+        REMOVE_EXPENSE(AppIcon.REMOVE, R.string.remove)
     }
 }

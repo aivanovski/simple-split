@@ -32,7 +32,7 @@ import com.github.ai.simplesplit.android.presentation.core.compose.TopBar
 import com.github.ai.simplesplit.android.presentation.core.compose.TopBarMenuItem
 import com.github.ai.simplesplit.android.presentation.core.compose.rememberCallback
 import com.github.ai.simplesplit.android.presentation.core.compose.rememberOnClickedCallback
-import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppIcons
+import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppIcon
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppTheme
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.ElementMargin
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.HalfMargin
@@ -191,7 +191,7 @@ private fun RenderDataContent(
                 }
             ) {
                 Icon(
-                    imageVector = AppIcons.Add,
+                    imageVector = AppIcon.ADD.vector,
                     contentDescription = null
                 )
             }
@@ -225,7 +225,7 @@ private fun RenderDataContent(
                         onClick = { onIntent.invoke(GroupEditorIntent.OnRemoveMemberClick(index)) }
                     ) {
                         Icon(
-                            imageVector = AppIcons.Close,
+                            imageVector = AppIcon.CLOSE.vector,
                             contentDescription = null
                         )
                     }

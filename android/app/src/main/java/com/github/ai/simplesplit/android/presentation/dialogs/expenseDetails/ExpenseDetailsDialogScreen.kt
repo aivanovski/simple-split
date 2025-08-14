@@ -31,7 +31,7 @@ import com.github.ai.simplesplit.android.presentation.core.compose.cells.viewMod
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.viewModel.SpaceCellViewModel
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.viewModel.TextCellViewModel
 import com.github.ai.simplesplit.android.presentation.core.compose.preview.ThemedPreview
-import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppIcons
+import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppIcon
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppTheme
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.DialogCardCornerSize
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.ElementMargin
@@ -132,11 +132,11 @@ private fun ExpenseDetailsScreenPreview() {
                         height = HalfMargin
                     ),
                     newMenuCell(
-                        icon = AppIcons.Edit,
+                        icon = AppIcon.EDIT.vector,
                         title = "Edit"
                     ),
                     newMenuCell(
-                        icon = AppIcons.Remove,
+                        icon = AppIcon.REMOVE.vector,
                         title = "Remove"
                     )
                 )

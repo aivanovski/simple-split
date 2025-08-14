@@ -19,7 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.github.ai.simplesplit.android.presentation.core.compose.preview.ThemedPreview
-import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppIcons
+import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppIcon
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.LightTheme
 
 @Composable
@@ -45,7 +45,7 @@ fun AppDropdownField(
             readOnly = true,
             trailingIcon = {
                 Icon(
-                    imageVector = AppIcons.ExpandMore,
+                    imageVector = AppIcon.EXPAND_MORE.vector,
                     contentDescription = null,
                     modifier = Modifier.clickable { expanded = true }
                 )

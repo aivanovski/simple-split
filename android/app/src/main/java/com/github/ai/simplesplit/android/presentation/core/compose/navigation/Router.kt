@@ -9,6 +9,7 @@ import com.arkivanov.decompose.router.stack.replaceCurrent
 import com.github.ai.simplesplit.android.presentation.dialogs.Dialog
 import com.github.ai.simplesplit.android.presentation.dialogs.root.BottomSheetRootDialog
 import com.github.ai.simplesplit.android.presentation.screens.Screen
+import com.github.ai.simplesplit.android.presentation.screens.root.model.StartActivityEvent
 import com.github.ai.simplesplit.android.utils.StringUtils
 import com.github.ai.simplesplit.android.utils.mutableStateFlow
 import java.util.concurrent.ConcurrentHashMap
@@ -35,6 +36,8 @@ interface Router {
         screenType: KClass<out ResultOwner>,
         result: Any
     )
+
+    fun startActivity(event: StartActivityEvent)
 }
 
 fun interface ResultListener {
@@ -140,6 +143,12 @@ class RouterImpl : Router {
         )
 
         resultListeners.remove(key)?.onResult(result)
+    }
+
+    override fun startActivity(event: StartActivityEvent) {
+        scope.launch {
+            getNavigatorOrThrow().startActivity(event)
+        }
     }
 
     private fun isDialogActive(): Boolean {
