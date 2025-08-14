@@ -16,4 +16,6 @@ sealed class GroupsIntent(
     data class OnEditGroupClick(val groupUid: String) : GroupsIntent()
     data class OnRemoveGroupClick(val groupUid: String) : GroupsIntent()
     data class OnRemoveGroupConfirmed(val groupUid: String) : GroupsIntent()
+    data class OpenUrl(val url: String) : GroupsIntent()
+    data class ShareUrl(val url: String) : GroupsIntent()
 }

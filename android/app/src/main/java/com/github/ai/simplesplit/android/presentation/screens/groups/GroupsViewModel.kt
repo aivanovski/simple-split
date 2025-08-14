@@ -1,11 +1,13 @@
 package com.github.ai.simplesplit.android.presentation.screens.groups
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.viewModelScope
 import com.github.ai.simplesplit.android.R
+import com.github.ai.simplesplit.android.model.db.GroupCredentials
 import com.github.ai.simplesplit.android.presentation.core.ResourceProvider
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.CellEvent
 import com.github.ai.simplesplit.android.presentation.core.compose.navigation.Router
-import com.github.ai.simplesplit.android.presentation.core.compose.theme.Icon
+import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppIcon
 import com.github.ai.simplesplit.android.presentation.core.mvi.CellsMviViewModel
 import com.github.ai.simplesplit.android.presentation.core.mvi.nonStateAction
 import com.github.ai.simplesplit.android.presentation.dialogs.Dialog
@@ -22,6 +24,7 @@ import com.github.ai.simplesplit.android.presentation.screens.groups.cells.model
 import com.github.ai.simplesplit.android.presentation.screens.groups.model.GroupsData
 import com.github.ai.simplesplit.android.presentation.screens.groups.model.GroupsIntent
 import com.github.ai.simplesplit.android.presentation.screens.groups.model.GroupsState
+import com.github.ai.simplesplit.android.presentation.screens.root.model.StartActivityEvent
 import com.github.ai.simplesplit.android.utils.StringUtils
 import com.github.ai.simplesplit.android.utils.getErrorMessage
 import com.github.ai.simplesplit.android.utils.getStringOrNull
@@ -90,6 +93,12 @@ class GroupsViewModel(
 
             is GroupsIntent.OnAddGroupByUrlClick ->
                 nonStateAction { navigateToCheckoutGroupScreen() }
+
+            is GroupsIntent.OpenUrl ->
+                nonStateAction { router.startActivity(StartActivityEvent.OpenUrl(intent.url)) }
+
+            is GroupsIntent.ShareUrl ->
+                nonStateAction { router.startActivity(StartActivityEvent.ShareUrl(intent.url)) }
         }
     }
 
@@ -163,9 +172,7 @@ class GroupsViewModel(
     }
 
     private fun navigateToGroupEditor(groupUid: String) {
-        val creds = screenData?.credentials
-            ?.firstOrNull { creds -> creds.groupUid == groupUid }
-            ?: return
+        val creds = getGroupCredentials(groupUid) ?: return
 
         router.navigateTo(
             Screen.GroupEditor(
@@ -202,12 +209,12 @@ class GroupsViewModel(
                 MenuDialogArgs(
                     items = listOf(
                         MenuItem(
-                            icon = Icon.ADD,
+                            icon = AppIcon.ADD,
                             text = resourceProvider.getString(R.string.create_new_group),
                             actionId = MenuActions.CREATE_GROUP
                         ),
                         MenuItem(
-                            icon = Icon.LINK,
+                            icon = AppIcon.LINK,
                             text = resourceProvider.getString(R.string.add_by_url),
                             actionId = MenuActions.ADD_GROUP_BY_URL
                         )
@@ -223,28 +230,23 @@ class GroupsViewModel(
     }
 
     private fun showGroupMenuDialog(groupUid: String) {
-        router.showDialog(
-            Dialog.MenuDialog(
-                MenuDialogArgs(
-                    items = listOf(
-                        MenuItem(
-                            icon = Icon.EDIT,
-                            text = resourceProvider.getString(R.string.edit),
-                            actionId = MenuActions.EDIT_GROUP
-                        ),
-                        MenuItem(
-                            icon = Icon.REMOVE,
-                            text = resourceProvider.getString(R.string.remove),
-                            actionId = MenuActions.REMOVE_GROUP
-                        )
-                    )
-                )
+        val items = GroupMenuAction.entries.map { entry ->
+            MenuItem(
+                icon = entry.icon,
+                text = resourceProvider.getString(entry.resourceId),
+                actionId = entry.ordinal
             )
-        )
+        }
+
+        router.showDialog(Dialog.MenuDialog(MenuDialogArgs(items)))
         router.setResultListener(Dialog.MenuDialog::class) { item ->
             if (item is MenuItem) {
+                val action = GroupMenuAction.entries.first { action ->
+                    action.ordinal == item.actionId
+                }
+
                 onGroupMenuItemClicked(
-                    actionId = item.actionId,
+                    action = action,
                     groupUid = groupUid
                 )
             }
@@ -270,13 +272,25 @@ class GroupsViewModel(
     }
 
     private fun onGroupMenuItemClicked(
-        actionId: Int,
+        action: GroupMenuAction,
         groupUid: String
     ) {
-        when (actionId) {
-            MenuActions.EDIT_GROUP -> sendIntent(GroupsIntent.OnEditGroupClick(groupUid))
-            MenuActions.REMOVE_GROUP -> sendIntent(GroupsIntent.OnRemoveGroupClick(groupUid))
-            else -> throw IllegalArgumentException("Illegal actionId: $actionId")
+        when (action) {
+            GroupMenuAction.EDIT_GROUP -> sendIntent(GroupsIntent.OnEditGroupClick(groupUid))
+
+            GroupMenuAction.REMOVE_GROUP -> sendIntent(GroupsIntent.OnRemoveGroupClick(groupUid))
+
+            GroupMenuAction.EXPORT_TO_CSV -> {
+                val creds = getGroupCredentials(groupUid) ?: return
+                val url = interactor.createExportToCsvUrl(creds)
+                sendIntent(GroupsIntent.OpenUrl(url))
+            }
+
+            GroupMenuAction.SHARE_LINK -> {
+                val creds = getGroupCredentials(groupUid) ?: return
+                val url = interactor.createShareUrl(creds)
+                sendIntent(GroupsIntent.ShareUrl(url))
+            }
         }
     }
 
@@ -292,9 +306,22 @@ class GroupsViewModel(
         return cellId.parseCellId()?.payload?.getStringOrNull()
     }
 
+    private fun getGroupCredentials(groupUid: String): GroupCredentials? {
+        return screenData?.credentials
+            ?.firstOrNull { creds -> creds.groupUid == groupUid }
+    }
+
+    enum class GroupMenuAction(
+        val icon: AppIcon,
+        @StringRes val resourceId: Int
+    ) {
+        EDIT_GROUP(AppIcon.EDIT, R.string.edit),
+        REMOVE_GROUP(AppIcon.REMOVE, R.string.remove),
+        EXPORT_TO_CSV(AppIcon.EXPORT, R.string.export_as_csv_file),
+        SHARE_LINK(AppIcon.SHARE, R.string.share)
+    }
+
     object MenuActions {
-        const val EDIT_GROUP = 100
-        const val REMOVE_GROUP = 101
         const val CREATE_GROUP = 102
         const val ADD_GROUP_BY_URL = 103
     }

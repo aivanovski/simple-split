@@ -22,7 +22,7 @@ import com.github.ai.simplesplit.android.presentation.core.compose.cells.viewMod
 import com.github.ai.simplesplit.android.presentation.core.compose.preview.PreviewEventProvider
 import com.github.ai.simplesplit.android.presentation.core.compose.preview.ThemedPreview
 import com.github.ai.simplesplit.android.presentation.core.compose.rememberOnClickedCallback
-import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppIcons
+import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppIcon
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppTheme
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.DoubleGroupMargin
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.ElementMargin
@@ -96,7 +96,7 @@ fun BottomSheetHeaderCellPreview() {
 }
 
 fun newBottomSheetHeaderCell(
-    icon: ImageVector = AppIcons.Close,
+    icon: ImageVector = AppIcon.CLOSE.vector,
     title: String = "Beer",
     description: String = "15.42$",
     titleTextSize: TextSize = TextSize.TITLE_MEDIUM,

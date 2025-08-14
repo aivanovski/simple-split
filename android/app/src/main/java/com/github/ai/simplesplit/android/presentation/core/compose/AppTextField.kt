@@ -21,7 +21,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.github.ai.simplesplit.android.presentation.core.compose.preview.ThemedPreview
-import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppIcons
+import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppIcon
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.LightTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -76,20 +76,20 @@ fun AppTextField(
             when {
                 isError -> {
                     Icon(
-                        imageVector = AppIcons.ErrorCircle,
+                        imageVector = AppIcon.ERROR_CIRCLE.vector,
                         contentDescription = null
                     )
                 }
 
                 isPasswordToggleEnabled -> {
                     val icon = if (isPasswordVisible) {
-                        AppIcons.VisibilityOff
+                        AppIcon.VISIBILITY_OFF
                     } else {
-                        AppIcons.VisibilityOn
+                        AppIcon.VISIBILITY_ON
                     }
 
                     Icon(
-                        imageVector = icon,
+                        imageVector = icon.vector,
                         contentDescription = null,
                         modifier = Modifier
                             .clickable(
