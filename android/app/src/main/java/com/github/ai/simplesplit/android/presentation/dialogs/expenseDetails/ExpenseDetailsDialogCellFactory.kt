@@ -17,7 +17,7 @@ import com.github.ai.simplesplit.android.presentation.core.compose.cells.viewMod
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.viewModel.MenuCellViewModel
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.viewModel.SpaceCellViewModel
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.viewModel.TextCellViewModel
-import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppIcons
+import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppIcon
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.ElementMargin
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.GroupMargin
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.HalfMargin
@@ -68,7 +68,7 @@ class ExpenseDetailsDialogCellFactory(
                     description = expense.amount.toString(),
                     titleTextSize = TextSize.TITLE_MEDIUM,
                     descriptionTextSize = TextSize.TITLE_LARGE,
-                    icon = AppIcons.Close
+                    icon = AppIcon.CLOSE.vector
                 ),
                 eventProvider = eventProvider
             )
@@ -213,7 +213,7 @@ class ExpenseDetailsDialogCellFactory(
                 MenuCellViewModel(
                     MenuCellModel(
                         id = CellId.EDIT_MENU.name,
-                        icon = AppIcons.Edit,
+                        icon = AppIcon.EDIT.vector,
                         title = resourceProvider.getString(R.string.edit)
                     ),
                     eventProvider
@@ -221,7 +221,7 @@ class ExpenseDetailsDialogCellFactory(
                 MenuCellViewModel(
                     MenuCellModel(
                         id = CellId.REMOVE_MENU.name,
-                        icon = AppIcons.Remove,
+                        icon = AppIcon.REMOVE.vector,
                         title = resourceProvider.getString(R.string.remove)
                     ),
                     eventProvider

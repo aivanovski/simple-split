@@ -8,6 +8,8 @@ import com.github.ai.simplesplit.android.data.repository.ExpenseRepository
 import com.github.ai.simplesplit.android.data.repository.GroupCredentialsRepository
 import com.github.ai.simplesplit.android.data.repository.GroupRepository
 import com.github.ai.simplesplit.android.data.repository.MemberRepository
+import com.github.ai.simplesplit.android.domain.usecase.CreateExportUrlUseCase
+import com.github.ai.simplesplit.android.domain.usecase.CreateGroupUrlUseCase
 import com.github.ai.simplesplit.android.domain.usecase.ParseGroupUrlUseCase
 import com.github.ai.simplesplit.android.presentation.core.ResourceProvider
 import com.github.ai.simplesplit.android.presentation.core.ResourceProviderImpl
@@ -66,6 +68,8 @@ object AndroidAppModule {
 
         // UseCases
         singleOf(::ParseGroupUrlUseCase)
+        singleOf(::CreateExportUrlUseCase)
+        singleOf(::CreateGroupUrlUseCase)
 
         // Interactors
         singleOf(::GroupsInteractor)

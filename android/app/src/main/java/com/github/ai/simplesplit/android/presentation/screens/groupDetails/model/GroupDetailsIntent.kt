@@ -19,4 +19,6 @@ sealed class GroupDetailsIntent(
     data class OnEditExpenseClick(val expenseUid: String) : GroupDetailsIntent()
     data class OnRemoveExpenseClick(val expenseUid: String) : GroupDetailsIntent()
     data class OnRemoveExpenseConfirmed(val expenseUid: String) : GroupDetailsIntent()
+    data class OpenUrl(val url: String) : GroupDetailsIntent()
+    data class ShareGroupUrl(val url: String) : GroupDetailsIntent()
 }

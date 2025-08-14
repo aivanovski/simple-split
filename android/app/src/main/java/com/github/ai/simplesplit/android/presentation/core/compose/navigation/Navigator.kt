@@ -8,17 +8,22 @@ import com.arkivanov.decompose.router.stack.StackNavigator
 import com.arkivanov.decompose.value.Value
 import com.github.ai.simplesplit.android.presentation.screens.Screen
 import com.github.ai.simplesplit.android.presentation.screens.root.RootScreenComponent
+import com.github.ai.simplesplit.android.presentation.screens.root.RootViewModel
+import com.github.ai.simplesplit.android.presentation.screens.root.model.RootIntent
+import com.github.ai.simplesplit.android.presentation.screens.root.model.StartActivityEvent
 
 interface Navigator {
     fun getStackNavigation(): StackNavigator<Screen>
     fun getStack(): Value<ChildStack<Screen, ComponentContext>>
     fun getFragmentManager(): FragmentManager
     fun exitNavigation()
+    fun startActivity(event: StartActivityEvent)
 }
 
 class NavigatorImpl(
     private val rootComponent: RootScreenComponent,
-    private val activity: AppCompatActivity
+    private val activity: AppCompatActivity,
+    private val viewModel: RootViewModel
 ) : Navigator {
 
     override fun getStackNavigation(): StackNavigator<Screen> = rootComponent.navigation
@@ -28,4 +33,8 @@ class NavigatorImpl(
     override fun exitNavigation() = activity.finish()
 
     override fun getFragmentManager(): FragmentManager = activity.supportFragmentManager
+
+    override fun startActivity(event: StartActivityEvent) {
+        viewModel.sendIntent(RootIntent.StartActivity(event))
+    }
 }

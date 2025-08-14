@@ -20,7 +20,7 @@ import com.github.ai.simplesplit.android.presentation.core.compose.cells.viewMod
 import com.github.ai.simplesplit.android.presentation.core.compose.preview.PreviewEventProvider
 import com.github.ai.simplesplit.android.presentation.core.compose.preview.ThemedPreview
 import com.github.ai.simplesplit.android.presentation.core.compose.rememberOnClickedCallback
-import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppIcons
+import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppIcon
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppTheme
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.ElementMargin
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.HalfMargin
@@ -75,7 +75,7 @@ fun MenuCellPreview() {
 }
 
 fun newMenuCell(
-    icon: ImageVector = AppIcons.Settings,
+    icon: ImageVector = AppIcon.SETTINGS.vector,
     title: String = "Settings"
 ) = MenuCellViewModel(
     model = MenuCellModel(
