@@ -14,6 +14,9 @@ sealed interface Screen : ResultOwner {
     data object Groups : Screen
 
     @Serializable
+    data object Settings : Screen
+
+    @Serializable
     data class GroupDetails(
         val args: GroupDetailsArgs
     ) : Screen

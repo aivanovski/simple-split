@@ -144,4 +144,7 @@ dependencies {
 
     // Api
     implementation(project(":backend-api"))
+
+    // Preferences
+    implementation(libs.ksprefs)
 }

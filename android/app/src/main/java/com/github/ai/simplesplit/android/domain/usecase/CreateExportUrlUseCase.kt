@@ -1,13 +1,15 @@
 package com.github.ai.simplesplit.android.domain.usecase
 
-import com.github.ai.simplesplit.android.data.api.ApiClient
+import com.github.ai.simplesplit.android.data.settings.Settings
 import com.github.ai.simplesplit.android.model.db.GroupCredentials
 
-class CreateExportUrlUseCase {
+class CreateExportUrlUseCase(
+    private val settings: Settings
+) {
 
     fun createUrl(credentials: GroupCredentials): String {
         return "%s/export/%s.csv?password=%s".format(
-            ApiClient.SERVER_URL,
+            settings.serverUrl,
             credentials.groupUid,
             credentials.password
         )

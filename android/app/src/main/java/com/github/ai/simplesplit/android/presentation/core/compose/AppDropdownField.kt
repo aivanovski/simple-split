@@ -20,7 +20,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.github.ai.simplesplit.android.presentation.core.compose.preview.ThemedPreview
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppIcon
+import com.github.ai.simplesplit.android.presentation.core.compose.theme.ElementMargin
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.LightTheme
+import com.github.ai.simplesplit.android.presentation.core.compose.theme.MediumMargin
 
 @Composable
 fun AppDropdownField(
@@ -47,7 +49,11 @@ fun AppDropdownField(
                 Icon(
                     imageVector = AppIcon.EXPAND_MORE.vector,
                     contentDescription = null,
-                    modifier = Modifier.clickable { expanded = true }
+                    modifier = Modifier
+                        .clickable(
+                            onClick = { expanded = true }
+                        )
+                        .padding(MediumMargin)
                 )
             },
             modifier = modifier.clickable { expanded = true }
@@ -74,7 +80,10 @@ fun AppDropdownField(
                 text = error.orEmpty(),
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+                modifier = Modifier
+                    .padding(
+                        start = ElementMargin
+                    )
             )
         }
     }

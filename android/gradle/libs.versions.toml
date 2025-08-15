@@ -39,6 +39,7 @@ dadb = "1.2.8"
 mordant = "3.0.1"
 truth = "1.4.4"
 jgit = "6.2.0.202206071550-r"
+ksprefs = "2.4.1"
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
@@ -100,7 +101,7 @@ logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 room-test = { module = "androidx.room:room-testing", version.ref = "room" }
-room-kts = { module = "androidx.room:room-ktx", version.ref = "room"}
+room-kts = { module = "androidx.room:room-ktx", version.ref = "room" }
 jackson-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson" }
 jackson-yaml = { module = "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml", version.ref = "jackson" }
 arrow-core = { module = "io.arrow-kt:arrow-core", version.ref = "arrow" }
@@ -116,3 +117,4 @@ dadb = { module = "dev.mobile:dadb", version.ref = "dadb" }
 mordant = { module = "com.github.ajalt.mordant:mordant", version.ref = "mordant" }
 truth = { module = "com.google.truth:truth", version.ref = "truth" }
 jgit = { module = "org.eclipse.jgit:org.eclipse.jgit", version.ref = "jgit" }
+ksprefs = { module = "com.github.cioccarellia:ksprefs", version.ref = "ksprefs" }

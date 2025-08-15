@@ -2,7 +2,10 @@ package com.github.ai.simplesplit.android.data.api
 
 import arrow.core.Either
 import arrow.core.Some
+import com.github.ai.simplesplit.android.data.json.JsonSerializer
+import com.github.ai.simplesplit.android.data.settings.Settings
 import com.github.ai.simplesplit.android.model.exception.ApiException
+import com.github.ai.simplesplit.android.utils.atomicReference
 import com.github.ai.split.api.request.PostExpenseRequest
 import com.github.ai.split.api.request.PostGroupRequest
 import com.github.ai.split.api.request.PostMemberRequest
@@ -16,12 +19,30 @@ import com.github.ai.split.api.response.PostGroupResponse
 import com.github.ai.split.api.response.PostMemberResponse
 import com.github.ai.split.api.response.PutExpenseResponse
 import com.github.ai.split.api.response.PutGroupResponse
-import io.ktor.client.HttpClient
 
 class ApiClient(
-    private val httpClient: HttpClient,
-    private val baseUrl: String = SERVER_URL
+    private val jsonSerializer: JsonSerializer,
+    private val settings: Settings
 ) {
+
+    private var baseUrl by atomicReference(settings.serverUrl)
+    private var httpClient by atomicReference(
+        HttpClientFactory.createHttpClient(
+            jsonSerializer = jsonSerializer,
+            isSslVerificationEnabled = settings.isSslVerificationEnabled
+        )
+    )
+
+    fun updateHttpClient() {
+        httpClient = HttpClientFactory.createHttpClient(
+            jsonSerializer = jsonSerializer,
+            isSslVerificationEnabled = settings.isSslVerificationEnabled
+        )
+    }
+
+    fun updateServerUrl() {
+        baseUrl = settings.serverUrl
+    }
 
     suspend fun getGroups(
         uids: List<String>,
@@ -104,6 +125,7 @@ class ApiClient(
         )
 
     companion object {
-        const val SERVER_URL = "https://api.simplesplitapp.link"
+        const val PROD_SERVER_URL = "https://api.simplesplitapp.link"
+        const val DEBUG_SERVER_URL = "http://10.0.2.2:8080"
     }
 }

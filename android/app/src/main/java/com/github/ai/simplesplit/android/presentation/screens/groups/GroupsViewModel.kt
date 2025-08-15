@@ -99,6 +99,9 @@ class GroupsViewModel(
 
             is GroupsIntent.ShareUrl ->
                 nonStateAction { router.startActivity(StartActivityEvent.ShareUrl(intent.url)) }
+
+            GroupsIntent.OnSettingsClick ->
+                nonStateAction { navigateToSettingsScreen() }
         }
     }
 
@@ -201,6 +204,10 @@ class GroupsViewModel(
                 )
             )
         )
+    }
+
+    private fun navigateToSettingsScreen() {
+        router.navigateTo(Screen.Settings)
     }
 
     private fun showAddGroupMenuDialog() {
