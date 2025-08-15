@@ -1,13 +1,14 @@
 package com.github.ai.simplesplit.android.di
 
 import com.github.ai.simplesplit.android.data.api.ApiClient
-import com.github.ai.simplesplit.android.data.api.HttpClientFactory
 import com.github.ai.simplesplit.android.data.database.AppDatabase
 import com.github.ai.simplesplit.android.data.json.JsonSerializer
 import com.github.ai.simplesplit.android.data.repository.ExpenseRepository
 import com.github.ai.simplesplit.android.data.repository.GroupCredentialsRepository
 import com.github.ai.simplesplit.android.data.repository.GroupRepository
 import com.github.ai.simplesplit.android.data.repository.MemberRepository
+import com.github.ai.simplesplit.android.data.settings.Settings
+import com.github.ai.simplesplit.android.data.settings.SettingsImpl
 import com.github.ai.simplesplit.android.domain.usecase.CreateExportUrlUseCase
 import com.github.ai.simplesplit.android.domain.usecase.CreateGroupUrlUseCase
 import com.github.ai.simplesplit.android.domain.usecase.ParseGroupUrlUseCase
@@ -40,6 +41,9 @@ import com.github.ai.simplesplit.android.presentation.screens.groupEditor.model.
 import com.github.ai.simplesplit.android.presentation.screens.groups.GroupsInteractor
 import com.github.ai.simplesplit.android.presentation.screens.groups.GroupsViewModel
 import com.github.ai.simplesplit.android.presentation.screens.root.RootViewModel
+import com.github.ai.simplesplit.android.presentation.screens.settings.SettingsInteractor
+import com.github.ai.simplesplit.android.presentation.screens.settings.SettingsViewModel
+import com.github.ai.simplesplit.android.presentation.screens.settings.cells.SettingsCellFactory
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -50,6 +54,7 @@ object AndroidAppModule {
         // Core
         singleOf(::ThemeProviderImpl).bind(ThemeProvider::class)
         singleOf(::ResourceProviderImpl).bind(ResourceProvider::class)
+        singleOf(::SettingsImpl).bind(Settings::class)
 
         // Database
         single { AppDatabase.buildDatabase(get()) }
@@ -57,8 +62,7 @@ object AndroidAppModule {
 
         // Api
         singleOf(::JsonSerializer)
-        single { HttpClientFactory.createHttpClient(get(), isSslVerificationEnabled = true) }
-        single { ApiClient(get()) }
+        singleOf(::ApiClient)
 
         // Repositories
         singleOf(::GroupRepository)
@@ -77,10 +81,12 @@ object AndroidAppModule {
         singleOf(::GroupEditorInteractor)
         singleOf(::ExpenseEditorInteractor)
         singleOf(::CheckoutGroupInteractor)
+        singleOf(::SettingsInteractor)
 
         // CellFactories
         singleOf(::GroupDetailsCellFactory)
         singleOf(::ExpenseDetailsDialogCellFactory)
+        singleOf(::SettingsCellFactory)
 
         // Router
         singleOf(::RouterImpl).bind(Router::class)
@@ -89,6 +95,14 @@ object AndroidAppModule {
         factory { RootViewModel(get()) }
         factory {
             GroupsViewModel(
+                get(),
+                get(),
+                get()
+            )
+        }
+        factory {
+            SettingsViewModel(
+                get(),
                 get(),
                 get(),
                 get()

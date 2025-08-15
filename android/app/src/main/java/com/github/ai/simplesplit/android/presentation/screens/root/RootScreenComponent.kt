@@ -15,6 +15,7 @@ import com.github.ai.simplesplit.android.presentation.screens.groupDetails.Group
 import com.github.ai.simplesplit.android.presentation.screens.groupEditor.GroupEditorScreenComponent
 import com.github.ai.simplesplit.android.presentation.screens.groups.GroupsScreenComponent
 import com.github.ai.simplesplit.android.presentation.screens.root.model.RootIntent
+import com.github.ai.simplesplit.android.presentation.screens.settings.SettingsScreenComponent
 
 class RootScreenComponent(
     componentContext: ComponentContext
@@ -54,6 +55,10 @@ class RootScreenComponent(
     ): ComponentContext {
         return when (screen) {
             is Screen.Groups -> GroupsScreenComponent(
+                context = childContext
+            )
+
+            is Screen.Settings -> SettingsScreenComponent(
                 context = childContext
             )
 

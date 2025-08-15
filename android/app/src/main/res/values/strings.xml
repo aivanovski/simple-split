@@ -17,6 +17,12 @@
     <string name="create_new_group">Create new group</string>
     <string name="add_by_url">Add by url</string>
 
+    <!-- Settings screen -->
+    <string name="settings">Settings</string>
+    <string name="server_url">Server URL</string>
+    <string name="validate_ssl_certificate_title">Validate SSL certificates</string>
+    <string name="validate_ssl_certificate_description">Disables SSL certificate validation during HTTPS requests</string>
+
     <!-- Group Editor screen -->
     <string name="create_new_group_title">Create New Group</string>
     <string name="group_name">Group Name</string>

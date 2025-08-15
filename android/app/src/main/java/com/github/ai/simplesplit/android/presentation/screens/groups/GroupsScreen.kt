@@ -15,12 +15,15 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import com.github.ai.simplesplit.android.BuildConfig
 import com.github.ai.simplesplit.android.R
 import com.github.ai.simplesplit.android.presentation.core.compose.CenteredBox
 import com.github.ai.simplesplit.android.presentation.core.compose.TopBar
+import com.github.ai.simplesplit.android.presentation.core.compose.TopBarMenuItem
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.CellViewModel
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.ui.SpaceCell
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.viewModel.SpaceCellViewModel
+import com.github.ai.simplesplit.android.presentation.core.compose.rememberCallback
 import com.github.ai.simplesplit.android.presentation.core.compose.rememberOnClickedCallback
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppIcon
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppTheme
@@ -47,12 +50,21 @@ private fun GroupsScreen(
     val onFabClick = rememberOnClickedCallback {
         onIntent.invoke(GroupsIntent.OnAddButtonClick)
     }
+    val onMenuClick = rememberCallback { item: TopBarMenuItem ->
+        onIntent.invoke(GroupsIntent.OnSettingsClick)
+    }
 
     Scaffold(
         topBar = {
             TopBar(
                 title = stringResource(R.string.groups),
-                isBackVisible = false
+                isBackVisible = false,
+                menuItems = if (BuildConfig.DEBUG) {
+                    listOf(TopBarMenuItem.SETTINGS)
+                } else {
+                    emptyList()
+                },
+                onMenuItemClick = onMenuClick
             )
         },
         floatingActionButton = {
@@ -68,7 +80,6 @@ private fun GroupsScreen(
             }
         }
     ) { padding ->
-
         Surface(
             modifier = Modifier
                 .fillMaxSize()
@@ -116,5 +127,6 @@ private fun RenderCell(viewModel: CellViewModel) {
     when (viewModel) {
         is SpaceCellViewModel -> SpaceCell(viewModel)
         is GroupCellViewModel -> GroupCell(viewModel)
+        else -> throw IllegalArgumentException("Unknown cell: $viewModel")
     }
 }

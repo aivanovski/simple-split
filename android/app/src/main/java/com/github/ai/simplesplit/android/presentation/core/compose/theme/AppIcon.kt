@@ -4,6 +4,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBackIos
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddLink
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -33,7 +35,9 @@ enum class AppIcon {
     EDIT,
     REMOVE,
     EXPORT,
-    SHARE;
+    SHARE,
+    ARROW_DROP_DOWN,
+    ARROW_DROP_UP;
 
     val vector: ImageVector
         get() =
@@ -53,5 +57,7 @@ enum class AppIcon {
                 REMOVE -> Icons.Filled.Delete
                 EXPORT -> Icons.Filled.FileUpload
                 SHARE -> Icons.Filled.Share
+                ARROW_DROP_DOWN -> Icons.Filled.ArrowDropDown
+                ARROW_DROP_UP -> Icons.Filled.ArrowDropUp
             }
 }

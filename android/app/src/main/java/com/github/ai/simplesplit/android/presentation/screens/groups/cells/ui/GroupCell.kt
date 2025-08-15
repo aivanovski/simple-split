@@ -116,7 +116,7 @@ fun GroupCellPreview() {
     }
 }
 
-private fun newGroupCell() =
+fun newGroupCell() =
     GroupCellViewModel(
         model = GroupCellModel(
             id = "id",

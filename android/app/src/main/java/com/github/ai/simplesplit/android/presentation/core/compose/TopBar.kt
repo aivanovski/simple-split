@@ -13,7 +13,8 @@ import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppThem
 
 enum class TopBarMenuItem {
     DONE,
-    MENU
+    MENU,
+    SETTINGS
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -75,5 +76,6 @@ private fun TopBarMenuItem.getImageVector(): ImageVector {
     return when (this) {
         TopBarMenuItem.DONE -> AppIcon.CHECK.vector
         TopBarMenuItem.MENU -> AppIcon.MENU.vector
+        TopBarMenuItem.SETTINGS -> AppIcon.SETTINGS.vector
     }
 }
