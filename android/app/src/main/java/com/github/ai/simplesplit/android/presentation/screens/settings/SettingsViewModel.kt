@@ -8,8 +8,10 @@ import com.github.ai.simplesplit.android.presentation.core.compose.navigation.Ro
 import com.github.ai.simplesplit.android.presentation.core.mvi.CellsMviViewModel
 import com.github.ai.simplesplit.android.presentation.core.mvi.nonStateAction
 import com.github.ai.simplesplit.android.presentation.screens.settings.cells.SettingsCellFactory
+import com.github.ai.simplesplit.android.presentation.screens.settings.cells.SettingsCellFactory.SettingsCellId
 import com.github.ai.simplesplit.android.presentation.screens.settings.model.SettingsIntent
 import com.github.ai.simplesplit.android.presentation.screens.settings.model.SettingsState
+import io.ktor.client.plugins.logging.LogLevel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 
@@ -48,8 +50,21 @@ class SettingsViewModel(
             }
 
             is DropDownCellEvent.OnOptionSelect -> {
-                settings.serverUrl = event.selectedOption
-                interactor.onServerUrlChanged()
+                when (event.cellId) {
+                    SettingsCellId.HTTP_LOG_LEVEL.name -> {
+                        val level = LogLevel.entries
+                            .find { level -> level.name == event.selectedOption }
+                            ?: LogLevel.INFO
+
+                        settings.httpLogLevel = level
+                        interactor.onLogLevelChanged()
+                    }
+
+                    SettingsCellId.SERVER_URL.name -> {
+                        settings.serverUrl = event.selectedOption
+                        interactor.onServerUrlChanged()
+                    }
+                }
             }
         }
     }

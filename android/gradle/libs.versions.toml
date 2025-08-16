@@ -40,6 +40,7 @@ mordant = "3.0.1"
 truth = "1.4.4"
 jgit = "6.2.0.202206071550-r"
 ksprefs = "2.4.1"
+constraintLayoutCompose = "1.0.1"
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
@@ -83,6 +84,7 @@ androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 androidx-viewMaterial = { module = "com.google.android.material:material", version.ref = "viewMaterial" }
 androidx-icons = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIcons" }
+androidx-constraintLayoutCompose = { module = "androidx.constraintlayout:constraintlayout-compose", version.ref = "constraintLayoutCompose" }
 ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktor" }
 ktor-server-netty = { module = "io.ktor:ktor-server-netty", version.ref = "ktor" }
 ktor-server-websockets = { module = "io.ktor:ktor-server-websockets", version.ref = "ktor" }

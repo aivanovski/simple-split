@@ -1,7 +1,7 @@
 package com.github.ai.simplesplit.android.domain.usecase
 
+import com.github.ai.simplesplit.android.data.database.model.GroupCredentials
 import com.github.ai.simplesplit.android.data.settings.Settings
-import com.github.ai.simplesplit.android.model.db.GroupCredentials
 
 class CreateExportUrlUseCase(
     private val settings: Settings

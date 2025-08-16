@@ -11,9 +11,9 @@ import com.github.ai.simplesplit.android.presentation.screens.groupEditor.model.
 import com.github.ai.simplesplit.android.presentation.screens.groupEditor.model.GroupEditorState
 import com.github.ai.simplesplit.android.presentation.screens.groupEditor.model.ValidationResult
 import com.github.ai.simplesplit.android.utils.StringUtils
-import com.github.ai.simplesplit.android.utils.getErrorMessage
 import com.github.ai.simplesplit.android.utils.mutableStateFlow
 import com.github.ai.simplesplit.android.utils.singleFlowOf
+import com.github.ai.simplesplit.android.utils.toErrorMessage
 import com.github.ai.split.api.GroupDto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -21,11 +21,10 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
-import timber.log.Timber
 
 class GroupEditorViewModel(
     private val interactor: GroupEditorInteractor,
-    private val resourceProvider: ResourceProvider,
+    private val resources: ResourceProvider,
     private val router: Router,
     private val args: GroupEditorArgs
 ) : MviViewModel<GroupEditorState, GroupEditorIntent>(
@@ -42,6 +41,7 @@ class GroupEditorViewModel(
             GroupEditorIntent.OnBackClick -> nonStateAction { navigateBack() }
             GroupEditorIntent.OnAddMemberClick -> onAddMemberClicked()
             GroupEditorIntent.OnDoneClick -> onDoneClicked()
+            GroupEditorIntent.OnCloseErrorClick -> onCloseErrorClicked()
             is GroupEditorIntent.OnTitleChanged -> onTitleChanged(intent)
             is GroupEditorIntent.OnPasswordChanged -> onPasswordChanged(intent)
             is GroupEditorIntent.OnConfirmPasswordChanged -> onConfirmPasswordChanged(intent)
@@ -188,17 +188,17 @@ class GroupEditorViewModel(
                 }
             }
 
-            if (response.isLeft()) {
-                // TODO: show data state
-                emit(GroupEditorState.Error(response.getErrorMessage()))
-                return@flow
-            }
-
-            val group = response.getOrNull() ?: return@flow
-            // TODO: remove logging
-            Timber.d("Successfully: uid=${group.uid}")
-
-            router.exit()
+            response.fold(
+                ifLeft = { error ->
+                    dataState = dataState.copy(
+                        error = error.toErrorMessage(resources)
+                    )
+                    emit(dataState)
+                },
+                ifRight = {
+                    router.exit()
+                }
+            )
         }
             .flowOn(Dispatchers.IO)
     }
@@ -209,24 +209,22 @@ class GroupEditorViewModel(
             is GroupEditorMode.EditGroup -> flow {
                 emit(GroupEditorState.Loading)
 
-                val loadGroupResult = interactor.loadGroup(
+                interactor.loadGroup(
                     uid = args.mode.credentials.groupUid,
                     password = args.mode.credentials.password
+                ).fold(
+                    ifLeft = { error ->
+                        emit(GroupEditorState.Error(error.toErrorMessage(resources)))
+                    },
+                    ifRight = { group ->
+                        data = group
+                        dataState = GroupEditorState.Data(
+                            title = group.title,
+                            members = group.members.map { member -> member.name }
+                        )
+                        emit(dataState)
+                    }
                 )
-                if (loadGroupResult.isLeft()) {
-                    emit(GroupEditorState.Error(loadGroupResult.getErrorMessage()))
-                    return@flow
-                }
-
-                val group = loadGroupResult.getOrNull() ?: return@flow
-
-                data = group
-                dataState = GroupEditorState.Data(
-                    title = group.title,
-                    members = group.members.map { member -> member.name }
-                )
-
-                emit(dataState)
             }.flowOn(Dispatchers.IO)
         }
     }
@@ -254,6 +252,13 @@ class GroupEditorViewModel(
         }
     }
 
+    private fun onCloseErrorClicked(): Flow<GroupEditorState> {
+        dataState = dataState.copy(
+            error = null
+        )
+        return flowOf(dataState)
+    }
+
     private fun validateEditGroupData(state: GroupEditorState.Data): ValidationResult {
         val title = state.title
         val password = state.password
@@ -261,13 +266,13 @@ class GroupEditorViewModel(
         val members = state.members
 
         val emptyTitleError = if (title.isBlank()) {
-            resourceProvider.getString(R.string.enter_group_name)
+            resources.getString(R.string.enter_group_name)
         } else {
             null
         }
 
         val membersError = if (members.size < 2) {
-            resourceProvider.getString(R.string.invalid_member_count_message)
+            resources.getString(R.string.invalid_member_count_message)
         } else {
             null
         }
@@ -276,19 +281,19 @@ class GroupEditorViewModel(
             confirmPassword.isNotBlank()
         ) {
             val emptyPasswordError = if (password.isBlank()) {
-                resourceProvider.getString(R.string.enter_password)
+                resources.getString(R.string.enter_password)
             } else {
                 null
             }
 
             val emptyConfirmationError = if (confirmPassword.isBlank()) {
-                resourceProvider.getString(R.string.enter_password)
+                resources.getString(R.string.enter_password)
             } else {
                 null
             }
 
             val passwordConfirmationError = if (password.trim() != confirmPassword.trim()) {
-                resourceProvider.getString(R.string.passwords_dont_match)
+                resources.getString(R.string.passwords_dont_match)
             } else {
                 null
             }
@@ -324,31 +329,31 @@ class GroupEditorViewModel(
         val members = state.members
 
         val emptyTitleError = if (title.isBlank()) {
-            resourceProvider.getString(R.string.enter_group_name)
+            resources.getString(R.string.enter_group_name)
         } else {
             null
         }
 
         val emptyPasswordError = if (title.isBlank()) {
-            resourceProvider.getString(R.string.enter_password)
+            resources.getString(R.string.enter_password)
         } else {
             null
         }
 
         val emptyConfirmationError = if (confirmPassword.isBlank()) {
-            resourceProvider.getString(R.string.enter_password)
+            resources.getString(R.string.enter_password)
         } else {
             null
         }
 
         val passwordConfirmationError = if (password.trim() != confirmPassword.trim()) {
-            resourceProvider.getString(R.string.passwords_dont_match)
+            resources.getString(R.string.passwords_dont_match)
         } else {
             null
         }
 
         val membersError = if (members.size < 2) {
-            resourceProvider.getString(R.string.invalid_member_count_message)
+            resources.getString(R.string.invalid_member_count_message)
         } else {
             null
         }

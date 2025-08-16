@@ -57,6 +57,7 @@ suspend inline fun <reified Request, reified Response> HttpClient.sendRequest(
 
         val status = response.status
         if (status != HttpStatusCode.OK) {
+            // TODO: Kotlin serializer cannot parse quoted json object from server
             val errorBody = Either
                 .catch { response.body<ErrorMessageDto>() }
                 .getOrNull()

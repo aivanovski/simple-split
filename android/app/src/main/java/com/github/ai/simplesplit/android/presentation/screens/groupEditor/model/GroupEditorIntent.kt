@@ -10,6 +10,7 @@ sealed class GroupEditorIntent(
     data object OnBackClick : GroupEditorIntent()
     data object OnAddMemberClick : GroupEditorIntent()
     data object OnDoneClick : GroupEditorIntent()
+    data object OnCloseErrorClick : GroupEditorIntent()
     data class OnTitleChanged(val title: String) : GroupEditorIntent(isImmediate = true)
     data class OnPasswordChanged(val password: String) : GroupEditorIntent(isImmediate = true)
     data class OnConfirmPasswordChanged(

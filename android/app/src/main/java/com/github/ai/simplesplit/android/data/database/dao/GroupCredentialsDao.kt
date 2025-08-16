@@ -5,7 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
-import com.github.ai.simplesplit.android.model.db.GroupCredentials
+import com.github.ai.simplesplit.android.data.database.model.GroupCredentials
 import kotlinx.coroutines.flow.Flow
 
 @Dao

@@ -12,8 +12,8 @@ class NetworkException(
 ) : ApiException(cause = cause)
 
 class InvalidResponseException(
-    statusCode: Int,
-    errorMessage: ErrorMessageDto? = null
+    val statusCode: Int,
+    val errorMessage: ErrorMessageDto? = null
 ) : ApiException(
     message = "Invalid server response, HTTP status code: $statusCode"
 )

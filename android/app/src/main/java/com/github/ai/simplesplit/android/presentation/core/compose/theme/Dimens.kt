@@ -16,6 +16,8 @@ val HugeMargin = 64.dp
 val EmptyMessageItemHeight = 200.dp
 val OneLineItemHeight = 48.dp
 val TwoLineItemHeight = 72.dp
+val GroupTwoLineItemHeight = 52.dp
+val GroupThreeLineItemHeight = 68.dp
 
 val CardCornerSize = 22.dp
 val DialogCardCornerSize = 16.dp

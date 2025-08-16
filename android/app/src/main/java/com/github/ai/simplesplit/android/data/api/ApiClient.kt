@@ -19,6 +19,7 @@ import com.github.ai.split.api.response.PostGroupResponse
 import com.github.ai.split.api.response.PostMemberResponse
 import com.github.ai.split.api.response.PutExpenseResponse
 import com.github.ai.split.api.response.PutGroupResponse
+import io.ktor.client.HttpClient
 
 class ApiClient(
     private val jsonSerializer: JsonSerializer,
@@ -27,21 +28,26 @@ class ApiClient(
 
     private var baseUrl by atomicReference(settings.serverUrl)
     private var httpClient by atomicReference(
-        HttpClientFactory.createHttpClient(
-            jsonSerializer = jsonSerializer,
-            isSslVerificationEnabled = settings.isSslVerificationEnabled
-        )
+        buildHttpClient(jsonSerializer, settings)
     )
 
     fun updateHttpClient() {
-        httpClient = HttpClientFactory.createHttpClient(
-            jsonSerializer = jsonSerializer,
-            isSslVerificationEnabled = settings.isSslVerificationEnabled
-        )
+        httpClient = buildHttpClient(jsonSerializer, settings)
     }
 
     fun updateServerUrl() {
         baseUrl = settings.serverUrl
+    }
+
+    private fun buildHttpClient(
+        jsonSerializer: JsonSerializer,
+        settings: Settings
+    ): HttpClient {
+        return HttpClientFactory.createHttpClient(
+            jsonSerializer = jsonSerializer,
+            isSslVerificationEnabled = settings.isSslVerificationEnabled,
+            logLevel = settings.httpLogLevel
+        )
     }
 
     suspend fun getGroups(

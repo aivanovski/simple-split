@@ -1,17 +1,14 @@
 package com.github.ai.simplesplit.android.presentation.screens.checkoutGroup
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -20,13 +17,13 @@ import androidx.compose.ui.res.stringResource
 import com.github.ai.simplesplit.android.R
 import com.github.ai.simplesplit.android.presentation.core.compose.AppTextField
 import com.github.ai.simplesplit.android.presentation.core.compose.CenteredBox
+import com.github.ai.simplesplit.android.presentation.core.compose.ErrorMessageCard
 import com.github.ai.simplesplit.android.presentation.core.compose.TopBar
 import com.github.ai.simplesplit.android.presentation.core.compose.TopBarMenuItem
 import com.github.ai.simplesplit.android.presentation.core.compose.rememberCallback
 import com.github.ai.simplesplit.android.presentation.core.compose.rememberOnClickedCallback
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppTheme
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.ElementMargin
-import com.github.ai.simplesplit.android.presentation.core.compose.theme.SmallMargin
 import com.github.ai.simplesplit.android.presentation.screens.checkoutGroup.model.CheckoutGroupIntent
 import com.github.ai.simplesplit.android.presentation.screens.checkoutGroup.model.CheckoutGroupState
 
@@ -100,10 +97,19 @@ private fun RenderDataContent(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(state = rememberScrollState())
-            .padding(ElementMargin)
     ) {
         val onUrlChange = rememberCallback { newValue: String ->
             onIntent.invoke(CheckoutGroupIntent.OnUrlChanged(newValue))
+        }
+        val onCloseErrorClick = rememberOnClickedCallback {
+            onIntent.invoke(CheckoutGroupIntent.OnCloseErrorClick)
+        }
+
+        if (state.error != null) {
+            ErrorMessageCard(
+                error = state.error,
+                onClose = onCloseErrorClick
+            )
         }
 
         AppTextField(
@@ -111,23 +117,9 @@ private fun RenderDataContent(
             error = state.urlError,
             label = stringResource(R.string.group_url),
             onValueChange = onUrlChange,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .padding(horizontal = ElementMargin)
+                .fillMaxWidth()
         )
-
-        Spacer(modifier = Modifier.height(SmallMargin))
-
-        // TODO: make error message more readable
-
-        // Show error message if there's one
-        state.errorMessage?.let { errorMessage ->
-            Spacer(modifier = Modifier.height(SmallMargin))
-
-            Text(
-                text = errorMessage,
-                color = AppTheme.theme.colors.errorText,
-                style = AppTheme.theme.typography.bodySmall,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
     }
 }

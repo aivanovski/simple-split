@@ -22,7 +22,8 @@ object HttpClientFactory {
 
     fun createHttpClient(
         jsonSerializer: JsonSerializer,
-        isSslVerificationEnabled: Boolean
+        isSslVerificationEnabled: Boolean,
+        logLevel: LogLevel
     ): HttpClient {
         return HttpClient(OkHttp) {
             install(ContentNegotiation) {
@@ -34,7 +35,7 @@ object HttpClientFactory {
                         Timber.d(message)
                     }
                 }
-                level = LogLevel.INFO
+                level = logLevel
             }
 
             if (BuildConfig.DEBUG && !isSslVerificationEnabled) {

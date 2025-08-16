@@ -13,4 +13,8 @@ class SettingsInteractor(
     fun onServerUrlChanged() {
         api.updateServerUrl()
     }
+
+    fun onLogLevelChanged() {
+        api.updateHttpClient()
+    }
 }

@@ -1,6 +1,5 @@
 package com.github.ai.simplesplit.android.presentation.screens.checkoutGroup
 
-import arrow.core.Either
 import com.github.ai.simplesplit.android.R
 import com.github.ai.simplesplit.android.presentation.core.ResourceProvider
 import com.github.ai.simplesplit.android.presentation.core.compose.navigation.Router
@@ -9,9 +8,9 @@ import com.github.ai.simplesplit.android.presentation.core.mvi.nonStateAction
 import com.github.ai.simplesplit.android.presentation.screens.checkoutGroup.model.CheckoutGroupArgs
 import com.github.ai.simplesplit.android.presentation.screens.checkoutGroup.model.CheckoutGroupIntent
 import com.github.ai.simplesplit.android.presentation.screens.checkoutGroup.model.CheckoutGroupState
-import com.github.ai.simplesplit.android.utils.getErrorMessage
 import com.github.ai.simplesplit.android.utils.mutableStateFlow
 import com.github.ai.simplesplit.android.utils.singleFlowOf
+import com.github.ai.simplesplit.android.utils.toErrorMessage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -20,7 +19,7 @@ import kotlinx.coroutines.flow.flowOn
 
 class CheckoutGroupViewModel(
     private val interactor: CheckoutGroupInteractor,
-    private val resourceProvider: ResourceProvider,
+    private val resources: ResourceProvider,
     private val router: Router,
     private val args: CheckoutGroupArgs
 ) : MviViewModel<CheckoutGroupState, CheckoutGroupIntent>(
@@ -35,6 +34,7 @@ class CheckoutGroupViewModel(
             CheckoutGroupIntent.Initialize -> loadData()
             CheckoutGroupIntent.OnBackClick -> nonStateAction { navigateBack() }
             CheckoutGroupIntent.OnDoneClick -> onDoneClicked()
+            CheckoutGroupIntent.OnCloseErrorClick -> onCloseErrorClicked()
             is CheckoutGroupIntent.OnUrlChanged -> onUrlChanged(intent)
         }
     }
@@ -54,26 +54,32 @@ class CheckoutGroupViewModel(
     private fun onDoneClicked(): Flow<CheckoutGroupState> {
         if (dataState.url.isBlank()) {
             dataState = dataState.copy(
-                urlError = resourceProvider.getString(R.string.field_required_error)
+                urlError = resources.getString(R.string.field_required_error)
             )
             return flowOf(dataState)
         }
 
         return flow {
             emit(CheckoutGroupState.Loading)
-            kotlinx.coroutines.delay(500)
 
-            when (val addGroupResult = interactor.addGroup(url = dataState.url.trim())) {
-                is Either.Left -> {
-                    dataState = dataState.copy(errorMessage = addGroupResult.getErrorMessage())
+            val addGroupResult = interactor.addGroup(url = dataState.url.trim())
+            addGroupResult.fold(
+                ifLeft = {
+                    dataState = dataState.copy(
+                        error = it.toErrorMessage(resources)
+                    )
                     emit(dataState)
-                }
-
-                is Either.Right -> {
+                },
+                ifRight = {
                     navigateBack()
                 }
-            }
+            )
         }.flowOn(Dispatchers.IO)
+    }
+
+    private fun onCloseErrorClicked(): Flow<CheckoutGroupState> {
+        dataState = dataState.copy(error = null)
+        return flowOf(dataState)
     }
 
     private fun navigateBack() {

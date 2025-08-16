@@ -12,7 +12,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -24,6 +23,8 @@ import com.github.ai.simplesplit.android.R
 import com.github.ai.simplesplit.android.presentation.core.compose.AppDropdownField
 import com.github.ai.simplesplit.android.presentation.core.compose.AppTextField
 import com.github.ai.simplesplit.android.presentation.core.compose.CenteredBox
+import com.github.ai.simplesplit.android.presentation.core.compose.ErrorMessageCard
+import com.github.ai.simplesplit.android.presentation.core.compose.ErrorState
 import com.github.ai.simplesplit.android.presentation.core.compose.TopBar
 import com.github.ai.simplesplit.android.presentation.core.compose.TopBarMenuItem
 import com.github.ai.simplesplit.android.presentation.core.compose.preview.ThemedScreenPreview
@@ -87,9 +88,9 @@ private fun ExpenseEditorScreen(
                 }
 
                 is ExpenseEditorState.Error -> {
-                    CenteredBox {
-                        Text(text = state.message)
-                    }
+                    ErrorState(
+                        error = state.error
+                    )
                 }
 
                 is ExpenseEditorState.Data -> {
@@ -108,12 +109,21 @@ private fun RenderDataContent(
     state: ExpenseEditorState.Data,
     onIntent: (intent: ExpenseEditorIntent) -> Unit
 ) {
+    val onCloseErrorClick = rememberOnClickedCallback {
+        onIntent.invoke(ExpenseEditorIntent.OnCloseErrorClick)
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(state = rememberScrollState())
-            .padding(ElementMargin)
     ) {
+        if (state.error != null) {
+            ErrorMessageCard(
+                error = state.error,
+                onClose = onCloseErrorClick
+            )
+        }
+
         AppDropdownField(
             value = state.payer,
             label = stringResource(R.string.payer),
@@ -121,7 +131,9 @@ private fun RenderDataContent(
             onValueChange = { newValue ->
                 onIntent.invoke(ExpenseEditorIntent.OnPayerChanged(newValue))
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .padding(horizontal = ElementMargin)
+                .fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(SmallMargin))
@@ -133,7 +145,9 @@ private fun RenderDataContent(
             onValueChange = { newValue ->
                 onIntent.invoke(ExpenseEditorIntent.OnTitleChanged(newValue))
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .padding(horizontal = ElementMargin)
+                .fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(SmallMargin))
@@ -146,7 +160,9 @@ private fun RenderDataContent(
                 onIntent.invoke(ExpenseEditorIntent.OnAmountChanged(newValue))
             },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .padding(horizontal = ElementMargin)
+                .fillMaxWidth()
         )
     }
 }

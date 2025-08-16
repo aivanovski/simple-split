@@ -1,7 +1,7 @@
 package com.github.ai.simplesplit.android.data.repository
 
 import com.github.ai.simplesplit.android.data.database.dao.GroupCredentialsDao
-import com.github.ai.simplesplit.android.model.db.GroupCredentials
+import com.github.ai.simplesplit.android.data.database.model.GroupCredentials
 import kotlinx.coroutines.flow.Flow
 
 class GroupCredentialsRepository(
