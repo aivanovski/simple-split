@@ -8,5 +8,6 @@ sealed class CheckoutGroupIntent(
     data object Initialize : CheckoutGroupIntent()
     data object OnBackClick : CheckoutGroupIntent()
     data object OnDoneClick : CheckoutGroupIntent()
+    data object OnCloseErrorClick : CheckoutGroupIntent()
     data class OnUrlChanged(val url: String) : CheckoutGroupIntent(isImmediate = true)
 }

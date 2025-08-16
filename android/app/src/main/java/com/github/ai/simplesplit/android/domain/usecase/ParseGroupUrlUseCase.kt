@@ -3,7 +3,7 @@ package com.github.ai.simplesplit.android.domain.usecase
 import androidx.core.net.toUri
 import arrow.core.Either
 import arrow.core.raise.either
-import com.github.ai.simplesplit.android.model.db.GroupCredentials
+import com.github.ai.simplesplit.android.data.database.model.GroupCredentials
 import com.github.ai.simplesplit.android.model.exception.ParsingException
 
 class ParseGroupUrlUseCase {

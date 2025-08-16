@@ -110,6 +110,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.viewMaterial)
     implementation(libs.androidx.icons)
+    implementation(libs.androidx.constraintLayoutCompose)
 
     // Timber
     implementation(libs.timber)

@@ -5,7 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.github.ai.simplesplit.android.data.database.dao.GroupCredentialsDao
-import com.github.ai.simplesplit.android.model.db.GroupCredentials
+import com.github.ai.simplesplit.android.data.database.model.GroupCredentials
 
 @Database(
     entities = [GroupCredentials::class],

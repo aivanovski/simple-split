@@ -10,19 +10,18 @@ import com.github.ai.simplesplit.android.presentation.screens.expenseEditor.mode
 import com.github.ai.simplesplit.android.presentation.screens.expenseEditor.model.ExpenseEditorIntent
 import com.github.ai.simplesplit.android.presentation.screens.expenseEditor.model.ExpenseEditorMode
 import com.github.ai.simplesplit.android.presentation.screens.expenseEditor.model.ExpenseEditorState
-import com.github.ai.simplesplit.android.utils.getErrorMessage
 import com.github.ai.simplesplit.android.utils.mutableStateFlow
 import com.github.ai.simplesplit.android.utils.singleFlowOf
+import com.github.ai.simplesplit.android.utils.toErrorMessage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
-import timber.log.Timber
 
 class ExpenseEditorViewModel(
     private val interactor: ExpenseEditorInteractor,
-    private val resourceProvider: ResourceProvider,
+    private val resources: ResourceProvider,
     private val router: Router,
     private val args: ExpenseEditorArgs
 ) : MviViewModel<ExpenseEditorState, ExpenseEditorIntent>(
@@ -37,6 +36,7 @@ class ExpenseEditorViewModel(
             ExpenseEditorIntent.Initialize -> initialize()
             ExpenseEditorIntent.OnBackClick -> nonStateAction { navigateBack() }
             ExpenseEditorIntent.OnDoneClick -> onDoneClicked()
+            ExpenseEditorIntent.OnCloseErrorClick -> onCloseErrorClicked()
             is ExpenseEditorIntent.OnPayerChanged -> onPayerChanged(intent)
             is ExpenseEditorIntent.OnTitleChanged -> onTitleChanged(intent)
             is ExpenseEditorIntent.OnAmountChanged -> onAmountChanged(intent)
@@ -115,17 +115,25 @@ class ExpenseEditorViewModel(
         router.exit()
     }
 
+    private fun onCloseErrorClicked(): Flow<ExpenseEditorState> {
+        dataState = dataState.copy(
+            error = null
+        )
+
+        return flowOf(dataState)
+    }
+
     private fun onDoneClicked(): Flow<ExpenseEditorState> {
         if (dataState.title.isBlank()) {
             dataState = dataState.copy(
-                titleError = resourceProvider.getString(R.string.enter_expense_title)
+                titleError = resources.getString(R.string.enter_expense_title)
             )
             return flowOf(dataState)
         }
 
         if (dataState.amount.isBlank()) {
             dataState = dataState.copy(
-                amountError = resourceProvider.getString(R.string.enter_amount)
+                amountError = resources.getString(R.string.enter_amount)
             )
             return flowOf(dataState)
         }
@@ -134,14 +142,14 @@ class ExpenseEditorViewModel(
             dataState.amount.toDouble()
         } catch (e: NumberFormatException) {
             dataState = dataState.copy(
-                amountError = resourceProvider.getString(R.string.invalid_amount)
+                amountError = resources.getString(R.string.invalid_amount)
             )
             return flowOf(dataState)
         }
 
         if (amount <= 0) {
             dataState = dataState.copy(
-                amountError = resourceProvider.getString(R.string.amount_must_be_positive)
+                amountError = resources.getString(R.string.amount_must_be_positive)
             )
             return flowOf(dataState)
         }
@@ -172,18 +180,18 @@ class ExpenseEditorViewModel(
                 }
             }
 
-            if (response.isLeft()) {
-                emit(ExpenseEditorState.Error(response.getErrorMessage()))
-                return@flow
-            }
-
-            val expense = response.getOrNull() ?: return@flow
-
-            // TODO: remove logging
-            Timber.d("Successfully: title=${expense.title}, uid=${expense.uid}, amount=$amount")
-
-            router.setResult(Screen.ExpenseEditor::class, expense)
-            router.exit()
+            response.fold(
+                ifLeft = { error ->
+                    dataState = dataState.copy(
+                        error = error.toErrorMessage(resources)
+                    )
+                    emit(dataState)
+                },
+                ifRight = { expense ->
+                    router.setResult(Screen.ExpenseEditor::class, expense)
+                    router.exit()
+                }
+            )
         }.flowOn(Dispatchers.IO)
     }
 }

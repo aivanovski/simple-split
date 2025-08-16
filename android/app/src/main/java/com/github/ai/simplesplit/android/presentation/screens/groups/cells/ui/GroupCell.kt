@@ -3,27 +3,31 @@ package com.github.ai.simplesplit.android.presentation.screens.groups.cells.ui
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.constraintlayout.compose.Dimension
+import com.github.ai.simplesplit.android.presentation.core.compose.TextSize
+import com.github.ai.simplesplit.android.presentation.core.compose.preview.ElementSpace
 import com.github.ai.simplesplit.android.presentation.core.compose.preview.PreviewEventProvider
 import com.github.ai.simplesplit.android.presentation.core.compose.preview.ThemedPreview
 import com.github.ai.simplesplit.android.presentation.core.compose.rememberOnClickedCallback
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppTheme
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.CardCornerSize
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.ElementMargin
+import com.github.ai.simplesplit.android.presentation.core.compose.theme.GroupThreeLineItemHeight
+import com.github.ai.simplesplit.android.presentation.core.compose.theme.GroupTwoLineItemHeight
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.LightTheme
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.QuarterMargin
+import com.github.ai.simplesplit.android.presentation.core.compose.toTextStyle
 import com.github.ai.simplesplit.android.presentation.screens.groups.cells.model.GroupCellEvent
 import com.github.ai.simplesplit.android.presentation.screens.groups.cells.model.GroupCellModel
 import com.github.ai.simplesplit.android.presentation.screens.groups.cells.viewModel.GroupCellViewModel
@@ -32,6 +36,7 @@ import com.github.ai.simplesplit.android.presentation.screens.groups.cells.viewM
 @Composable
 fun GroupCell(viewModel: GroupCellViewModel) {
     val model = viewModel.model
+    val isDescriptionVisible = model.description.isNotEmpty()
 
     val onClick = rememberOnClickedCallback {
         viewModel.sendEvent(GroupCellEvent.OnClick(model.id))
@@ -39,6 +44,12 @@ fun GroupCell(viewModel: GroupCellViewModel) {
 
     val onLongClick = rememberOnClickedCallback {
         viewModel.sendEvent(GroupCellEvent.OnLongClick(model.id))
+    }
+
+    val minHeight = if (isDescriptionVisible) {
+        GroupThreeLineItemHeight
+    } else {
+        GroupTwoLineItemHeight
     }
 
     Card(
@@ -52,56 +63,77 @@ fun GroupCell(viewModel: GroupCellViewModel) {
                 horizontal = ElementMargin
             )
     ) {
-        Column(
+        ConstraintLayout(
             modifier = Modifier
                 .fillMaxWidth()
                 .combinedClickable(
                     onClick = onClick,
                     onLongClick = onLongClick
                 )
-                .padding(ElementMargin)
+                .padding(horizontal = ElementMargin, vertical = ElementMargin)
+                .sizeIn(minHeight = minHeight)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = model.title,
-                    style = AppTheme.theme.typography.headlineSmall,
-                    color = AppTheme.theme.colors.primaryText,
-                    maxLines = 1,
-                    modifier = Modifier.weight(1f)
-                )
+            val (title, description, members, amount) = createRefs()
 
-                Text(
-                    text = model.amount,
-                    style = AppTheme.theme.typography.headlineSmall,
-                    color = AppTheme.theme.colors.secondaryText,
-                    maxLines = 1
-                )
-            }
+            Text(
+                text = model.title,
+                style = TextSize.TITLE_LARGE.toTextStyle(),
+                color = AppTheme.theme.colors.primaryText,
+                maxLines = 1,
+                modifier = Modifier
+                    .constrainAs(title) {
+                        top.linkTo(parent.top)
+                        start.linkTo(parent.start)
+                        end.linkTo(amount.start)
+                        width = Dimension.fillToConstraints
+                    }
+            )
 
-            Spacer(modifier = Modifier.height(QuarterMargin))
+            Text(
+                text = model.amount,
+                style = TextSize.TITLE_LARGE.toTextStyle(),
+                color = AppTheme.theme.colors.secondaryText,
+                maxLines = 1,
+                modifier = Modifier
+                    .constrainAs(amount) {
+                        top.linkTo(parent.top)
+                        end.linkTo(parent.end)
+                    }
+            )
 
-            if (model.description.isNotEmpty()) {
+            if (isDescriptionVisible) {
                 Text(
                     text = model.description,
-                    style = AppTheme.theme.typography.bodyMedium,
+                    style = TextSize.BODY_MEDIUM.toTextStyle(),
                     color = AppTheme.theme.colors.primaryText,
                     maxLines = 1,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .constrainAs(description) {
+                            top.linkTo(title.bottom)
+                            start.linkTo(parent.start)
+                            end.linkTo(parent.end)
+                            width = Dimension.fillToConstraints
+                        }
                 )
             }
 
-            if (model.members.isNotEmpty()) {
-                Text(
-                    text = model.members,
-                    style = AppTheme.theme.typography.bodyMedium,
-                    color = AppTheme.theme.colors.secondaryText,
-                    maxLines = 1,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+            Text(
+                text = model.members,
+                style = TextSize.BODY_MEDIUM.toTextStyle(),
+                color = AppTheme.theme.colors.secondaryText,
+                maxLines = 1,
+                modifier = Modifier
+                    .constrainAs(members) {
+                        if (isDescriptionVisible) {
+                            top.linkTo(description.bottom)
+                        } else {
+                            top.linkTo(title.bottom, margin = QuarterMargin)
+                        }
+                        start.linkTo(parent.start)
+                        end.linkTo(parent.end)
+                        width = Dimension.fillToConstraints
+                    }
+            )
         }
     }
 }
@@ -112,18 +144,23 @@ fun GroupCellPreview() {
     ThemedPreview(theme = LightTheme) {
         Column {
             GroupCell(newGroupCell())
+            ElementSpace()
+            GroupCell(newGroupCell(description = ""))
         }
     }
 }
 
-fun newGroupCell() =
-    GroupCellViewModel(
-        model = GroupCellModel(
-            id = "id",
-            title = "Title",
-            description = "Description",
-            members = "Mickey Mouse, Donald Duck",
-            amount = "100$"
-        ),
-        eventProvider = PreviewEventProvider
-    )
+fun newGroupCell(
+    title: String = "Group",
+    description: String = "Description",
+    members: String = "Mickey Mouse, Donald Duck"
+) = GroupCellViewModel(
+    model = GroupCellModel(
+        id = "id",
+        title = title,
+        description = description,
+        members = members,
+        amount = "100$"
+    ),
+    eventProvider = PreviewEventProvider
+)

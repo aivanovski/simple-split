@@ -2,12 +2,12 @@ package com.github.ai.simplesplit.android.presentation.screens.groupDetails
 
 import arrow.core.Either
 import arrow.core.raise.either
+import com.github.ai.simplesplit.android.data.database.model.GroupCredentials
 import com.github.ai.simplesplit.android.data.repository.ExpenseRepository
 import com.github.ai.simplesplit.android.data.repository.GroupCredentialsRepository
 import com.github.ai.simplesplit.android.data.repository.GroupRepository
 import com.github.ai.simplesplit.android.domain.usecase.CreateExportUrlUseCase
 import com.github.ai.simplesplit.android.domain.usecase.CreateGroupUrlUseCase
-import com.github.ai.simplesplit.android.model.db.GroupCredentials
 import com.github.ai.simplesplit.android.model.exception.AppException
 import com.github.ai.split.api.GroupDto
 

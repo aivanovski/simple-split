@@ -3,7 +3,8 @@ package com.github.ai.simplesplit.android.presentation.screens.groups
 import androidx.annotation.StringRes
 import androidx.lifecycle.viewModelScope
 import com.github.ai.simplesplit.android.R
-import com.github.ai.simplesplit.android.model.db.GroupCredentials
+import com.github.ai.simplesplit.android.data.database.model.GroupCredentials
+import com.github.ai.simplesplit.android.model.ErrorMessage
 import com.github.ai.simplesplit.android.presentation.core.ResourceProvider
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.CellEvent
 import com.github.ai.simplesplit.android.presentation.core.compose.navigation.Router
@@ -26,20 +27,22 @@ import com.github.ai.simplesplit.android.presentation.screens.groups.model.Group
 import com.github.ai.simplesplit.android.presentation.screens.groups.model.GroupsState
 import com.github.ai.simplesplit.android.presentation.screens.root.model.StartActivityEvent
 import com.github.ai.simplesplit.android.utils.StringUtils
-import com.github.ai.simplesplit.android.utils.getErrorMessage
 import com.github.ai.simplesplit.android.utils.getStringOrNull
 import com.github.ai.simplesplit.android.utils.mutableStateFlow
 import com.github.ai.simplesplit.android.utils.parseCellId
+import com.github.ai.simplesplit.android.utils.toErrorMessage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 
 class GroupsViewModel(
     private val interactor: GroupsInteractor,
-    private val resourceProvider: ResourceProvider,
+    private val resources: ResourceProvider,
     private val router: Router
 ) : CellsMviViewModel<GroupsState, GroupsIntent>(
     initialState = GroupsState.Loading,
@@ -88,6 +91,10 @@ class GroupsViewModel(
 
             is GroupsIntent.OnRemoveGroupConfirmed -> removeGroup(intent.groupUid)
 
+            is GroupsIntent.OnCloseErrorClick -> onCloseErrorClicked()
+
+            is GroupsIntent.OnErrorActionClick -> handleErrorAction(intent.actionId)
+
             is GroupsIntent.OnCreateGroupClick ->
                 nonStateAction { navigateToNewGroupScreen() }
 
@@ -125,26 +132,43 @@ class GroupsViewModel(
                 emit(GroupsState.Loading)
             }
 
-            val getDataResult = interactor.loadData()
-            if (getDataResult.isLeft()) {
-                val message = getDataResult.getErrorMessage()
-                emit(GroupsState.Error(message))
-                return@flow
-            }
-
-            val data = getDataResult.getOrNull() ?: GroupsData()
-            screenData = data
-
-            if (data.groups.isNotEmpty()) {
-                val viewModels = cellFactory.createCells(
-                    groups = data.groups,
-                    eventProvider = cellEventProvider
+            interactor.loadData()
+                .fold(
+                    ifLeft = {
+                        emit(GroupsState.Error(it.toErrorMessage(resources)))
+                    },
+                    ifRight = { data ->
+                        emit(createScreenState(data))
+                    }
                 )
-                emit(GroupsState.Data(viewModels))
-            } else {
-                emit(GroupsState.Empty)
-            }
         }.flowOn(Dispatchers.IO)
+    }
+
+    private fun createScreenState(data: GroupsData): GroupsState {
+        screenData = data
+
+        val missingGroupsError = if (data.groups.size != data.requestedCredentials.size) {
+            ErrorMessage(
+                message = resources.getString(R.string.missing_groups_error_message),
+                actionText = resources.getString(R.string.forget_missing),
+                actionId = ErrorAction.FORGET_MISSING_GROUPS.ordinal
+            )
+        } else {
+            null
+        }
+
+        return if (data.groups.isNotEmpty()) {
+            val viewModels = cellFactory.createCells(
+                data = data,
+                eventProvider = cellEventProvider
+            )
+            GroupsState.Data(
+                cellViewModels = viewModels,
+                error = missingGroupsError
+            )
+        } else {
+            GroupsState.Empty(error = missingGroupsError)
+        }
     }
 
     private fun removeGroup(groupUid: String): Flow<GroupsState> {
@@ -159,7 +183,7 @@ class GroupsViewModel(
 
     private fun navigateToGroupDetails(groupUid: String) {
         val groups = screenData?.groups ?: emptyList()
-        val credentials = screenData?.credentials ?: emptyList()
+        val credentials = screenData?.requestedCredentials ?: emptyList()
 
         val groupAndCreds = groups.zip(credentials)
             .firstOrNull { (group, _) -> group.uid == groupUid } ?: return
@@ -217,12 +241,12 @@ class GroupsViewModel(
                     items = listOf(
                         MenuItem(
                             icon = AppIcon.ADD,
-                            text = resourceProvider.getString(R.string.create_new_group),
+                            text = resources.getString(R.string.create_new_group),
                             actionId = MenuActions.CREATE_GROUP
                         ),
                         MenuItem(
                             icon = AppIcon.LINK,
-                            text = resourceProvider.getString(R.string.add_by_url),
+                            text = resources.getString(R.string.add_by_url),
                             actionId = MenuActions.ADD_GROUP_BY_URL
                         )
                     )
@@ -240,7 +264,7 @@ class GroupsViewModel(
         val items = GroupMenuAction.entries.map { entry ->
             MenuItem(
                 icon = entry.icon,
-                text = resourceProvider.getString(entry.resourceId),
+                text = resources.getString(entry.resourceId),
                 actionId = entry.ordinal
             )
         }
@@ -264,10 +288,10 @@ class GroupsViewModel(
         router.showDialog(
             Dialog.ConfirmationDialog(
                 args = ConfirmationDialogArgs(
-                    message = resourceProvider.getString(
+                    message = resources.getString(
                         R.string.remove_group_confirmation_message
                     ),
-                    buttonTitle = resourceProvider.getString(R.string.remove)
+                    buttonTitle = resources.getString(R.string.remove)
                 )
             )
         )
@@ -309,12 +333,55 @@ class GroupsViewModel(
         }
     }
 
+    private fun onCloseErrorClicked(): Flow<GroupsState> {
+        val state = this.state.value
+
+        return flowOf(
+            when (state) {
+                is GroupsState.Empty -> state.copy(error = null)
+                is GroupsState.Data -> state.copy(error = null)
+                else -> state
+            }
+        )
+    }
+
+    private fun handleErrorAction(actionId: Int): Flow<GroupsState> {
+        val action = ErrorAction.entries.getOrNull(actionId) ?: return emptyFlow()
+
+        return when (action) {
+            ErrorAction.FORGET_MISSING_GROUPS -> onForgetMissingGroupsClicked()
+        }
+    }
+
+    private fun onForgetMissingGroupsClicked(): Flow<GroupsState> {
+        val data = screenData ?: return emptyFlow()
+
+        return flow {
+            emit(GroupsState.Loading)
+
+            val foundGroupsUids = data.groups
+                .map { group -> group.uid }
+                .toSet()
+
+            val missingGroupsUids = data.requestedCredentials
+                .filter { credentials -> credentials.groupUid !in foundGroupsUids }
+                .map { credentials -> credentials.groupUid }
+
+            val removeResult = interactor.removeGroups(missingGroupsUids)
+            if (removeResult.isLeft()) {
+                val message = removeResult.toErrorMessage(resources)
+                emit(GroupsState.Error(message))
+                return@flow
+            }
+        }.flowOn(Dispatchers.IO)
+    }
+
     private fun getGroupUidFromCellId(cellId: String): String? {
         return cellId.parseCellId()?.payload?.getStringOrNull()
     }
 
     private fun getGroupCredentials(groupUid: String): GroupCredentials? {
-        return screenData?.credentials
+        return screenData?.requestedCredentials
             ?.firstOrNull { creds -> creds.groupUid == groupUid }
     }
 
@@ -326,6 +393,10 @@ class GroupsViewModel(
         REMOVE_GROUP(AppIcon.REMOVE, R.string.remove),
         EXPORT_TO_CSV(AppIcon.EXPORT, R.string.export_as_csv_file),
         SHARE_LINK(AppIcon.SHARE, R.string.share)
+    }
+
+    enum class ErrorAction {
+        FORGET_MISSING_GROUPS
     }
 
     object MenuActions {

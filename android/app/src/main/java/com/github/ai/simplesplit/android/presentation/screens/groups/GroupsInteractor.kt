@@ -2,11 +2,11 @@ package com.github.ai.simplesplit.android.presentation.screens.groups
 
 import arrow.core.Either
 import arrow.core.raise.either
+import com.github.ai.simplesplit.android.data.database.model.GroupCredentials
 import com.github.ai.simplesplit.android.data.repository.GroupCredentialsRepository
 import com.github.ai.simplesplit.android.data.repository.GroupRepository
 import com.github.ai.simplesplit.android.domain.usecase.CreateExportUrlUseCase
 import com.github.ai.simplesplit.android.domain.usecase.CreateGroupUrlUseCase
-import com.github.ai.simplesplit.android.model.db.GroupCredentials
 import com.github.ai.simplesplit.android.model.exception.AppException
 import com.github.ai.simplesplit.android.presentation.screens.groups.model.GroupsData
 import kotlinx.coroutines.flow.Flow
@@ -39,13 +39,20 @@ class GroupsInteractor(
 
             GroupsData(
                 groups = groups,
-                credentials = credentials
+                requestedCredentials = credentials
             )
         }
 
     fun removeGroup(groupUid: String): Either<AppException, Unit> =
         either {
             credentialsRepository.removeByGroupUid(groupUid)
+        }
+
+    fun removeGroups(groupUids: List<String>): Either<AppException, Unit> =
+        either {
+            for (uid in groupUids) {
+                credentialsRepository.removeByGroupUid(uid)
+            }
         }
 
     fun getGroupCredentialsFlow(): Flow<List<GroupCredentials>> = credentialsRepository.getAllFlow()

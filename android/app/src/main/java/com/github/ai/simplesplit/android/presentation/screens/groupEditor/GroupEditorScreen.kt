@@ -28,6 +28,8 @@ import androidx.compose.ui.res.stringResource
 import com.github.ai.simplesplit.android.R
 import com.github.ai.simplesplit.android.presentation.core.compose.AppTextField
 import com.github.ai.simplesplit.android.presentation.core.compose.CenteredBox
+import com.github.ai.simplesplit.android.presentation.core.compose.ErrorMessageCard
+import com.github.ai.simplesplit.android.presentation.core.compose.ErrorState
 import com.github.ai.simplesplit.android.presentation.core.compose.TopBar
 import com.github.ai.simplesplit.android.presentation.core.compose.TopBarMenuItem
 import com.github.ai.simplesplit.android.presentation.core.compose.rememberCallback
@@ -58,11 +60,9 @@ private fun GroupEditorScreen(
     val onBackClick = rememberOnClickedCallback {
         onIntent.invoke(GroupEditorIntent.OnBackClick)
     }
-
     val onMenuItemClick = rememberCallback { _: TopBarMenuItem ->
         onIntent.invoke(GroupEditorIntent.OnDoneClick)
     }
-
     Scaffold(
         topBar = {
             TopBar(
@@ -91,9 +91,9 @@ private fun GroupEditorScreen(
                 }
 
                 is GroupEditorState.Error -> {
-                    CenteredBox {
-                        Text(text = state.message)
-                    }
+                    ErrorState(
+                        error = state.error
+                    )
                 }
 
                 is GroupEditorState.Data -> {
@@ -112,12 +112,23 @@ private fun RenderDataContent(
     state: GroupEditorState.Data,
     onIntent: (intent: GroupEditorIntent) -> Unit
 ) {
+    val onCloseErrorClick = rememberOnClickedCallback {
+        onIntent.invoke(GroupEditorIntent.OnCloseErrorClick)
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(state = rememberScrollState())
             .padding(ElementMargin)
     ) {
+        if (state.error != null) {
+            ErrorMessageCard(
+                error = state.error,
+                onClose = onCloseErrorClick
+            )
+        }
+
         AppTextField(
             value = state.title,
             error = state.titleError,

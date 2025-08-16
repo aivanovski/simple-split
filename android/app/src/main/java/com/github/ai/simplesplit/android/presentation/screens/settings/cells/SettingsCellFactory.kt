@@ -10,6 +10,7 @@ import com.github.ai.simplesplit.android.presentation.core.compose.cells.model.D
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.model.SwitchCellModel
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.viewModel.DropDownCellViewModel
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.viewModel.SwitchCellViewModel
+import io.ktor.client.plugins.logging.LogLevel
 
 class SettingsCellFactory(
     private val resources: ResourceProvider
@@ -28,6 +29,20 @@ class SettingsCellFactory(
                     title = resources.getString(R.string.server_url),
                     options = listOf(ApiClient.PROD_SERVER_URL, ApiClient.DEBUG_SERVER_URL),
                     selectedOption = settings.serverUrl
+                ),
+                eventProvider
+            )
+        )
+
+        val logOptions = LogLevel.entries.map { level -> level.name }
+
+        cells.add(
+            DropDownCellViewModel(
+                DropDownCellModel(
+                    id = SettingsCellId.HTTP_LOG_LEVEL.name,
+                    title = resources.getString(R.string.http_log_level),
+                    options = logOptions,
+                    selectedOption = settings.httpLogLevel.name
                 ),
                 eventProvider
             )
@@ -53,6 +68,7 @@ class SettingsCellFactory(
 
     enum class SettingsCellId {
         SERVER_URL,
-        SSL_CERTIFICATE_SWITCH
+        SSL_CERTIFICATE_SWITCH,
+        HTTP_LOG_LEVEL
     }
 }

@@ -14,6 +14,7 @@ sealed class GroupDetailsIntent(
     data object OnEditGroupClick : GroupDetailsIntent()
     data object OnRemoveGroupClick : GroupDetailsIntent()
     data object OnRemoveGroupConfirmed : GroupDetailsIntent()
+    data object OnCloseErrorClick : GroupDetailsIntent()
     data class OnExpenseClick(val expenseUid: String) : GroupDetailsIntent()
     data class OnExpenseLongClick(val expenseUid: String) : GroupDetailsIntent()
     data class OnEditExpenseClick(val expenseUid: String) : GroupDetailsIntent()

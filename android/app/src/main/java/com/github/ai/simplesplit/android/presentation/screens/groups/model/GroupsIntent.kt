@@ -12,6 +12,8 @@ sealed class GroupsIntent(
     data object OnCreateGroupClick : GroupsIntent()
     data object OnAddGroupByUrlClick : GroupsIntent()
     data object OnSettingsClick : GroupsIntent()
+    data object OnCloseErrorClick : GroupsIntent()
+    data class OnErrorActionClick(val actionId: Int) : GroupsIntent()
     data class OnGroupClick(val groupUid: String) : GroupsIntent()
     data class OnGroupLongClick(val groupUid: String) : GroupsIntent()
     data class OnEditGroupClick(val groupUid: String) : GroupsIntent()

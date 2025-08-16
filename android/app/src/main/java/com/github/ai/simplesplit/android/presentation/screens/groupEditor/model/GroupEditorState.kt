@@ -1,12 +1,13 @@
 package com.github.ai.simplesplit.android.presentation.screens.groupEditor.model
 
+import com.github.ai.simplesplit.android.model.ErrorMessage
 import com.github.ai.simplesplit.android.utils.StringUtils
 
 sealed interface GroupEditorState {
     data object Loading : GroupEditorState
 
     data class Error(
-        val message: String
+        val error: ErrorMessage
     ) : GroupEditorState
 
     data class Data(
@@ -19,8 +20,8 @@ sealed interface GroupEditorState {
         val passwordError: String? = null,
         val confirmPasswordError: String? = null,
         val memberError: String? = null,
-        val errorMessage: String? = null,
         val isPasswordVisible: Boolean = false,
-        val isConfirmPasswordVisible: Boolean = false
+        val isConfirmPasswordVisible: Boolean = false,
+        val error: ErrorMessage? = null
     ) : GroupEditorState
 }

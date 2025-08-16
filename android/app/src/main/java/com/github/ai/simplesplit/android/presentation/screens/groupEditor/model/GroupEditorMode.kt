@@ -1,6 +1,6 @@
 package com.github.ai.simplesplit.android.presentation.screens.groupEditor.model
 
-import com.github.ai.simplesplit.android.model.db.GroupCredentials
+import com.github.ai.simplesplit.android.data.database.model.GroupCredentials
 import kotlinx.serialization.Serializable
 
 @Serializable

@@ -9,6 +9,7 @@ sealed class ExpenseEditorIntent(
     data object Initialize : ExpenseEditorIntent()
     data object OnBackClick : ExpenseEditorIntent()
     data object OnDoneClick : ExpenseEditorIntent()
+    data object OnCloseErrorClick : ExpenseEditorIntent()
     data class OnPayerChanged(val payer: String) : ExpenseEditorIntent(isImmediate = true)
     data class OnTitleChanged(val title: String) : ExpenseEditorIntent(isImmediate = true)
     data class OnAmountChanged(val amount: String) : ExpenseEditorIntent(isImmediate = true)

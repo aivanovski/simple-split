@@ -2,9 +2,9 @@ package com.github.ai.simplesplit.android.presentation.screens.expenseEditor
 
 import arrow.core.Either
 import arrow.core.raise.either
+import com.github.ai.simplesplit.android.data.database.model.GroupCredentials
 import com.github.ai.simplesplit.android.data.repository.ExpenseRepository
 import com.github.ai.simplesplit.android.data.repository.GroupCredentialsRepository
-import com.github.ai.simplesplit.android.model.db.GroupCredentials
 import com.github.ai.simplesplit.android.model.exception.AppException
 import com.github.ai.split.api.ExpenseDto
 import com.github.ai.split.api.UserUidDto

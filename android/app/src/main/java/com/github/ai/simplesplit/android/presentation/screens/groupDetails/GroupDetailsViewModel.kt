@@ -2,7 +2,7 @@ package com.github.ai.simplesplit.android.presentation.screens.groupDetails
 
 import androidx.annotation.StringRes
 import com.github.ai.simplesplit.android.R
-import com.github.ai.simplesplit.android.model.db.GroupCredentials
+import com.github.ai.simplesplit.android.data.database.model.GroupCredentials
 import com.github.ai.simplesplit.android.presentation.core.ResourceProvider
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.CellEvent
 import com.github.ai.simplesplit.android.presentation.core.compose.navigation.Router
@@ -26,21 +26,22 @@ import com.github.ai.simplesplit.android.presentation.screens.groupDetails.model
 import com.github.ai.simplesplit.android.presentation.screens.groupEditor.model.GroupEditorArgs
 import com.github.ai.simplesplit.android.presentation.screens.groupEditor.model.GroupEditorMode
 import com.github.ai.simplesplit.android.presentation.screens.root.model.StartActivityEvent
-import com.github.ai.simplesplit.android.utils.getErrorMessage
 import com.github.ai.simplesplit.android.utils.getStringOrNull
 import com.github.ai.simplesplit.android.utils.mutableStateFlow
 import com.github.ai.simplesplit.android.utils.parseCellId
+import com.github.ai.simplesplit.android.utils.toErrorMessage
 import com.github.ai.split.api.GroupDto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 
 class GroupDetailsViewModel(
     private val interactor: GroupDetailsInteractor,
     private val cellFactory: GroupDetailsCellFactory,
-    private val resourceProvider: ResourceProvider,
+    private val resources: ResourceProvider,
     private val router: Router,
     private val args: GroupDetailsArgs
 ) : CellsMviViewModel<GroupDetailsState, GroupDetailsIntent>(
@@ -84,6 +85,8 @@ class GroupDetailsViewModel(
             is GroupDetailsIntent.OnRemoveExpenseConfirmed -> removeExpense(intent.expenseUid)
 
             GroupDetailsIntent.OnRemoveGroupConfirmed -> removeGroup(args.group.uid)
+
+            GroupDetailsIntent.OnCloseErrorClick -> onCloseErrorClicked()
 
             is GroupDetailsIntent.OnMenuClick ->
                 nonStateAction { showGroupMenuDialog() }
@@ -177,19 +180,18 @@ class GroupDetailsViewModel(
                 emit(GroupDetailsState.Loading)
             }
 
-            val getGroupResult = interactor.getGroup(
+            interactor.getGroup(
                 groupUid = groupUid,
                 password = password
+            ).fold(
+                ifLeft = { error ->
+                    emit(GroupDetailsState.Error(error.toErrorMessage(resources)))
+                },
+                ifRight = { group ->
+                    data = group
+                    emit(createScreenState(group))
+                }
             )
-            if (getGroupResult.isLeft()) {
-                emit(GroupDetailsState.Error(getGroupResult.getErrorMessage()))
-                return@flow
-            }
-
-            val groupDto = getGroupResult.getOrNull() ?: return@flow
-            data = groupDto
-
-            emitAll(showData(groupDto))
         }.flowOn(Dispatchers.IO)
     }
 
@@ -197,18 +199,26 @@ class GroupDetailsViewModel(
         return flow {
             emit(GroupDetailsState.Loading)
 
-            val response = interactor.removeExpense(
+            interactor.removeExpense(
                 password = args.password,
                 expenseUid = expenseUid
+            ).fold(
+                ifLeft = { error ->
+                    val newState = when (val state = state.value) {
+                        is GroupDetailsState.Data -> state.copy(
+                            error = error.toErrorMessage(resources)
+                        )
+
+                        else -> GroupDetailsState.Error(error.toErrorMessage(resources))
+                    }
+
+                    emit(newState)
+                },
+                ifRight = { group ->
+                    data = group
+                    emit(createScreenState(group))
+                }
             )
-            if (response.isLeft()) {
-                emit(GroupDetailsState.Error(response.getErrorMessage()))
-                return@flow
-            }
-
-            val group = response.getOrNull() ?: return@flow
-
-            emitAll(showData(group))
         }.flowOn(Dispatchers.IO)
     }
 
@@ -251,7 +261,7 @@ class GroupDetailsViewModel(
         val items = GroupMenuAction.entries.map { entry ->
             MenuItem(
                 icon = entry.icon,
-                text = resourceProvider.getString(entry.resourceId),
+                text = resources.getString(entry.resourceId),
                 actionId = entry.ordinal
             )
         }
@@ -269,7 +279,7 @@ class GroupDetailsViewModel(
         val items = ExpenseMenuAction.entries.map { entry ->
             MenuItem(
                 icon = entry.icon,
-                text = resourceProvider.getString(entry.resourceId),
+                text = resources.getString(entry.resourceId),
                 actionId = entry.ordinal
             )
         }
@@ -293,10 +303,10 @@ class GroupDetailsViewModel(
         router.showDialog(
             Dialog.ConfirmationDialog(
                 args = ConfirmationDialogArgs(
-                    message = resourceProvider.getString(
+                    message = resources.getString(
                         R.string.remove_expense_confirmation_message
                     ),
-                    buttonTitle = resourceProvider.getString(R.string.remove)
+                    buttonTitle = resources.getString(R.string.remove)
                 )
             )
         )
@@ -311,10 +321,10 @@ class GroupDetailsViewModel(
         router.showDialog(
             Dialog.ConfirmationDialog(
                 args = ConfirmationDialogArgs(
-                    message = resourceProvider.getString(
+                    message = resources.getString(
                         R.string.remove_group_confirmation_message
                     ),
-                    buttonTitle = resourceProvider.getString(R.string.remove)
+                    buttonTitle = resources.getString(R.string.remove)
                 )
             )
         )
@@ -368,20 +378,27 @@ class GroupDetailsViewModel(
         }
     }
 
-    private fun showData(group: GroupDto): Flow<GroupDetailsState> {
-        return flow<GroupDetailsState> {
-            val viewModels = cellFactory.createCells(
-                group = group,
-                eventProvider = cellEventProvider
-            )
+    private fun createScreenState(group: GroupDto): GroupDetailsState {
+        val viewModels = cellFactory.createCells(
+            group = group,
+            eventProvider = cellEventProvider
+        )
 
-            emit(GroupDetailsState.Data(viewModels))
-        }.flowOn(Dispatchers.IO)
+        return GroupDetailsState.Data(viewModels)
+    }
+
+    private fun onCloseErrorClicked(): Flow<GroupDetailsState> {
+        val state = state.value.asDataOrNull() ?: return emptyFlow()
+
+        return flowOf(state.copy(error = null))
     }
 
     private fun getExpenseUidFromCellId(cellId: String): String? {
         return cellId.parseCellId()?.payload?.getStringOrNull()
     }
+
+    private fun GroupDetailsState.asDataOrNull(): GroupDetailsState.Data? =
+        this as? GroupDetailsState.Data
 
     enum class GroupMenuAction(
         val icon: AppIcon,

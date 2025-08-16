@@ -1,5 +1,6 @@
 package com.github.ai.simplesplit.android.presentation.screens.groups
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -9,7 +10,6 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -18,6 +18,9 @@ import androidx.compose.ui.res.stringResource
 import com.github.ai.simplesplit.android.BuildConfig
 import com.github.ai.simplesplit.android.R
 import com.github.ai.simplesplit.android.presentation.core.compose.CenteredBox
+import com.github.ai.simplesplit.android.presentation.core.compose.EmptyState
+import com.github.ai.simplesplit.android.presentation.core.compose.ErrorMessageCard
+import com.github.ai.simplesplit.android.presentation.core.compose.ErrorState
 import com.github.ai.simplesplit.android.presentation.core.compose.TopBar
 import com.github.ai.simplesplit.android.presentation.core.compose.TopBarMenuItem
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.CellViewModel
@@ -52,6 +55,12 @@ private fun GroupsScreen(
     }
     val onMenuClick = rememberCallback { item: TopBarMenuItem ->
         onIntent.invoke(GroupsIntent.OnSettingsClick)
+    }
+    val onCloseErrorClick = rememberOnClickedCallback {
+        onIntent.invoke(GroupsIntent.OnCloseErrorClick)
+    }
+    val onErrorActionClick = rememberCallback { actionId: Int ->
+        onIntent.invoke(GroupsIntent.OnErrorActionClick(actionId))
     }
 
     Scaffold(
@@ -96,26 +105,52 @@ private fun GroupsScreen(
                     }
                 }
 
-                GroupsState.Empty -> {
-                    CenteredBox {
-                        Text(text = "No groups") // TODO: string
+                is GroupsState.Empty -> {
+                    Column {
+                        if (state.error != null) {
+                            ErrorMessageCard(
+                                error = state.error,
+                                onClose = onCloseErrorClick,
+                                onAction = onErrorActionClick
+                            )
+                        }
+
+                        CenteredBox {
+                            EmptyState(
+                                text = stringResource(R.string.no_groups)
+                            )
+                        }
                     }
                 }
 
                 is GroupsState.Data -> {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize()
+                    Column(
+                        modifier = Modifier
                     ) {
-                        items(state.cellViewModels) { model ->
-                            RenderCell(model)
+                        if (state.error != null) {
+                            ErrorMessageCard(
+                                error = state.error,
+                                onClose = onCloseErrorClick,
+                                onAction = onErrorActionClick
+                            )
+                        }
+
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxSize()
+                        ) {
+                            items(state.cellViewModels) { model ->
+                                RenderCell(model)
+                            }
                         }
                     }
                 }
 
                 is GroupsState.Error -> {
-                    CenteredBox {
-                        Text(text = state.message)
-                    }
+                    ErrorState(
+                        error = state.message,
+                        onAction = onErrorActionClick
+                    )
                 }
             }
         }

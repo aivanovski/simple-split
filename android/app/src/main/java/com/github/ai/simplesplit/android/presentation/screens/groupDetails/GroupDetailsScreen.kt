@@ -1,5 +1,6 @@
 package com.github.ai.simplesplit.android.presentation.screens.groupDetails
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -11,13 +12,14 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.github.ai.simplesplit.android.presentation.core.compose.CenteredBox
+import com.github.ai.simplesplit.android.presentation.core.compose.ErrorMessageCard
+import com.github.ai.simplesplit.android.presentation.core.compose.ErrorState
 import com.github.ai.simplesplit.android.presentation.core.compose.TopBar
 import com.github.ai.simplesplit.android.presentation.core.compose.TopBarMenuItem
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.CellViewModel
@@ -64,13 +66,14 @@ private fun GroupDetailsScreen(
     val onBackClick = rememberOnClickedCallback {
         onIntent.invoke(GroupDetailsIntent.OnBackClick)
     }
-
     val onFabClick = rememberOnClickedCallback {
         onIntent.invoke(GroupDetailsIntent.OnFabClick)
     }
-
     val onMenuItemClick = rememberCallback { _: TopBarMenuItem ->
         onIntent.invoke(GroupDetailsIntent.OnMenuClick)
+    }
+    val onCloseErrorClick = rememberOnClickedCallback {
+        onIntent.invoke(GroupDetailsIntent.OnCloseErrorClick)
     }
 
     Scaffold(
@@ -96,7 +99,6 @@ private fun GroupDetailsScreen(
             }
         }
     ) { padding ->
-
         Surface(
             modifier = Modifier
                 .fillMaxSize()
@@ -112,19 +114,28 @@ private fun GroupDetailsScreen(
                 }
 
                 is GroupDetailsState.Data -> {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        items(state.cellViewModels) { model ->
-                            RenderCell(model)
+                    Column {
+                        if (state.error != null) {
+                            ErrorMessageCard(
+                                error = state.error,
+                                onClose = onCloseErrorClick
+                            )
+                        }
+
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            items(state.cellViewModels) { model ->
+                                RenderCell(model)
+                            }
                         }
                     }
                 }
 
                 is GroupDetailsState.Error -> {
-                    CenteredBox {
-                        Text(text = state.message)
-                    }
+                    ErrorState(
+                        error = state.message
+                    )
                 }
             }
         }
