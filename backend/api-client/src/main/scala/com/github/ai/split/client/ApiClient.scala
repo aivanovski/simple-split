@@ -1,7 +1,7 @@
 package com.github.ai.split.client
 
 import com.github.ai.split.api.{NewExpenseDto, UserNameDto, UserUidDto}
-import com.github.ai.split.api.request.{PostExpenseRequest, PostGroupRequest, PostMemberRequest}
+import com.github.ai.split.api.request.{PostExpenseRequest, PostGroupRequest, PostMemberRequest, PutMemberRequest}
 import zio.*
 import zio.json.*
 import zio.http.*
@@ -120,6 +120,23 @@ class ApiClient(
     client.request(
       Request.delete(
         path = s"$baseUrl/member/$memberUid?password=$password"
+      )
+    )
+  }
+
+  def putMember(
+    memberUid: String,
+    password: String = DefaultPassword,
+    newName: String
+  ): ApiResponse = {
+    client.request(
+      Request.put(
+        path = s"$baseUrl/member/$memberUid?password=$password",
+        body = Body.fromString(
+          PutMemberRequest(
+            name = newName
+          ).toJsonPretty
+        )
       )
     )
   }

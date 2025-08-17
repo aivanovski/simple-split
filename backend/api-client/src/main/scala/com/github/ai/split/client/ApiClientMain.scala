@@ -12,17 +12,18 @@ object ApiClientMain extends ZIOAppDefault {
     """
       |Commands:
       |
-      |group                                                 Gets default group
-      |group [GROUP_UID]                                     Gets group by GROUP_UID
+      |group                                                 Get default group
+      |group [GROUP_UID]                                     Get group by GROUP_UID
       |gen-group                                             Generate new test group with members and expenses
       |
-      |post-expense                                          Creates new expense in default group
-      |gen-expense                                           Generates new expense in default group
-      |delete-expense [EXPENSE_UID]                          Deletes expense by EXPENSE_UID
+      |post-expense                                          Create new expense in default group
+      |gen-expense                                           Generate new expense in default group
+      |delete-expense [EXPENSE_UID]                          Delete expense by EXPENSE_UID
       |
-      |post-member [GROUP_UID] [USER_NAME]                   Create new member with USER_NAME in GROUP_UID
+      |post-member [GROUP_UID] [NAME]                        Create new member with NAME in GROUP_UID
+      |update-member [MEMBER_UID] [NAME]                     Update member name by MEMBER_UID
       |gen-members [GROUP_UID]
-      |delete-member [MEMBER_UID]                            Deletes member by MEMBER_UID
+      |delete-member [MEMBER_UID]                            Delete member by MEMBER_UID
       |help                                                  Print help
       |""".stripMargin
 
@@ -68,6 +69,7 @@ object ApiClientMain extends ZIOAppDefault {
       case s"delete-expense $expenseUid" => api.deleteExpense(expenseUid = expenseUid).run
 
       case s"post-member $groupUid $userName" => api.postMember(groupUid = groupUid, userName = userName).run
+      case s"update-member $memberUid $name" => api.putMember(memberUid = memberUid, newName = name).run
       case s"gen-members $groupUid" => {
         api.postMember(groupUid = groupUid, userName = "Mickey").run
         api.postMember(groupUid = groupUid, userName = "Donald").run

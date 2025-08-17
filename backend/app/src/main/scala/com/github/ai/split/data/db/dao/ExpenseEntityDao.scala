@@ -16,15 +16,6 @@ class ExpenseEntityDao(
 
   import quill._
 
-  def getAll(): IO[DomainError, List[ExpenseEntity]] = {
-    val query = quote {
-      querySchema[ExpenseEntity]("expenses")
-    }
-
-    run(query)
-      .mapError(_.toDomainError())
-  }
-
   def getByUid(uid: ExpenseUid): IO[DomainError, ExpenseEntity] = {
     val query = quote {
       querySchema[ExpenseEntity]("expenses")

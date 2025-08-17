@@ -5,10 +5,11 @@ import com.github.ai.split.domain.usecases.{
   AddUserUseCase,
   AssembleGroupResponseUseCase,
   GetGroupUseCase,
-  RemoveMembersUseCase
+  RemoveMembersUseCase,
+  UpdateMemberUseCase
 }
-import com.github.ai.split.api.request.PostMemberRequest
-import com.github.ai.split.api.response.{DeleteMemberResponse, PostMemberResponse}
+import com.github.ai.split.api.request.{PostMemberRequest, PutMemberRequest}
+import com.github.ai.split.api.response.{DeleteMemberResponse, PostMemberResponse, PutMemberResponse}
 import com.github.ai.split.domain.AccessResolverService
 import com.github.ai.split.entity.db.{GroupUid, MemberUid}
 import com.github.ai.split.utils.{parse, parsePasswordParam, parseUid, parseUidFromUrl}
@@ -16,6 +17,7 @@ import com.github.ai.split.entity.exception.DomainError
 import zio.*
 import zio.http.{Request, Response}
 import zio.json.*
+import zio.direct.*
 
 class MemberController(
   private val accessResolver: AccessResolverService,
@@ -24,6 +26,7 @@ class MemberController(
   private val addUserUseCase: AddUserUseCase,
   private val addMemberUseCase: AddMembersUseCase,
   private val removeMembersUseCase: RemoveMembersUseCase,
+  private val updateMemberUseCase: UpdateMemberUseCase,
   private val assembleGroupUseCase: AssembleGroupResponseUseCase
 ) {
 
@@ -42,6 +45,22 @@ class MemberController(
       )
       groupDto <- assembleGroupUseCase.assembleGroupDto(groupUid)
     } yield Response.json(PostMemberResponse(groupDto).toJsonPretty)
+  }
+
+  def updateMember(
+    request: Request
+  ): IO[DomainError, Response] = {
+    defer {
+      val password = parsePasswordParam(request).run
+      val memberUid = parseUidFromUrl(request).map(uid => MemberUid(uid)).run
+      val body = request.body.parse[PutMemberRequest].run
+      accessResolver.canAccessToMember(memberUid = memberUid, password = password).run
+
+      val member = updateMemberUseCase.updateMember(memberUid = memberUid, newName = body.name).run
+
+      val groupDto = assembleGroupUseCase.assembleGroupDto(groupUid = member.groupUid).run
+      Response.json(PutMemberResponse(groupDto).toJsonPretty)
+    }
   }
 
   def removeMember(
