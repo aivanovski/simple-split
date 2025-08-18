@@ -2,6 +2,7 @@ package com.github.ai.split.client
 
 import com.github.ai.split.client.ApiClientMain.getArgs
 import com.github.ai.split.client.utils.Printer
+import com.github.ai.split.client.utils.parseOptionsIntoMap
 import zio.*
 import zio.direct.*
 import zio.http.*
@@ -15,6 +16,7 @@ object ApiClientMain extends ZIOAppDefault {
       |group                                                 Gets default group
       |group [GROUP_UID]                                     Gets group by GROUP_UID
       |gen-group                                             Generate new test group with members and expenses
+      |update-group [GROUP_UID] [OPTIONS]                    Updates group (requires at least one: --title, --password, --description)
       |
       |post-expense                                          Creates new expense in default group
       |gen-expense                                           Generates new expense in default group
@@ -73,6 +75,14 @@ object ApiClientMain extends ZIOAppDefault {
         api.postMember(groupUid = groupUid, userName = "Donald").run
       }
       case s"delete-member $memberUid" => api.deleteMember(memberUid = memberUid).run
+      case s"update-group $groupUid $other" =>
+        val map = parseOptionsIntoMap(other.split(" ").toList, Set("--title", "--password", "--description")).run
+        api.updateGroup(
+          groupUid = groupUid,
+          title = map.get("--title"),
+          password = map.get("--password"),
+          description = map.get("--description")
+        ).run
       case _ => ZIO.fail(InvalidCliArgumentException(s"Illegal arguments: $arguments")).run
     }
 

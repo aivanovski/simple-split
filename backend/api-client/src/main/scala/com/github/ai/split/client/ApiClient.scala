@@ -1,7 +1,7 @@
 package com.github.ai.split.client
 
 import com.github.ai.split.api.{NewExpenseDto, UserNameDto, UserUidDto}
-import com.github.ai.split.api.request.{PostExpenseRequest, PostGroupRequest, PostMemberRequest}
+import com.github.ai.split.api.request.{PostExpenseRequest, PostGroupRequest, PostMemberRequest, PutGroupRequest}
 import zio.*
 import zio.json.*
 import zio.http.*
@@ -13,7 +13,7 @@ class ApiClient(
   type ApiResponse = ZIO[Scope, Throwable, Response]
 
   private val DefaultPassword = "abc123"
-  private val baseUrl = "http://127.0.0.1:8080"
+  private val baseUrl = "https://api.simplesplitapp.link"
 
   def getGroup(
     uid: String = Groups.TripToDisneyLand,
@@ -133,6 +133,31 @@ class ApiClient(
         path = s"$baseUrl/expense/$expenseUid?password=$password"
       )
     )
+  }
+
+  def updateGroup(
+    groupUid: String,
+    title: Option[String] = None,
+    password: Option[String] = None,
+    description: Option[String] = None,
+    currentPassword: String = DefaultPassword
+  ): ApiResponse = {
+    val body = PutGroupRequest(
+      title = title,
+      password = password,
+      description = description,
+      members = None
+    ).toJsonPretty
+
+    for {
+      _ <- Console.printLine(s"Body: $body")
+      response <- client.request(
+        Request.put(
+          path = s"$baseUrl/group/$groupUid?password=$currentPassword",
+          body = Body.fromString(body)
+        )
+      )
+    } yield response
   }
 
   private object Users {
