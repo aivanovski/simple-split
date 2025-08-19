@@ -12,6 +12,9 @@ import com.github.ai.split.api.UserNameDto
 import com.github.ai.split.api.request.PostGroupRequest
 import com.github.ai.split.api.request.PostMemberRequest
 import com.github.ai.split.api.request.PutGroupRequest
+import com.github.ai.split.api.request.PutMemberRequest
+
+typealias UserUidAndName = Pair<String, String>
 
 class GroupEditorInteractor(
     private val groupRepository: GroupRepository,
@@ -28,29 +31,36 @@ class GroupEditorInteractor(
         credentials: GroupCredentials,
         newTitle: String?,
         newPassword: String?,
-        membersToRemove: List<String>,
-        membersToAdd: List<String>
+        memberUidsToRemove: List<String>,
+        memberNamesToAdd: List<String>,
+        membersToUpdate: List<UserUidAndName>
     ): Either<AppException, GroupDto> =
         either {
-            if (membersToAdd.isNotEmpty()) {
-                for (member in membersToAdd) {
-                    memberRepository.createMember(
-                        password = credentials.password,
-                        request = PostMemberRequest(
-                            groupUid = credentials.groupUid,
-                            name = member
-                        )
-                    ).bind()
-                }
+            for (memberName in memberNamesToAdd) {
+                memberRepository.createMember(
+                    password = credentials.password,
+                    request = PostMemberRequest(
+                        groupUid = credentials.groupUid,
+                        name = memberName
+                    )
+                ).bind()
             }
 
-            if (membersToRemove.isNotEmpty()) {
-                for (member in membersToRemove) {
-                    memberRepository.removeMember(
-                        memberUid = member,
-                        password = credentials.password
-                    ).bind()
-                }
+            for (memberUid in memberUidsToRemove) {
+                memberRepository.removeMember(
+                    memberUid = memberUid,
+                    password = credentials.password
+                ).bind()
+            }
+
+            for ((memberUid, memberName) in membersToUpdate) {
+                memberRepository.updateMember(
+                    memberUid = memberUid,
+                    password = credentials.password,
+                    request = PutMemberRequest(
+                        name = memberName
+                    )
+                ).bind()
             }
 
             val group = if (newTitle != null ||

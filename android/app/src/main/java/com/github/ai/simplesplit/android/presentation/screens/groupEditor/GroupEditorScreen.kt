@@ -1,5 +1,6 @@
 package com.github.ai.simplesplit.android.presentation.screens.groupEditor
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -17,7 +18,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -25,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import com.github.ai.simplesplit.android.R
 import com.github.ai.simplesplit.android.presentation.core.compose.AppTextField
 import com.github.ai.simplesplit.android.presentation.core.compose.CenteredBox
@@ -32,15 +33,19 @@ import com.github.ai.simplesplit.android.presentation.core.compose.ErrorMessageC
 import com.github.ai.simplesplit.android.presentation.core.compose.ErrorState
 import com.github.ai.simplesplit.android.presentation.core.compose.TopBar
 import com.github.ai.simplesplit.android.presentation.core.compose.TopBarMenuItem
+import com.github.ai.simplesplit.android.presentation.core.compose.preview.ThemedScreenPreview
 import com.github.ai.simplesplit.android.presentation.core.compose.rememberCallback
 import com.github.ai.simplesplit.android.presentation.core.compose.rememberOnClickedCallback
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppIcon
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppTheme
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.ElementMargin
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.HalfMargin
+import com.github.ai.simplesplit.android.presentation.core.compose.theme.LightTheme
+import com.github.ai.simplesplit.android.presentation.core.compose.theme.MediumMargin
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.SmallMargin
 import com.github.ai.simplesplit.android.presentation.screens.groupEditor.model.GroupEditorIntent
 import com.github.ai.simplesplit.android.presentation.screens.groupEditor.model.GroupEditorState
+import com.github.ai.simplesplit.android.presentation.screens.groupEditor.model.MemberItem
 
 @Composable
 fun GroupEditorScreen(viewModel: GroupEditorViewModel) {
@@ -63,6 +68,7 @@ private fun GroupEditorScreen(
     val onMenuItemClick = rememberCallback { _: TopBarMenuItem ->
         onIntent.invoke(GroupEditorIntent.OnDoneClick)
     }
+
     Scaffold(
         topBar = {
             TopBar(
@@ -74,14 +80,13 @@ private fun GroupEditorScreen(
             )
         }
     ) { padding ->
-        Surface(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(
                     top = padding.calculateTopPadding(),
                     bottom = padding.calculateBottomPadding()
-                ),
-            color = AppTheme.theme.colors.background
+                )
         ) {
             when (state) {
                 GroupEditorState.Loading -> {
@@ -115,6 +120,33 @@ private fun RenderDataContent(
     val onCloseErrorClick = rememberOnClickedCallback {
         onIntent.invoke(GroupEditorIntent.OnCloseErrorClick)
     }
+    val onApplyMemberEditClick = rememberOnClickedCallback {
+        onIntent.invoke(GroupEditorIntent.OnApplyMemberEditClick)
+    }
+    val onCancelMemberEditClick = rememberOnClickedCallback {
+        onIntent.invoke(GroupEditorIntent.OnCancelMemberEditClick)
+    }
+    val onAddClick = rememberOnClickedCallback {
+        onIntent.invoke(GroupEditorIntent.OnAddMemberClick)
+    }
+    val onTitleChange = rememberCallback { newTitle: String ->
+        onIntent.invoke(GroupEditorIntent.OnTitleChanged(newTitle))
+    }
+    val onPasswordChange = rememberCallback { newPassword: String ->
+        onIntent.invoke(GroupEditorIntent.OnPasswordChanged(newPassword))
+    }
+    val onConfirmPasswordChange = rememberCallback { newConfirmPassword: String ->
+        onIntent.invoke(GroupEditorIntent.OnConfirmPasswordChanged(newConfirmPassword))
+    }
+    val onMemberChange = rememberCallback { newMember: String ->
+        onIntent.invoke(GroupEditorIntent.OnMemberChanged(newMember))
+    }
+    val onPasswordToggleClick = rememberCallback { isVisible: Boolean ->
+        onIntent.invoke(GroupEditorIntent.OnPasswordToggleClick(isVisible))
+    }
+    val onConfirmPasswordToggleClick = rememberCallback { isVisible: Boolean ->
+        onIntent.invoke(GroupEditorIntent.OnConfirmPasswordToggleClick(isVisible))
+    }
 
     Column(
         modifier = Modifier
@@ -133,10 +165,7 @@ private fun RenderDataContent(
             value = state.title,
             error = state.titleError,
             label = stringResource(R.string.group_name),
-            // TODO: remember callback
-            onValueChange = { newValue ->
-                onIntent.invoke(GroupEditorIntent.OnTitleChanged(newValue))
-            },
+            onValueChange = onTitleChange,
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -148,13 +177,8 @@ private fun RenderDataContent(
             label = stringResource(R.string.password),
             isPasswordToggleEnabled = true,
             isPasswordVisible = state.isPasswordVisible,
-            // TODO: remember callbacks
-            onPasswordToggleClicked = { isVisible ->
-                onIntent.invoke(GroupEditorIntent.OnPasswordToggleClick(isVisible))
-            },
-            onValueChange = { newValue ->
-                onIntent.invoke(GroupEditorIntent.OnPasswordChanged(newValue))
-            },
+            onPasswordToggleClicked = onPasswordToggleClick,
+            onValueChange = onPasswordChange,
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -166,45 +190,60 @@ private fun RenderDataContent(
             label = stringResource(R.string.confirm_password),
             isPasswordToggleEnabled = true,
             isPasswordVisible = state.isConfirmPasswordVisible,
-            // TODO: remember callbacks
-            onPasswordToggleClicked = { isVisible ->
-                onIntent.invoke(GroupEditorIntent.OnConfirmPasswordToggleClick(isVisible))
-            },
-            onValueChange = { newValue ->
-                onIntent.invoke(GroupEditorIntent.OnConfirmPasswordChanged(newValue))
-            },
+            onPasswordToggleClicked = onConfirmPasswordToggleClick,
+            onValueChange = onConfirmPasswordChange,
             modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(SmallMargin))
 
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.fillMaxWidth()
         ) {
             AppTextField(
                 value = state.member,
                 error = state.memberError,
                 label = stringResource(R.string.member_name),
-                // TODO: remember callback
-                onValueChange = { newValue ->
-                    onIntent.invoke(GroupEditorIntent.OnMemberChanged(newValue))
-                },
+                onValueChange = onMemberChange,
                 modifier = Modifier.weight(1f)
             )
 
             Spacer(modifier = Modifier.width(width = HalfMargin))
 
-            IconButton(
-                // TODO: remember callback
-                onClick = {
-                    onIntent.invoke(GroupEditorIntent.OnAddMemberClick)
+            if (state.isApplyButtonVisible) {
+                IconButton(
+                    onClick = onApplyMemberEditClick,
+                    modifier = Modifier.padding(top = MediumMargin)
+                ) {
+                    Icon(
+                        imageVector = AppIcon.CHECK.vector,
+                        contentDescription = null
+                    )
                 }
-            ) {
-                Icon(
-                    imageVector = AppIcon.ADD.vector,
-                    contentDescription = null
-                )
+            }
+
+            if (state.isAddButtonVisible) {
+                IconButton(
+                    onClick = onAddClick,
+                    modifier = Modifier.padding(top = MediumMargin)
+                ) {
+                    Icon(
+                        imageVector = AppIcon.ADD.vector,
+                        contentDescription = null
+                    )
+                }
+            }
+
+            if (state.isCancelButtonVisible) {
+                IconButton(
+                    onClick = onCancelMemberEditClick,
+                    modifier = Modifier.padding(top = MediumMargin)
+                ) {
+                    Icon(
+                        imageVector = AppIcon.CLOSE.vector,
+                        contentDescription = null
+                    )
+                }
             }
         }
 
@@ -213,35 +252,85 @@ private fun RenderDataContent(
                 Spacer(modifier = Modifier.height(SmallMargin))
             }
 
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = AppTheme.theme.colors.cardSecondaryBackground
-                )
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = member,
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(start = ElementMargin)
-                    )
+            MemberItemComposable(
+                member = member,
+                index = index,
+                onIntent = onIntent
+            )
+        }
+    }
+}
 
-                    IconButton(
-                        // TODO: remember callback
-                        onClick = { onIntent.invoke(GroupEditorIntent.OnRemoveMemberClick(index)) }
-                    ) {
-                        Icon(
-                            imageVector = AppIcon.CLOSE.vector,
-                            contentDescription = null
-                        )
-                    }
-                }
+@Composable
+private fun MemberItemComposable(
+    member: MemberItem,
+    index: Int,
+    onIntent: (intent: GroupEditorIntent) -> Unit
+) {
+    val onEditMemberClick = rememberOnClickedCallback {
+        onIntent.invoke(GroupEditorIntent.OnEditMemberClick(index))
+    }
+    val onRemoveMemberClick = rememberOnClickedCallback {
+        onIntent.invoke(GroupEditorIntent.OnRemoveMemberClick(index))
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = AppTheme.theme.colors.cardSecondaryBackground
+        )
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = member.name,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = ElementMargin)
+            )
+
+            IconButton(
+                onClick = onEditMemberClick
+            ) {
+                Icon(
+                    imageVector = AppIcon.EDIT.vector,
+                    contentDescription = null
+                )
+            }
+
+            IconButton(
+                onClick = onRemoveMemberClick
+            ) {
+                Icon(
+                    imageVector = AppIcon.CLOSE.vector,
+                    contentDescription = null
+                )
             }
         }
     }
 }
+
+@Preview
+@Composable
+fun GroupEditorScreenDataPreview() {
+    ThemedScreenPreview(theme = LightTheme) {
+        GroupEditorScreen(
+            state = newDataState(),
+            onIntent = {}
+        )
+    }
+}
+
+private fun newDataState() =
+    GroupEditorState.Data(
+        members = listOf(
+            MemberItem("Donald"),
+            MemberItem("Mickey")
+        ),
+        isApplyButtonVisible = true,
+        isAddButtonVisible = true,
+        isCancelButtonVisible = true
+    )
