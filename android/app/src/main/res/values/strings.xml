@@ -41,6 +41,7 @@
     <string name="confirm_password">Confirm Password</string>
     <string name="passwords_dont_match">Passwords don\'t match</string>
     <string name="invalid_member_count_message">Add at least 2 members</string>
+    <string name="non_unique_member_name">Non-unique member name</string>
 
     <!-- Group Details screen -->
     <string name="no_expenses_message">No expenses yet in this group. Add the first expense to get started!</string>

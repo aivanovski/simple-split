@@ -15,6 +15,7 @@ class UserEntityDao(
 
   import quill._
 
+  // TODO: refactor
   def getAll(): IO[DomainError, List[UserEntity]] = {
     val query = quote {
       querySchema[UserEntity]("users")
@@ -97,6 +98,18 @@ class UserEntityDao(
           .insertValue(lift(user))
       }
     )
+      .map(_ => user)
+      .mapError(_.toDomainError())
+  }
+
+  def update(user: UserEntity): IO[DomainError, UserEntity] = {
+    val updateQuery = quote {
+      querySchema[UserEntity]("users")
+        .filter(_.uid == lift(user.uid))
+        .updateValue(lift(user))
+    }
+
+    run(updateQuery)
       .map(_ => user)
       .mapError(_.toDomainError())
   }

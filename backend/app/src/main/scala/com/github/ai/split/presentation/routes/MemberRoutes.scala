@@ -14,6 +14,12 @@ object MemberRoutes {
         response <- controller.createMember(request).mapError(_.toDomainResponse)
       } yield response
     },
+    Method.PUT / "member" / string("memberId") -> handler { (request: Request) =>
+      for {
+        controller <- ZIO.service[MemberController]
+        response <- controller.updateMember(request).mapError(_.toDomainResponse)
+      } yield response
+    },
     Method.DELETE / "member" / string("memberId") -> handler { (request: Request) =>
       for {
         controller <- ZIO.service[MemberController]

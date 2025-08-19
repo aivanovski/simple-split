@@ -11,6 +11,7 @@ import com.github.ai.split.api.request.PostGroupRequest
 import com.github.ai.split.api.request.PostMemberRequest
 import com.github.ai.split.api.request.PutExpenseRequest
 import com.github.ai.split.api.request.PutGroupRequest
+import com.github.ai.split.api.request.PutMemberRequest
 import com.github.ai.split.api.response.DeleteExpenseResponse
 import com.github.ai.split.api.response.DeleteMemberResponse
 import com.github.ai.split.api.response.GetGroupsResponse
@@ -19,6 +20,7 @@ import com.github.ai.split.api.response.PostGroupResponse
 import com.github.ai.split.api.response.PostMemberResponse
 import com.github.ai.split.api.response.PutExpenseResponse
 import com.github.ai.split.api.response.PutGroupResponse
+import com.github.ai.split.api.response.PutMemberResponse
 import io.ktor.client.HttpClient
 
 class ApiClient(
@@ -128,6 +130,17 @@ class ApiClient(
         httpClient.sendRequest<Unit, DeleteMemberResponse>(
             type = RequestType.DELETE,
             url = "$baseUrl/member/$memberUid?password=$password"
+        )
+
+    suspend fun putMember(
+        memberUid: String,
+        password: String,
+        request: PutMemberRequest
+    ): Either<ApiException, PutMemberResponse> =
+        httpClient.sendRequest<PutMemberRequest, PutMemberResponse>(
+            type = RequestType.PUT,
+            url = "$baseUrl/member/$memberUid?password=$password",
+            body = Some(request)
         )
 
     companion object {

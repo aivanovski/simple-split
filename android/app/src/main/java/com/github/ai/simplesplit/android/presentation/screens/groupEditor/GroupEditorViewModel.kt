@@ -9,6 +9,7 @@ import com.github.ai.simplesplit.android.presentation.screens.groupEditor.model.
 import com.github.ai.simplesplit.android.presentation.screens.groupEditor.model.GroupEditorIntent
 import com.github.ai.simplesplit.android.presentation.screens.groupEditor.model.GroupEditorMode
 import com.github.ai.simplesplit.android.presentation.screens.groupEditor.model.GroupEditorState
+import com.github.ai.simplesplit.android.presentation.screens.groupEditor.model.MemberItem
 import com.github.ai.simplesplit.android.presentation.screens.groupEditor.model.ValidationResult
 import com.github.ai.simplesplit.android.utils.StringUtils
 import com.github.ai.simplesplit.android.utils.mutableStateFlow
@@ -34,6 +35,7 @@ class GroupEditorViewModel(
 
     private var dataState by mutableStateFlow(GroupEditorState.Data())
     private var data by mutableStateFlow<GroupDto?>(null)
+    private var selectedMember by mutableStateFlow<MemberItem?>(null)
 
     override fun handleIntent(intent: GroupEditorIntent): Flow<GroupEditorState> {
         return when (intent) {
@@ -50,6 +52,10 @@ class GroupEditorViewModel(
             is GroupEditorIntent.OnPasswordToggleClick -> onPasswordToggleClicked(intent)
             is GroupEditorIntent.OnConfirmPasswordToggleClick ->
                 onConfirmPasswordToggleClicked(intent)
+
+            GroupEditorIntent.OnCancelMemberEditClick -> onCancelMemberEditClicked()
+            GroupEditorIntent.OnApplyMemberEditClick -> onApplyMemberEditClicked()
+            is GroupEditorIntent.OnEditMemberClick -> onEditMemberClicked(intent.memberIndex)
         }
     }
 
@@ -96,14 +102,82 @@ class GroupEditorViewModel(
             return emptyFlow()
         }
 
-        if (newMemberName in dataState.members) {
+        val isMemberAlreadyAdded = dataState.members
+            .any { member -> member.name == newMemberName }
+
+        if (isMemberAlreadyAdded) {
             return emptyFlow()
         }
 
         dataState = dataState.copy(
             member = StringUtils.EMPTY,
             memberError = null,
-            members = dataState.members + newMemberName
+            members = dataState.members + MemberItem(newMemberName)
+        )
+
+        return flowOf(dataState)
+    }
+
+    private fun onEditMemberClicked(memberIndex: Int): Flow<GroupEditorState> {
+        val member = dataState.members.getOrNull(memberIndex) ?: return emptyFlow()
+        selectedMember = member
+
+        dataState = dataState.copy(
+            member = member.name,
+            memberError = null,
+            isApplyButtonVisible = true,
+            isAddButtonVisible = false,
+            isCancelButtonVisible = true
+        )
+
+        return flowOf(dataState)
+    }
+
+    private fun onCancelMemberEditClicked(): Flow<GroupEditorState> {
+        dataState = dataState.copy(
+            member = StringUtils.EMPTY,
+            memberError = null,
+            isApplyButtonVisible = false,
+            isAddButtonVisible = true,
+            isCancelButtonVisible = false
+        )
+
+        return flowOf(dataState)
+    }
+
+    private fun onApplyMemberEditClicked(): Flow<GroupEditorState> {
+        val selectedMember = selectedMember ?: return emptyFlow()
+
+        val newMemberName = dataState.member.trim()
+
+        val isNameAlreadyExist = dataState.members
+            .filter { member -> member != selectedMember }
+            .any { member -> member.name == newMemberName }
+
+        if (isNameAlreadyExist) {
+            dataState = dataState.copy(
+                memberError = resources.getString(R.string.non_unique_member_name)
+            )
+
+            return flowOf(dataState)
+        }
+
+        val newMember = selectedMember.copy(name = newMemberName)
+
+        val newMembers = dataState.members
+            .filter { member -> member != selectedMember }
+            .toMutableList()
+            .apply {
+                add(newMember)
+            }
+
+        dataState = dataState.copy(
+            members = newMembers,
+            member = StringUtils.EMPTY,
+            memberError = null,
+            isApplyButtonVisible = false,
+            isAddButtonVisible = true,
+            isCancelButtonVisible = false
         )
 
         return flowOf(dataState)
@@ -170,20 +244,22 @@ class GroupEditorViewModel(
                     interactor.createGroup(
                         password = dataState.password.trim(),
                         title = dataState.title.trim(),
-                        members = dataState.members
+                        members = dataState.members.map { member -> member.name }
                     )
                 }
 
                 is GroupEditorMode.EditGroup -> {
-                    val membersToAdd = getNewMembers()
-                    val memberToDelete = getMemberUidsToDelete()
+                    val membersToAdd = getMembersToAdd()
+                    val membersToDelete = getMemberUidsToDelete()
+                    val membersToUpdate = getMembersToUpdate()
 
                     interactor.updateGroup(
                         credentials = args.mode.credentials,
                         newTitle = dataState.title.ifBlank { null },
                         newPassword = dataState.password.ifBlank { null },
-                        membersToRemove = memberToDelete,
-                        membersToAdd = membersToAdd
+                        memberUidsToRemove = membersToDelete,
+                        memberNamesToAdd = membersToAdd.map { it.name },
+                        membersToUpdate = membersToUpdate.map { Pair(it.uid ?: "", it.name) }
                     )
                 }
             }
@@ -205,7 +281,16 @@ class GroupEditorViewModel(
 
     private fun loadData(): Flow<GroupEditorState> {
         return when (args.mode) {
-            is GroupEditorMode.NewGroup -> flowOf(GroupEditorState.Data())
+            is GroupEditorMode.NewGroup -> {
+                dataState = dataState.copy(
+                    isAddButtonVisible = true
+                )
+
+                flowOf(
+                    dataState
+                )
+            }
+
             is GroupEditorMode.EditGroup -> flow {
                 emit(GroupEditorState.Loading)
 
@@ -220,7 +305,13 @@ class GroupEditorViewModel(
                         data = group
                         dataState = GroupEditorState.Data(
                             title = group.title,
-                            members = group.members.map { member -> member.name }
+                            isAddButtonVisible = true,
+                            members = group.members.map { member ->
+                                MemberItem(
+                                    name = member.name,
+                                    uid = member.uid
+                                )
+                            }
                         )
                         emit(dataState)
                     }
@@ -229,27 +320,42 @@ class GroupEditorViewModel(
         }
     }
 
-    private fun getNewMembers(): List<String> {
-        val memberNames = data?.members
-            ?.map { member -> member.name }
-            ?.toSet()
-            ?: emptySet()
-
-        val newMemberNames = dataState.members
-            .filter { memberName -> memberName !in memberNames }
-
-        return newMemberNames
+    private fun getMembersToAdd(): List<MemberItem> {
+        return dataState.members
+            .filter { member -> member.uid == null }
     }
 
     private fun getMemberUidsToDelete(): List<String> {
-        val members = data?.members ?: return emptyList()
+        val currentMember = data?.members ?: return emptyList()
 
-        val memberNameToUidMap = members.associateBy { member -> member.name }
-        val removedNames = memberNameToUidMap.keys - dataState.members.toSet()
+        val oldMemberUidToNameMap = currentMember.associateBy { member -> member.uid }
 
-        return removedNames.mapNotNull { name ->
-            memberNameToUidMap[name]?.uid
-        }
+        val newMemberUids = dataState.members
+            .mapNotNull { member -> member.uid }
+            .toSet()
+
+        val uidsToDelete = oldMemberUidToNameMap.keys
+            .filter { uid -> uid !in newMemberUids }
+
+        return uidsToDelete
+    }
+
+    private fun getMembersToUpdate(): List<MemberItem> {
+        val oldMembers = data?.members ?: return emptyList()
+
+        val oldMemberUidToNameMap = oldMembers
+            .map { member -> member.uid to member.name }
+            .toMap()
+
+        return dataState.members
+            .filter { member ->
+                if (member.uid != null) {
+                    val oldName = oldMemberUidToNameMap[member.uid]
+                    oldName != member.name
+                } else {
+                    false
+                }
+            }
     }
 
     private fun onCloseErrorClicked(): Flow<GroupEditorState> {
