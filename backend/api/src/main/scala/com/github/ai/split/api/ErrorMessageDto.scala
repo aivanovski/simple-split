@@ -4,7 +4,9 @@ import zio.json.{DeriveJsonEncoder, JsonEncoder}
 
 case class ErrorMessageDto(
   message: Option[String],
-  stacktrace: String
+  exception: String,
+  stacktraceBase64: String,
+  stacktraceLines: List[String]
 )
 
 object ErrorMessageDto {
