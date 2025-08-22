@@ -1,7 +1,8 @@
 package com.github.ai.split
 
+import com.github.ai.split.data.currency.CurrencyParser
 import com.github.ai.split.domain.CliArgumentParser
-import com.github.ai.split.domain.usecases.FillTestDataUseCase
+import com.github.ai.split.domain.usecases.{FillTestDataUseCase, StartUpServerUseCase}
 import com.github.ai.split.entity.CliArguments
 import com.github.ai.split.presentation.routes.{ExpenseRoutes, ExportRoutes, GroupRoutes, MemberRoutes}
 import io.getquill.SnakeCase
@@ -24,16 +25,8 @@ object Main extends ZIOAppDefault {
 
   private def application() = {
     for {
-      fillTestDataUseCase <- ZIO.service[FillTestDataUseCase]
-      arguments <- ZIO.service[CliArguments]
-
-      _ <-
-        if (arguments.isPopulateTestData) {
-          fillTestDataUseCase.createTestData()
-        } else {
-          ZIO.succeed(())
-        }
-
+      startupUseCase <- ZIO.service[StartUpServerUseCase]
+      _ <- startupUseCase.startUpServer()
       _ <- Server.serve(routes)
     } yield ()
   }
@@ -66,6 +59,8 @@ object Main extends ZIOAppDefault {
         Layers.validateExpenseUseCase,
         Layers.removeExpenseUseCase,
         Layers.exportGroupDataUseCase,
+        Layers.startUpServerUseCase,
+        Layers.fillCurrencyDataUseCase,
 
         // Response assemblers use cases
         Layers.assembleGroupResponseUseCase,
@@ -92,8 +87,10 @@ object Main extends ZIOAppDefault {
         Layers.userDao,
         Layers.paidByDao,
         Layers.splitBetweenDao,
+        Layers.currencyDao,
 
         // Others
+        Layers.currencyParser,
         Server.defaultWithPort(8080),
         Quill.H2.fromNamingStrategy(SnakeCase),
         if (arguments.isUseInMemoryDatabase) {

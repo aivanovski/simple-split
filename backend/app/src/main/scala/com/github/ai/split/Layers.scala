@@ -1,37 +1,10 @@
 package com.github.ai.split
 
-import com.github.ai.split.data.db.dao.{
-  ExpenseEntityDao,
-  GroupEntityDao,
-  GroupMemberEntityDao,
-  PaidByEntityDao,
-  SplitBetweenEntityDao,
-  UserEntityDao
-}
+import com.github.ai.split.data.currency.CurrencyParser
+import com.github.ai.split.data.db.dao.{CurrencyEntityDao, ExpenseEntityDao, GroupEntityDao, GroupMemberEntityDao, PaidByEntityDao, SplitBetweenEntityDao, UserEntityDao}
 import com.github.ai.split.data.db.repository.{ExpenseRepository, GroupRepository}
 import com.github.ai.split.domain.{AccessResolverService, AuthService, PasswordService}
-import com.github.ai.split.domain.usecases.{
-  AddExpenseUseCase,
-  AddGroupUseCase,
-  AddMembersUseCase,
-  AddUserUseCase,
-  AssembleExpenseUseCase,
-  AssembleGroupResponseUseCase,
-  AssembleGroupsResponseUseCase,
-  CalculateSettlementUseCase,
-  ConvertExpensesToTransactionsUseCase,
-  ExportGroupDataUseCase,
-  FillTestDataUseCase,
-  GetAllUsersUseCase,
-  GetGroupUseCase,
-  RemoveExpenseUseCase,
-  RemoveMembersUseCase,
-  ResolveUserReferencesUseCase,
-  UpdateExpenseUseCase,
-  UpdateGroupUseCase,
-  ValidateExpenseUseCase,
-  ValidateMemberNameUseCase
-}
+import com.github.ai.split.domain.usecases.{AddExpenseUseCase, AddGroupUseCase, AddMembersUseCase, AddUserUseCase, AssembleExpenseUseCase, AssembleGroupResponseUseCase, AssembleGroupsResponseUseCase, CalculateSettlementUseCase, ConvertExpensesToTransactionsUseCase, ExportGroupDataUseCase, FillCurrencyDataUseCase, FillTestDataUseCase, GetAllUsersUseCase, GetGroupUseCase, RemoveExpenseUseCase, RemoveMembersUseCase, ResolveUserReferencesUseCase, StartUpServerUseCase, UpdateExpenseUseCase, UpdateGroupUseCase, ValidateExpenseUseCase, ValidateMemberNameUseCase}
 import com.github.ai.split.presentation.controllers.{ExpenseController, GroupController, MemberController}
 import zio.{ZIO, ZLayer}
 
@@ -44,6 +17,7 @@ object Layers {
   val expenseDao = ZLayer.fromFunction(ExpenseEntityDao(_))
   val paidByDao = ZLayer.fromFunction(PaidByEntityDao(_))
   val splitBetweenDao = ZLayer.fromFunction(SplitBetweenEntityDao(_))
+  val currencyDao = ZLayer.fromFunction(CurrencyEntityDao(_))
 
   // Repositories
   val expenseRepository = ZLayer.fromFunction(ExpenseRepository(_, _, _))
@@ -71,6 +45,8 @@ object Layers {
   val validateExpenseUseCase = ZLayer.fromFunction(ValidateExpenseUseCase(_, _))
   val removeExpenseUseCase = ZLayer.fromFunction(RemoveExpenseUseCase(_))
   val exportGroupDataUseCase = ZLayer.fromFunction(ExportGroupDataUseCase(_, _))
+  val startUpServerUseCase = ZLayer.fromFunction(StartUpServerUseCase(_, _, _))
+  val fillCurrencyDataUseCase = ZLayer.fromFunction(FillCurrencyDataUseCase(_))
 
   // Response use cases
   val assembleGroupResponseUseCase = ZLayer.fromFunction(AssembleGroupResponseUseCase(_, _, _, _, _, _))
@@ -81,4 +57,7 @@ object Layers {
   val groupController = ZLayer.fromFunction(GroupController(_, _, _, _, _, _, _, _, _, _))
   val memberController = ZLayer.fromFunction(MemberController(_, _, _, _, _, _, _))
   val expenseController = ZLayer.fromFunction(ExpenseController(_, _, _, _, _, _, _))
+
+  // Other
+  val currencyParser = ZLayer.succeed(CurrencyParser())
 }

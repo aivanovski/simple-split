@@ -38,3 +38,9 @@ CREATE TABLE IF NOT EXISTS split_between (
     member_uid UUID NOT NULL,
     PRIMARY KEY (expense_uid, member_uid) -- Composite primary key to ensure uniqueness
 );
+
+CREATE TABLE IF NOT EXISTS currencies (
+    iso_code VARCHAR(255) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    symbol VARCHAR(255) NOT NULL
+);
