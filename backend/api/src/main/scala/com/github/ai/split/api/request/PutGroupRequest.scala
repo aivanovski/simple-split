@@ -7,6 +7,7 @@ case class PutGroupRequest(
   title: Option[String],
   password: Option[String],
   description: Option[String],
+  currencyIsoCode: Option[String],
   members: Option[List[UserUidDto]]
 )
 

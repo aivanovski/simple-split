@@ -12,6 +12,7 @@ import com.github.ai.split.domain.PasswordService
 import com.github.ai.split.entity.db.{GroupEntity, GroupMemberEntity, GroupUid, MemberUid, UserUid}
 import com.github.ai.split.entity.exception.DomainError
 import zio.*
+import zio.direct.*
 
 import java.util.UUID
 
@@ -23,7 +24,8 @@ class UpdateGroupUseCase(
   private val paidByDao: PaidByEntityDao,
   private val splitBetweenDao: SplitBetweenEntityDao,
   private val addMemberUseCase: AddMembersUseCase,
-  private val removeMembersUseCase: RemoveMembersUseCase
+  private val removeMembersUseCase: RemoveMembersUseCase,
+  private val validateCurrencyUseCase: ValidateCurrencyUseCase
 ) {
 
   def updateGroup(
@@ -31,9 +33,12 @@ class UpdateGroupUseCase(
     newPassword: Option[String],
     newTitle: Option[String],
     newDescription: Option[String],
+    newCurrencyIsoCode: Option[String],
     newMemberUids: Option[List[UserUid]]
   ): IO[DomainError, GroupUid] = {
     for {
+      _ <- isCurrencyIsoCodeValid(newCurrencyIsoCode)
+
       group <- groupDao.getByUid(uid = groupUid)
       currentMembers <- groupMemberDao.getByGroupUid(groupUid = groupUid)
 
@@ -70,7 +75,8 @@ class UpdateGroupUseCase(
             Some(passwordService.hashPassword(newPassword.get))
           } else {
             group.passwordHash
-          }
+          },
+          currencyIsoCode = newCurrencyIsoCode.getOrElse(group.currencyIsoCode)
         )
       )
     } yield groupUid
@@ -130,5 +136,17 @@ class UpdateGroupUseCase(
         }
       )
     } yield result
+  }
+
+  private def isCurrencyIsoCodeValid(
+    newCurrencyIsoCode: Option[String]
+  ): IO[DomainError, Unit] = {
+    defer {
+      if (newCurrencyIsoCode.isDefined) {
+        validateCurrencyUseCase.isCurrencyIsoCodeValid(newCurrencyIsoCode.get).run
+      }
+
+      ()
+    }
   }
 }

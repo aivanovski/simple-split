@@ -4,7 +4,8 @@ case class GroupEntity(
   uid: GroupUid,
   title: String,
   description: String,
-  passwordHash: Option[String]
+  passwordHash: Option[String],
+  currencyIsoCode: String
 )
 
 object GroupEntity {

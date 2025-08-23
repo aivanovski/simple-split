@@ -5,19 +5,21 @@ import zio.IO
 import zio.ZIO
 import zio.http.{Body, Request}
 import zio.json.*
+import zio.direct.*
 
 import java.util.UUID
 
 extension (body: Body) {
 
   def parse[T](implicit decoder: JsonDecoder[T]): IO[DomainError, T] = {
-    for
-      text <- body.asString.mapError(error => new DomainError(cause = error.some))
+    defer {
+      val text = body.asString.mapError(error => new DomainError(cause = error.some)).run
 
-      dto <- ZIO.fromEither(
-        text.fromJson[T](using decoder).left.map(error => new DomainError(message = error.some))
-      )
-    yield dto
+      ZIO
+        .fromEither(text.fromJson[T](using decoder))
+        .mapError(message => DomainError(message = s"Invalid request format: $message".some))
+        .run
+    }
   }
 }
 
@@ -33,7 +35,7 @@ extension (request: Request) {
     if (parameter.nonEmpty) {
       ZIO.succeed(parameter)
     } else {
-      ZIO.fail(new DomainError(message = Some("Invalid groupId")))
+      ZIO.fail(new DomainError(message = Some("Invalid id parameter")))
     }
   }
 }

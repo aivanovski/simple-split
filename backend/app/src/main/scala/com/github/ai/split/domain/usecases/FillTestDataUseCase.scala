@@ -104,7 +104,8 @@ class FillTestDataUseCase(
           uid = group.uid,
           title = group.title,
           description = group.description,
-          passwordHash = Some(passwordService.hashPassword(group.password))
+          passwordHash = Some(passwordService.hashPassword(group.password)),
+          currencyIsoCode = "EUR"
         )
       )
 

@@ -7,7 +7,8 @@ CREATE TABLE IF NOT EXISTS groups (
     uid UUID PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     description VARCHAR(255) NOT NULL,
-    password_hash VARCHAR(255)
+    password_hash VARCHAR(255),
+    currency_iso_code VARCHAR(3) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS group_members (

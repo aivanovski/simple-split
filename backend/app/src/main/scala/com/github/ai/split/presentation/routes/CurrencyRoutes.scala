@@ -13,6 +13,6 @@ object CurrencyRoutes {
         controller <- ZIO.service[CurrencyController]
         response <- controller.getCurrencies().mapError(_.toDomainResponse)
       } yield response
-    },
+    }
   )
 }

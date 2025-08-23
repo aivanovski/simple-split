@@ -1,8 +1,9 @@
 package com.github.ai.split.utils
 
 import com.github.ai.split.entity.{ExpenseWithRelations, Transaction}
-import com.github.ai.split.api.{ExpenseDto, GroupDto, TransactionDto, MemberDto}
+import com.github.ai.split.api.{CurrencyDto, ExpenseDto, GroupDto, MemberDto, TransactionDto}
 import com.github.ai.split.entity.db.{
+  CurrencyEntity,
   ExpenseEntity,
   ExpenseUid,
   GroupEntity,
@@ -21,11 +22,13 @@ import java.util.UUID
 
 def toExpenseDto(
   expense: ExpenseWithRelations,
+  currency: CurrencyEntity,
   members: List[GroupMemberEntity],
   userUidToUserMap: Map[UserUid, UserEntity]
 ): IO[DomainError, ExpenseDto] =
   toExpenseDto(
     expense = expense.entity,
+    currency = currency,
     members = members,
     paidBy = expense.paidBy,
     splitBetween = expense.splitBetween,
@@ -34,6 +37,7 @@ def toExpenseDto(
 
 def toExpenseDto(
   expense: ExpenseEntity,
+  currency: CurrencyEntity,
   members: List[GroupMemberEntity],
   paidBy: List[PaidByEntity],
   splitBetween: List[SplitBetweenEntity],
@@ -68,6 +72,7 @@ def toExpenseDto(
     title = expense.title,
     description = expense.description.some,
     amount = expense.amount,
+    currency = toCurrencyDto(currency),
     paidBy = paidByUsers,
     splitBetween = splitBetweenUsers
   )
@@ -99,6 +104,7 @@ def toMemberDtos(
 
 def toGroupDto(
   group: GroupEntity,
+  currency: CurrencyEntity,
   members: List[GroupMemberEntity],
   expenses: List[ExpenseWithRelations],
   userUidToUserMap: Map[UserUid, UserEntity],
@@ -106,6 +112,7 @@ def toGroupDto(
 ): IO[DomainError, GroupDto] =
   toGroupDto(
     group = group,
+    currency = currency,
     members = members,
     expenses = expenses.map(_.entity),
     expenseUidToPaidByMap = expenses.map(expense => (expense.entity.uid, expense.paidBy)).toMap,
@@ -116,6 +123,7 @@ def toGroupDto(
 
 def toGroupDto(
   group: GroupEntity,
+  currency: CurrencyEntity,
   members: List[GroupMemberEntity],
   expenses: List[ExpenseEntity],
   expenseUidToPaidByMap: Map[ExpenseUid, List[PaidByEntity]],
@@ -139,6 +147,7 @@ def toGroupDto(
 
         toExpenseDto(
           expense = expense,
+          currency = currency,
           members = members,
           paidBy = paidBy,
           splitBetween = splitBetween,
@@ -150,6 +159,7 @@ def toGroupDto(
     uid = group.uid.toString,
     title = group.title,
     description = group.description,
+    currency = toCurrencyDto(currency),
     members = memberDtos,
     expenses = transformedExpenses,
     paybackTransactions = paybackTransactions.map(transaction => toTransactionDto(transaction))
@@ -163,4 +173,13 @@ def toTransactionDto(
     creditorUid = transaction.creditor.toString,
     debtorUid = transaction.debtor.toString,
     amount = transaction.amount
+  )
+
+def toCurrencyDto(
+  currency: CurrencyEntity
+): CurrencyDto =
+  CurrencyDto(
+    isoCode = currency.isoCode,
+    name = currency.name,
+    symbol = currency.symbol
   )
