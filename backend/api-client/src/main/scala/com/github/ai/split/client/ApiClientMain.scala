@@ -24,6 +24,7 @@ object ApiClientMain extends ZIOAppDefault {
       |update-member [MEMBER_UID] [NAME]                     Update member name by MEMBER_UID
       |gen-members [GROUP_UID]
       |delete-member [MEMBER_UID]                            Delete member by MEMBER_UID
+      |currencies                                            Get list of currencies
       |help                                                  Print help
       |""".stripMargin
 
@@ -75,6 +76,8 @@ object ApiClientMain extends ZIOAppDefault {
         api.postMember(groupUid = groupUid, userName = "Donald").run
       }
       case s"delete-member $memberUid" => api.deleteMember(memberUid = memberUid).run
+
+      case s"currencies" => api.getCurrencies().run
       case _ => ZIO.fail(InvalidCliArgumentException(s"Illegal arguments: $arguments")).run
     }
 

@@ -1,9 +1,10 @@
 package com.github.ai.split
 
+import com.github.ai.split.data.currency.CurrencyParser
 import com.github.ai.split.domain.CliArgumentParser
-import com.github.ai.split.domain.usecases.FillTestDataUseCase
+import com.github.ai.split.domain.usecases.{FillTestDataUseCase, StartUpServerUseCase}
 import com.github.ai.split.entity.CliArguments
-import com.github.ai.split.presentation.routes.{ExpenseRoutes, ExportRoutes, GroupRoutes, MemberRoutes}
+import com.github.ai.split.presentation.routes.{CurrencyRoutes, ExpenseRoutes, ExportRoutes, GroupRoutes, MemberRoutes}
 import io.getquill.SnakeCase
 import io.getquill.jdbczio.Quill
 import zio.*
@@ -17,6 +18,7 @@ object Main extends ZIOAppDefault {
     ++ ExportRoutes.routes()
     ++ MemberRoutes.routes()
     ++ ExpenseRoutes.routes()
+    ++ CurrencyRoutes.routes()
 
   override val bootstrap: ZLayer[Any, Nothing, Unit] = {
     Runtime.removeDefaultLoggers >>> SLF4J.slf4j(LogFormat.colored)
@@ -24,16 +26,8 @@ object Main extends ZIOAppDefault {
 
   private def application() = {
     for {
-      fillTestDataUseCase <- ZIO.service[FillTestDataUseCase]
-      arguments <- ZIO.service[CliArguments]
-
-      _ <-
-        if (arguments.isPopulateTestData) {
-          fillTestDataUseCase.createTestData()
-        } else {
-          ZIO.succeed(())
-        }
-
+      startupUseCase <- ZIO.service[StartUpServerUseCase]
+      _ <- startupUseCase.startUpServer()
       _ <- Server.serve(routes)
     } yield ()
   }
@@ -67,6 +61,8 @@ object Main extends ZIOAppDefault {
         Layers.removeExpenseUseCase,
         Layers.exportGroupDataUseCase,
         Layers.updateMemberUseCase,
+        Layers.startUpServerUseCase,
+        Layers.fillCurrencyDataUseCase,
 
         // Response assemblers use cases
         Layers.assembleGroupResponseUseCase,
@@ -77,6 +73,7 @@ object Main extends ZIOAppDefault {
         Layers.memberController,
         Layers.groupController,
         Layers.expenseController,
+        Layers.currencyController,
 
         // Services
         Layers.passwordService,
@@ -85,6 +82,7 @@ object Main extends ZIOAppDefault {
         // Repositories
         Layers.expenseRepository,
         Layers.groupRepository,
+        Layers.currencyRepository,
 
         // Dao
         Layers.expenseDao,
@@ -93,8 +91,10 @@ object Main extends ZIOAppDefault {
         Layers.userDao,
         Layers.paidByDao,
         Layers.splitBetweenDao,
+        Layers.currencyDao,
 
         // Others
+        Layers.currencyParser,
         Server.defaultWithPort(8080),
         Quill.H2.fromNamingStrategy(SnakeCase),
         if (arguments.isUseInMemoryDatabase) {

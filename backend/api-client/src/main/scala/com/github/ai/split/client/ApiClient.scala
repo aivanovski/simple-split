@@ -26,6 +26,14 @@ class ApiClient(
     )
   }
 
+  def getCurrencies(): ApiResponse = {
+    client.request(
+      Request.get(
+        path = s"$baseUrl/currency"
+      )
+    )
+  }
+
   def postGroup(): ApiResponse = {
     client.request(
       Request.post(
