@@ -18,11 +18,13 @@ class CurrencyParser {
         val isoCode = item.currencies.keys.headOption
         val nameAndSymbol = isoCode.flatMap { code => item.currencies.get(code) }
 
-        if (isoCode.isDefined
+        if (
+          isoCode.isDefined
           && nameAndSymbol.isDefined
           && !isoCode.get.isBlank
           && !nameAndSymbol.get.name.isBlank
-          && !nameAndSymbol.get.symbol.isBlank) {
+          && !nameAndSymbol.get.symbol.isBlank
+        ) {
 
           CurrencyEntity(
             name = nameAndSymbol.get.name.trim,

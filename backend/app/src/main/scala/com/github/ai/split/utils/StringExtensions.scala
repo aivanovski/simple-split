@@ -13,7 +13,8 @@ extension (str: String) {
 
   def parseJson[T](implicit decoder: JsonDecoder[T]): IO[DomainError, T] = {
     ZIO.fromEither(
-      str.fromJson[T](using decoder)
+      str
+        .fromJson[T](using decoder)
         .left
         .map(error => new DomainError(message = error.some))
     )

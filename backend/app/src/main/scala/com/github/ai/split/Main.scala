@@ -63,6 +63,7 @@ object Main extends ZIOAppDefault {
         Layers.updateMemberUseCase,
         Layers.startUpServerUseCase,
         Layers.fillCurrencyDataUseCase,
+        Layers.validateCurrencyUseCase,
 
         // Response assemblers use cases
         Layers.assembleGroupResponseUseCase,

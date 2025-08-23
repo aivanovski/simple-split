@@ -9,6 +9,7 @@ data class PostGroupRequest(
     val password: String,
     val title: String,
     val description: String?,
+    val currencyIsoCode: String,
     val members: List<UserNameDto>?,
     val expenses: List<NewExpenseDto>?
 )

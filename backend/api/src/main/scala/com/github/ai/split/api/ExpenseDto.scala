@@ -7,6 +7,7 @@ case class ExpenseDto(
   title: String,
   description: Option[String],
   amount: Double,
+  currency: CurrencyDto,
   paidBy: List[MemberDto],
   splitBetween: List[MemberDto]
 )

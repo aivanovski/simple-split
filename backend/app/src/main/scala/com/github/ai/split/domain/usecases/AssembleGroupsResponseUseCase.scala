@@ -2,7 +2,7 @@ package com.github.ai.split.domain.usecases
 
 import com.github.ai.split.data.db.dao.{GroupEntityDao, GroupMemberEntityDao, PaidByEntityDao, SplitBetweenEntityDao}
 import com.github.ai.split.api.GroupDto
-import com.github.ai.split.data.db.repository.ExpenseRepository
+import com.github.ai.split.data.db.repository.{ExpenseRepository, GroupRepository}
 import com.github.ai.split.entity.db.GroupUid
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.toGroupDto
@@ -11,6 +11,7 @@ import zio.*
 import java.util.UUID
 
 class AssembleGroupsResponseUseCase(
+  private val groupRepository: GroupRepository,
   private val expenseRepository: ExpenseRepository,
   private val groupDao: GroupEntityDao,
   private val groupMemberDao: GroupMemberEntityDao,
@@ -25,15 +26,14 @@ class AssembleGroupsResponseUseCase(
     uids: List[GroupUid]
   ): IO[DomainError, List[GroupDto]] = {
     for {
-      userUidToUserMap <- getAllUsersUseCase.getUserUidToUserMap()
       // TODO: Optimize DB querying
-      groups <- groupDao.getByUids(uids)
-      allMembers <- groupMemberDao.getAll()
+      userUidToUserMap <- getAllUsersUseCase.getUserUidToUserMap()
+      groups <- groupRepository.getByUids(uids)
       allExpenses <- expenseRepository.getEntitiesByGroupUids(uids)
       allPaidBy <- paidByDao.getAll()
       allSplitBetween <- splitBetweenDao.getAll()
+
       data <- {
-        val groupUidToMembersMap = allMembers.groupBy(_.groupUid)
         val groupUidToExpenseMap = allExpenses.groupBy(_.groupUid)
         val expenseUidToPaidByMap = allPaidBy.groupBy(_.expenseUid)
         val expenseUidToSplitBetweenMap = allSplitBetween.groupBy(_.expenseUid)
@@ -41,14 +41,13 @@ class AssembleGroupsResponseUseCase(
         ZIO.collectAll(
           groups
             .map { group =>
-              val groupExpenses = groupUidToExpenseMap.getOrElse(group.uid, List.empty)
-              val groupPaidBy = allPaidBy.filter(_.groupUid == group.uid)
-              val groupSplitBetween = allSplitBetween.filter(_.groupUid == group.uid)
-              val groupMembers = groupUidToMembersMap.getOrElse(group.uid, List.empty)
+              val groupExpenses = groupUidToExpenseMap.getOrElse(group.entity.uid, List.empty)
+              val groupPaidBy = allPaidBy.filter(_.groupUid == group.entity.uid)
+              val groupSplitBetween = allSplitBetween.filter(_.groupUid == group.entity.uid)
 
               val groupTransactions = convertExpensesUseCase.convertToTransactions(
                 expenses = groupExpenses,
-                members = groupMembers.map(_.uid),
+                members = group.members.map(_.entity.uid),
                 paidBy = groupPaidBy,
                 splitBetween = groupSplitBetween
               )
@@ -56,9 +55,10 @@ class AssembleGroupsResponseUseCase(
               val paybackTransactions = settlementCalculator.calculateSettlement(groupTransactions)
 
               toGroupDto(
-                group = group,
-                members = groupUidToMembersMap.getOrElse(group.uid, List.empty),
-                expenses = groupUidToExpenseMap.getOrElse(group.uid, List.empty),
+                group = group.entity,
+                currency = group.currency,
+                members = group.members.map(_.entity),
+                expenses = groupUidToExpenseMap.getOrElse(group.entity.uid, List.empty),
                 expenseUidToPaidByMap = expenseUidToPaidByMap,
                 expenseUidToSplitBetweenMap = expenseUidToSplitBetweenMap,
                 userUidToUserMap = userUidToUserMap,

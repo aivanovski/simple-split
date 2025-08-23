@@ -43,6 +43,7 @@ class ApiClient(
             password = DefaultPassword,
             title = "Oktoberfest",
             description = Some("Amazing party"),
+            currencyIsoCode = "USD",
             members = Some(List("Bob", "Alan").map(UserNameDto(_))),
             expenses = Some(
               List(

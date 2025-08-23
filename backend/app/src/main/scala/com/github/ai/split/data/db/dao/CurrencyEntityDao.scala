@@ -63,9 +63,9 @@ class CurrencyEntityDao(
     for {
       currencies <- run(query).mapError(_.toDomainError())
       _ <-
-        if (currencies.size != isoCodes.size) {
+        if (currencies.size != isoCodeSet.size) {
           val foundIsoCodes = currencies.map(_.isoCode).toSet
-          val notFoundIsoCodes = isoCodes.filterNot(foundIsoCodes.contains).mkString(", ")
+          val notFoundIsoCodes = isoCodeSet.diff(foundIsoCodes).mkString(", ")
           ZIO.fail(DomainError(message = s"Failed to find currencies: $notFoundIsoCodes".some))
         } else {
           ZIO.succeed(())
