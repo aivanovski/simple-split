@@ -2,6 +2,7 @@ package com.github.ai.split.domain.usecases
 
 import com.github.ai.split.entity.db.{GroupEntity, GroupMemberEntity, GroupUid, MemberUid}
 import com.github.ai.split.data.db.dao.{GroupEntityDao, GroupMemberEntityDao}
+import com.github.ai.split.data.db.repository.CurrencyRepository
 import com.github.ai.split.domain.PasswordService
 import com.github.ai.split.entity.{NewExpense, NewGroup}
 import com.github.ai.split.entity.exception.DomainError
@@ -18,7 +19,8 @@ class AddGroupUseCase(
   private val addMemberUserCase: AddMembersUseCase,
   private val addExpenseUseCase: AddExpenseUseCase,
   private val validateMemberUseCase: ValidateMemberNameUseCase,
-  private val validateExpenseUseCase: ValidateExpenseUseCase
+  private val validateExpenseUseCase: ValidateExpenseUseCase,
+  private val validateCurrencyUseCase: ValidateCurrencyUseCase
 ) {
 
   def addGroup(
@@ -39,7 +41,8 @@ class AddGroupUseCase(
               passwordService.hashPassword(newGroup.password).some
             } else {
               None
-            }
+            },
+            currencyIsoCode = newGroup.currencyIsoCode
           )
         )
         .run
@@ -83,6 +86,8 @@ class AddGroupUseCase(
       if (newGroup.title.isBlank) {
         ZIO.fail(DomainError(message = "Group title is empty".some)).run
       }
+
+      validateCurrencyUseCase.isCurrencyIsoCodeValid(newGroup.currencyIsoCode).run
 
       if (newGroup.members.nonEmpty) {
         validateMemberUseCase

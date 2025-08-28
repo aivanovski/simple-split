@@ -1,7 +1,6 @@
 package com.github.ai.simplesplit.android.data.api
 
 import arrow.core.Either
-import arrow.core.Some
 import com.github.ai.simplesplit.android.data.json.JsonSerializer
 import com.github.ai.simplesplit.android.data.settings.Settings
 import com.github.ai.simplesplit.android.model.exception.ApiException
@@ -14,6 +13,7 @@ import com.github.ai.split.api.request.PutGroupRequest
 import com.github.ai.split.api.request.PutMemberRequest
 import com.github.ai.split.api.response.DeleteExpenseResponse
 import com.github.ai.split.api.response.DeleteMemberResponse
+import com.github.ai.split.api.response.GetCurrenciesResponse
 import com.github.ai.split.api.response.GetGroupsResponse
 import com.github.ai.split.api.response.PostExpenseResponse
 import com.github.ai.split.api.response.PostGroupResponse
@@ -69,7 +69,7 @@ class ApiClient(
         httpClient.sendRequest<PostGroupRequest, PostGroupResponse>(
             type = RequestType.POST,
             url = "$baseUrl/group",
-            body = Some(request)
+            body = request
         )
 
     suspend fun postExpense(
@@ -79,7 +79,7 @@ class ApiClient(
         httpClient.sendRequest<PostExpenseRequest, PostExpenseResponse>(
             type = RequestType.POST,
             url = "$baseUrl/expense?password=$password",
-            body = Some(request)
+            body = request
         )
 
     suspend fun putExpense(
@@ -90,7 +90,7 @@ class ApiClient(
         httpClient.sendRequest(
             type = RequestType.PUT,
             url = "$baseUrl/expense/$expenseUid?password=$password",
-            body = Some(request)
+            body = request
         )
 
     suspend fun removeExpense(
@@ -110,7 +110,7 @@ class ApiClient(
         httpClient.sendRequest<PutGroupRequest, PutGroupResponse>(
             type = RequestType.PUT,
             url = "$baseUrl/group/$uid?password=$password",
-            body = Some(request)
+            body = request
         )
 
     suspend fun postMember(
@@ -120,7 +120,7 @@ class ApiClient(
         httpClient.sendRequest(
             type = RequestType.POST,
             url = "$baseUrl/member?password=$password",
-            body = Some(request)
+            body = request
         )
 
     suspend fun removeMember(
@@ -140,7 +140,13 @@ class ApiClient(
         httpClient.sendRequest<PutMemberRequest, PutMemberResponse>(
             type = RequestType.PUT,
             url = "$baseUrl/member/$memberUid?password=$password",
-            body = Some(request)
+            body = request
+        )
+
+    suspend fun getCurrencies(): Either<ApiException, GetCurrenciesResponse> =
+        httpClient.sendRequest<Unit, GetCurrenciesResponse>(
+            type = RequestType.GET,
+            url = "$baseUrl/currency"
         )
 
     companion object {

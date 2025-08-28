@@ -2,11 +2,14 @@ package com.github.ai.simplesplit.android.presentation.screens.groupEditor
 
 import arrow.core.Either
 import arrow.core.raise.either
+import com.github.ai.simplesplit.android.data.database.model.CurrencyEntity
 import com.github.ai.simplesplit.android.data.database.model.GroupCredentials
+import com.github.ai.simplesplit.android.data.repository.CurrencyRepository
 import com.github.ai.simplesplit.android.data.repository.GroupCredentialsRepository
 import com.github.ai.simplesplit.android.data.repository.GroupRepository
 import com.github.ai.simplesplit.android.data.repository.MemberRepository
 import com.github.ai.simplesplit.android.model.exception.AppException
+import com.github.ai.simplesplit.android.presentation.screens.groupEditor.model.GroupEditorData
 import com.github.ai.split.api.GroupDto
 import com.github.ai.split.api.UserNameDto
 import com.github.ai.split.api.request.PostGroupRequest
@@ -19,18 +22,32 @@ typealias UserUidAndName = Pair<String, String>
 class GroupEditorInteractor(
     private val groupRepository: GroupRepository,
     private val memberRepository: MemberRepository,
-    private val credentialsRepository: GroupCredentialsRepository
+    private val credentialsRepository: GroupCredentialsRepository,
+    private val currencyRepository: CurrencyRepository
 ) {
+
+    suspend fun loadCurrencies(): Either<AppException, List<CurrencyEntity>> =
+        currencyRepository.getAllOrDownload()
 
     suspend fun loadGroup(
         uid: String,
         password: String
-    ): Either<AppException, GroupDto> = groupRepository.getGroup(uid, password)
+    ): Either<AppException, GroupEditorData> =
+        either {
+            val currencies = loadCurrencies().bind()
+            val group = groupRepository.getGroup(uid, password).bind()
+
+            GroupEditorData(
+                currencies = currencies,
+                group = group
+            )
+        }
 
     suspend fun updateGroup(
         credentials: GroupCredentials,
         newTitle: String?,
         newPassword: String?,
+        newCurrencyIsoCode: String?,
         memberUidsToRemove: List<String>,
         memberNamesToAdd: List<String>,
         membersToUpdate: List<UserUidAndName>
@@ -73,6 +90,7 @@ class GroupEditorInteractor(
                         title = newTitle,
                         password = newPassword,
                         description = null,
+                        currencyIsoCode = newCurrencyIsoCode,
                         members = null
                     )
                 ).bind().group
@@ -89,6 +107,7 @@ class GroupEditorInteractor(
     suspend fun createGroup(
         password: String,
         title: String,
+        currencyIsoCode: String,
         members: List<String>
     ): Either<AppException, GroupDto> =
         either {
@@ -96,6 +115,7 @@ class GroupEditorInteractor(
                 password = password,
                 title = title,
                 description = null,
+                currencyIsoCode = currencyIsoCode,
                 members = members.map { UserNameDto(name = it) },
                 expenses = null
             )

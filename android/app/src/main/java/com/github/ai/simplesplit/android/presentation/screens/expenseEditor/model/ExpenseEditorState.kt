@@ -14,6 +14,7 @@ sealed interface ExpenseEditorState {
         val payer: String = StringUtils.EMPTY,
         val title: String = StringUtils.EMPTY,
         val amount: String = StringUtils.EMPTY,
+        val amountHint: String = StringUtils.EMPTY,
         val availablePayers: List<String> = emptyList(),
         val titleError: String? = null,
         val amountError: String? = null,

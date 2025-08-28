@@ -8,10 +8,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 
 @Composable
-fun CenteredBox(content: @Composable BoxScope.() -> Unit) {
+fun CenteredBox(
+    modifier: Modifier = Modifier,
+    content: @Composable BoxScope.() -> Unit
+) {
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier.fillMaxSize()
+        modifier = modifier.fillMaxSize()
     ) {
         content.invoke(this)
     }

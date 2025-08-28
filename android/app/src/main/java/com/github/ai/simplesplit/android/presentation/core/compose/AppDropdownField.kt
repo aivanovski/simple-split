@@ -25,6 +25,47 @@ import com.github.ai.simplesplit.android.presentation.core.compose.theme.LightTh
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.MediumMargin
 
 @Composable
+fun AppDropdownFieldNoMenu(
+    value: String,
+    label: String,
+    error: String? = null,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val isError = (error != null)
+
+    OutlinedTextField(
+        value = value,
+        onValueChange = { },
+        label = {
+            Text(label)
+        },
+        isError = isError,
+        supportingText = {
+            if (isError) {
+                Text(
+                    text = error.orEmpty(),
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+        },
+        readOnly = true,
+        trailingIcon = {
+            Icon(
+                imageVector = AppIcon.EXPAND_MORE.vector,
+                contentDescription = null,
+                modifier = Modifier
+                    .clickable(
+                        onClick = onClick
+                    )
+                    .padding(MediumMargin)
+            )
+        },
+        modifier = modifier
+    )
+}
+
+@Composable
 fun AppDropdownField(
     value: String,
     label: String,
@@ -44,6 +85,14 @@ fun AppDropdownField(
                 Text(label)
             },
             isError = isError,
+            supportingText = {
+                if (isError) {
+                    Text(
+                        text = error.orEmpty(),
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            },
             readOnly = true,
             trailingIcon = {
                 Icon(

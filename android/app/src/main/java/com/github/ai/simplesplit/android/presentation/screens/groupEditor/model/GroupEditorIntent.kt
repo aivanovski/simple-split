@@ -1,5 +1,6 @@
 package com.github.ai.simplesplit.android.presentation.screens.groupEditor.model
 
+import com.github.ai.simplesplit.android.data.database.model.CurrencyEntity
 import com.github.ai.simplesplit.android.presentation.core.mvi.MviIntent
 
 sealed class GroupEditorIntent(
@@ -13,6 +14,7 @@ sealed class GroupEditorIntent(
     data object OnAddMemberClick : GroupEditorIntent()
     data object OnCancelMemberEditClick : GroupEditorIntent()
     data object OnApplyMemberEditClick : GroupEditorIntent()
+    data object OnCurrencyClick : GroupEditorIntent()
     data class OnTitleChanged(val title: String) : GroupEditorIntent(isImmediate = true)
     data class OnPasswordChanged(val password: String) : GroupEditorIntent(isImmediate = true)
     data class OnConfirmPasswordChanged(
@@ -23,4 +25,5 @@ sealed class GroupEditorIntent(
     data class OnEditMemberClick(val memberIndex: Int) : GroupEditorIntent()
     data class OnPasswordToggleClick(val isVisible: Boolean) : GroupEditorIntent()
     data class OnConfirmPasswordToggleClick(val isVisible: Boolean) : GroupEditorIntent()
+    data class OnCurrencySelected(val currency: CurrencyEntity) : GroupEditorIntent()
 }

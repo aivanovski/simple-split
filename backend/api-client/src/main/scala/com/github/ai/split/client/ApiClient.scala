@@ -26,6 +26,14 @@ class ApiClient(
     )
   }
 
+  def getCurrencies(): ApiResponse = {
+    client.request(
+      Request.get(
+        path = s"$baseUrl/currency"
+      )
+    )
+  }
+
   def postGroup(): ApiResponse = {
     client.request(
       Request.post(
@@ -35,6 +43,7 @@ class ApiClient(
             password = DefaultPassword,
             title = "Oktoberfest",
             description = Some("Amazing party"),
+            currencyIsoCode = "USD",
             members = Some(List("Bob", "Alan").map(UserNameDto(_))),
             expenses = Some(
               List(

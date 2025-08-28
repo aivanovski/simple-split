@@ -1,11 +1,14 @@
 package com.github.ai.simplesplit.android.presentation.core.compose.cells.ui
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,7 +28,8 @@ import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppThem
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.ElementMargin
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.HalfMargin
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.LightTheme
-import com.github.ai.simplesplit.android.presentation.core.compose.theme.OneLineItemHeight
+import com.github.ai.simplesplit.android.presentation.core.compose.theme.OneLineSmallItemHeight
+import com.github.ai.simplesplit.android.presentation.core.compose.theme.SmallIconSize
 
 @Composable
 fun MenuCell(viewModel: MenuCellViewModel) {
@@ -41,13 +45,22 @@ fun MenuCell(viewModel: MenuCellViewModel) {
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .padding(horizontal = ElementMargin)
-            .height(height = OneLineItemHeight)
+            .height(height = model.height)
     ) {
-        Icon(
-            imageVector = model.icon,
-            tint = AppTheme.theme.colors.primaryIcon,
-            contentDescription = null
-        )
+        Box(
+            modifier = Modifier
+                .size(size = SmallIconSize)
+        ) {
+            if (model.icon != null) {
+                Icon(
+                    imageVector = model.icon,
+                    tint = AppTheme.theme.colors.primaryIcon,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxSize()
+                )
+            }
+        }
 
         Text(
             text = model.title,
@@ -70,18 +83,20 @@ fun MenuCellPreview() {
     ) {
         Column {
             MenuCell(newMenuCell())
+            MenuCell(newMenuCell(icon = null))
         }
     }
 }
 
 fun newMenuCell(
-    icon: ImageVector = AppIcon.SETTINGS.vector,
+    icon: ImageVector? = AppIcon.SETTINGS.vector,
     title: String = "Settings"
 ) = MenuCellViewModel(
     model = MenuCellModel(
         id = "id",
         icon = icon,
-        title = title
+        title = title,
+        height = OneLineSmallItemHeight
     ),
     eventProvider = PreviewEventProvider
 )

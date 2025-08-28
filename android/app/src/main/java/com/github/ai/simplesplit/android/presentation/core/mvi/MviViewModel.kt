@@ -32,7 +32,17 @@ abstract class MviViewModel<State, Intent : MviIntent>(
             viewModelScope.launch {
                 intents.receiveAsFlow()
                     .onStart { emit(initialIntent) }
-                    .flatMapLatest { intent -> handleIntent(intent) }
+                    .flatMapLatest { intent ->
+                        val flow = handleIntent(intent)
+
+                        if (flow is SingleFlow<*> && !intent.isImmediate) {
+                            throw IllegalStateException(
+                                "Intent ${intent::class.simpleName} must be immediate"
+                            )
+                        }
+
+                        flow
+                    }
                     .flowOn(Dispatchers.IO)
                     .collect { newState ->
                         state.value = newState

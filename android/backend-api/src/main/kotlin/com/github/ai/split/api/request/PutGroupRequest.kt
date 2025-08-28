@@ -8,5 +8,6 @@ data class PutGroupRequest(
     val title: String?,
     val password: String?,
     val description: String?,
+    val currencyIsoCode: String?,
     val members: List<UserUidDto>?
 )

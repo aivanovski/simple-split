@@ -2,6 +2,7 @@ package com.github.ai.simplesplit.android.presentation.dialogs.expenseDetails
 
 import androidx.compose.ui.unit.dp
 import com.github.ai.simplesplit.android.R
+import com.github.ai.simplesplit.android.data.api.coverters.toCurrency
 import com.github.ai.simplesplit.android.presentation.core.ResourceProvider
 import com.github.ai.simplesplit.android.presentation.core.compose.TextColor
 import com.github.ai.simplesplit.android.presentation.core.compose.TextSize
@@ -21,8 +22,10 @@ import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppIcon
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.ElementMargin
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.GroupMargin
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.HalfMargin
+import com.github.ai.simplesplit.android.presentation.core.compose.theme.OneLineSmallItemHeight
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.ThemeProvider
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.TinyMargin
+import com.github.ai.simplesplit.android.utils.formatAsMoney
 import com.github.ai.split.api.ExpenseDto
 
 class ExpenseDetailsDialogCellFactory(
@@ -59,13 +62,15 @@ class ExpenseDetailsDialogCellFactory(
             )
         )
 
+        val currency = expense.currency.toCurrency()
+
         // Title
         cells.add(
             BottomSheetHeaderCellViewModel(
                 model = BottomSheetHeaderCellModel(
                     id = "title",
                     title = expense.title,
-                    description = expense.amount.toString(),
+                    description = expense.amount.formatAsMoney(currency),
                     titleTextSize = TextSize.TITLE_MEDIUM,
                     descriptionTextSize = TextSize.TITLE_LARGE,
                     icon = AppIcon.CLOSE.vector
@@ -129,12 +134,14 @@ class ExpenseDetailsDialogCellFactory(
             )
         )
 
+        val currency = expense.currency.toCurrency()
+
         for ((index, payer) in expense.paidBy.withIndex()) {
             cells.add(
                 TextCellViewModel(
                     TextCellModel(
                         id = "payer_$index",
-                        text = payer.name + " paid " + expense.amount,
+                        text = payer.name + " paid " + expense.amount.formatAsMoney(currency),
                         textSize = TextSize.BODY_LARGE,
                         textColor = TextColor.PRIMARY
                     )
@@ -157,6 +164,7 @@ class ExpenseDetailsDialogCellFactory(
             )
         )
 
+        val currency = expense.currency.toCurrency()
         val payerUid = expense.paidBy.firstOrNull()?.uid.orEmpty()
         val debtors = expense.splitBetween.filter { splitMember -> splitMember.uid != payerUid }
 
@@ -167,7 +175,7 @@ class ExpenseDetailsDialogCellFactory(
                 TextCellViewModel(
                     TextCellModel(
                         id = "split_$index",
-                        text = splitMember.name + " owe " + "%.2f".format(debtAmount),
+                        text = splitMember.name + " owe " + debtAmount.formatAsMoney(currency),
                         textSize = TextSize.BODY_LARGE,
                         textColor = TextColor.SECONDARY
                     )
@@ -214,7 +222,8 @@ class ExpenseDetailsDialogCellFactory(
                     MenuCellModel(
                         id = CellId.EDIT_MENU.name,
                         icon = AppIcon.EDIT.vector,
-                        title = resourceProvider.getString(R.string.edit)
+                        title = resourceProvider.getString(R.string.edit),
+                        height = OneLineSmallItemHeight
                     ),
                     eventProvider
                 ),
@@ -222,7 +231,8 @@ class ExpenseDetailsDialogCellFactory(
                     MenuCellModel(
                         id = CellId.REMOVE_MENU.name,
                         icon = AppIcon.REMOVE.vector,
-                        title = resourceProvider.getString(R.string.remove)
+                        title = resourceProvider.getString(R.string.remove),
+                        height = OneLineSmallItemHeight
                     ),
                     eventProvider
                 )

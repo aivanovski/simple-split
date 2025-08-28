@@ -24,10 +24,12 @@ object ApiClientMain extends ZIOAppDefault {
       |update-member [MEMBER_UID] [NAME]                     Update member name by MEMBER_UID
       |gen-members [GROUP_UID]
       |delete-member [MEMBER_UID]                            Delete member by MEMBER_UID
+      |currencies                                            Get list of currencies
       |help                                                  Print help
       |""".stripMargin
 
   class InvalidCliArgumentException(message: String) extends Exception(message)
+  class EmptyCliArgumentException extends InvalidCliArgumentException("Empty arguments")
 
   override def run: ZIO[ZIOAppArgs, Any, ExitCode] = {
     val application = for {
@@ -44,7 +46,9 @@ object ApiClientMain extends ZIOAppDefault {
     application
       .catchAll { error =>
         defer {
-          Console.printLine(s"Error: $error").run
+          if (!error.isInstanceOf[EmptyCliArgumentException]) {
+            Console.printLine(s"Error: $error").run
+          }
 
           if (error.isInstanceOf[InvalidCliArgumentException]) {
             Console.printLine(HelpText).run
@@ -58,6 +62,10 @@ object ApiClientMain extends ZIOAppDefault {
   private def processArguments(arguments: String) = defer {
     val api = ZIO.service[ApiClient].run
     val printer = ZIO.service[Printer].run
+
+    if (arguments.isBlank) {
+      ZIO.fail(EmptyCliArgumentException()).run
+    }
 
     val response = arguments match {
       case "group" => api.getGroup(uid = Groups.TripToDisneyLand).run
@@ -75,6 +83,8 @@ object ApiClientMain extends ZIOAppDefault {
         api.postMember(groupUid = groupUid, userName = "Donald").run
       }
       case s"delete-member $memberUid" => api.deleteMember(memberUid = memberUid).run
+
+      case s"currencies" => api.getCurrencies().run
       case _ => ZIO.fail(InvalidCliArgumentException(s"Illegal arguments: $arguments")).run
     }
 

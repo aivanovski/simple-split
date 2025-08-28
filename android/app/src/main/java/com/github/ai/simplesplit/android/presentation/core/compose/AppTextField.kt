@@ -32,9 +32,11 @@ fun AppTextField(
     error: String? = null,
     onValueChange: (String) -> Unit,
     isPasswordToggleEnabled: Boolean = false,
+    isResetIconEnabled: Boolean = false,
     isPasswordVisible: Boolean = false,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     onPasswordToggleClicked: ((isPasswordVisible: Boolean) -> Unit)? = null,
+    onResetIconClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     // TODO: resolve issue with inner state
@@ -74,13 +76,6 @@ fun AppTextField(
         },
         trailingIcon = {
             when {
-                isError -> {
-                    Icon(
-                        imageVector = AppIcon.ERROR_CIRCLE.vector,
-                        contentDescription = null
-                    )
-                }
-
                 isPasswordToggleEnabled -> {
                     val icon = if (isPasswordVisible) {
                         AppIcon.VISIBILITY_OFF
@@ -94,12 +89,38 @@ fun AppTextField(
                         modifier = Modifier
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
-                                indication = rememberRipple(bounded = false)
-                            ) {
-                                onPasswordToggleClicked?.invoke(!isPasswordVisible)
-                            }
+                                indication = rememberRipple(bounded = false),
+                                onClick = {
+                                    onPasswordToggleClicked?.invoke(!isPasswordVisible)
+                                }
+                            )
                             .padding(8.dp)
                     )
+                }
+
+                isError -> {
+                    Icon(
+                        imageVector = AppIcon.ERROR_CIRCLE.vector,
+                        contentDescription = null
+                    )
+                }
+
+                isResetIconEnabled -> {
+                    if (observedInnerValue.isNotEmpty()) {
+                        Icon(
+                            imageVector = AppIcon.CLOSE.vector,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = rememberRipple(bounded = false),
+                                    onClick = {
+                                        // TODO: remember
+                                        onResetIconClick?.invoke()
+                                    }
+                                )
+                        )
+                    }
                 }
             }
         },
@@ -157,6 +178,26 @@ fun TextFieldsLightPreview() {
                 value = "john.doe",
                 label = "Username",
                 error = "username is already exists",
+                onValueChange = {},
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+            )
+
+            AppTextField(
+                value = "john.doe",
+                label = "Username",
+                isResetIconEnabled = true,
+                onValueChange = {},
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+            )
+
+            AppTextField(
+                value = "",
+                label = "Username",
+                isResetIconEnabled = true,
                 onValueChange = {},
                 modifier = Modifier
                     .fillMaxWidth()

@@ -1,11 +1,17 @@
 package com.github.ai.simplesplit.android.presentation.screens.groupEditor
 
+import arrow.core.Either
 import com.github.ai.simplesplit.android.R
+import com.github.ai.simplesplit.android.data.database.model.CurrencyEntity
+import com.github.ai.simplesplit.android.model.exception.AppException
 import com.github.ai.simplesplit.android.presentation.core.ResourceProvider
 import com.github.ai.simplesplit.android.presentation.core.compose.navigation.Router
 import com.github.ai.simplesplit.android.presentation.core.mvi.MviViewModel
 import com.github.ai.simplesplit.android.presentation.core.mvi.nonStateAction
+import com.github.ai.simplesplit.android.presentation.dialogs.Dialog
+import com.github.ai.simplesplit.android.presentation.dialogs.selectCurrency.model.SelectCurrencyDialogArgs
 import com.github.ai.simplesplit.android.presentation.screens.groupEditor.model.GroupEditorArgs
+import com.github.ai.simplesplit.android.presentation.screens.groupEditor.model.GroupEditorData
 import com.github.ai.simplesplit.android.presentation.screens.groupEditor.model.GroupEditorIntent
 import com.github.ai.simplesplit.android.presentation.screens.groupEditor.model.GroupEditorMode
 import com.github.ai.simplesplit.android.presentation.screens.groupEditor.model.GroupEditorState
@@ -34,7 +40,9 @@ class GroupEditorViewModel(
 ) {
 
     private var dataState by mutableStateFlow(GroupEditorState.Data())
-    private var data by mutableStateFlow<GroupDto?>(null)
+    private var currentGroup by mutableStateFlow<GroupDto?>(null)
+    private var allCurrencies by mutableStateFlow<List<CurrencyEntity>?>(null)
+    private var selectedCurrency by mutableStateFlow<CurrencyEntity?>(null)
     private var selectedMember by mutableStateFlow<MemberItem?>(null)
 
     override fun handleIntent(intent: GroupEditorIntent): Flow<GroupEditorState> {
@@ -44,6 +52,9 @@ class GroupEditorViewModel(
             GroupEditorIntent.OnAddMemberClick -> onAddMemberClicked()
             GroupEditorIntent.OnDoneClick -> onDoneClicked()
             GroupEditorIntent.OnCloseErrorClick -> onCloseErrorClicked()
+            GroupEditorIntent.OnCurrencyClick ->
+                nonStateAction { showSelectCurrencyDialog() }
+
             is GroupEditorIntent.OnTitleChanged -> onTitleChanged(intent)
             is GroupEditorIntent.OnPasswordChanged -> onPasswordChanged(intent)
             is GroupEditorIntent.OnConfirmPasswordChanged -> onConfirmPasswordChanged(intent)
@@ -56,6 +67,7 @@ class GroupEditorViewModel(
             GroupEditorIntent.OnCancelMemberEditClick -> onCancelMemberEditClicked()
             GroupEditorIntent.OnApplyMemberEditClick -> onApplyMemberEditClicked()
             is GroupEditorIntent.OnEditMemberClick -> onEditMemberClicked(intent.memberIndex)
+            is GroupEditorIntent.OnCurrencySelected -> onCurrencySelected(intent.currency)
         }
     }
 
@@ -244,6 +256,7 @@ class GroupEditorViewModel(
                     interactor.createGroup(
                         password = dataState.password.trim(),
                         title = dataState.title.trim(),
+                        currencyIsoCode = selectedCurrency?.isoCode ?: StringUtils.EMPTY,
                         members = dataState.members.map { member -> member.name }
                     )
                 }
@@ -257,6 +270,7 @@ class GroupEditorViewModel(
                         credentials = args.mode.credentials,
                         newTitle = dataState.title.ifBlank { null },
                         newPassword = dataState.password.ifBlank { null },
+                        newCurrencyIsoCode = selectedCurrency?.isoCode?.ifBlank { null },
                         memberUidsToRemove = membersToDelete,
                         memberNamesToAdd = membersToAdd.map { it.name },
                         membersToUpdate = membersToUpdate.map { Pair(it.uid ?: "", it.name) }
@@ -281,43 +295,78 @@ class GroupEditorViewModel(
 
     private fun loadData(): Flow<GroupEditorState> {
         return when (args.mode) {
-            is GroupEditorMode.NewGroup -> {
-                dataState = dataState.copy(
-                    isAddButtonVisible = true
-                )
+            is GroupEditorMode.NewGroup -> flow {
+                emit(GroupEditorState.Loading)
 
-                flowOf(
-                    dataState
-                )
+                val getCurrenciesResult = interactor.loadCurrencies()
+                emit(onNewGroupDataLoaded(getCurrenciesResult))
             }
 
             is GroupEditorMode.EditGroup -> flow {
                 emit(GroupEditorState.Loading)
 
-                interactor.loadGroup(
+                val loadDataResult = interactor.loadGroup(
                     uid = args.mode.credentials.groupUid,
                     password = args.mode.credentials.password
-                ).fold(
-                    ifLeft = { error ->
-                        emit(GroupEditorState.Error(error.toErrorMessage(resources)))
-                    },
-                    ifRight = { group ->
-                        data = group
-                        dataState = GroupEditorState.Data(
-                            title = group.title,
-                            isAddButtonVisible = true,
-                            members = group.members.map { member ->
-                                MemberItem(
-                                    name = member.name,
-                                    uid = member.uid
-                                )
-                            }
-                        )
-                        emit(dataState)
-                    }
                 )
+                emit(onGroupDataLoaded(loadDataResult))
             }.flowOn(Dispatchers.IO)
         }
+    }
+
+    private fun onNewGroupDataLoaded(
+        result: Either<AppException, List<CurrencyEntity>>
+    ): GroupEditorState {
+        return result.fold(
+            ifLeft = { error ->
+                GroupEditorState.Error(error.toErrorMessage(resources))
+            },
+            ifRight = { data ->
+                val currency = determineDefaultCurrency(data)
+
+                allCurrencies = data
+                selectedCurrency = currency
+
+                dataState = dataState.copy(
+                    currency = formatCurrency(currency),
+                    isAddButtonVisible = true
+                )
+
+                dataState
+            }
+        )
+    }
+
+    private fun onGroupDataLoaded(result: Either<AppException, GroupEditorData>): GroupEditorState {
+        return result.fold(
+            ifLeft = { error ->
+                GroupEditorState.Error(error.toErrorMessage(resources))
+            },
+            ifRight = { data ->
+                allCurrencies = data.currencies
+                currentGroup = data.group
+
+                val currency = data.currencies
+                    .firstOrNull { currency -> currency.isoCode == data.group.currency.isoCode }
+                    ?: determineDefaultCurrency(data.currencies)
+
+                selectedCurrency = currency
+
+                dataState = GroupEditorState.Data(
+                    title = data.group.title,
+                    currency = formatCurrency(currency),
+                    isAddButtonVisible = true,
+                    members = data.group.members.map { member ->
+                        MemberItem(
+                            name = member.name,
+                            uid = member.uid
+                        )
+                    }
+                )
+
+                dataState
+            }
+        )
     }
 
     private fun getMembersToAdd(): List<MemberItem> {
@@ -326,7 +375,7 @@ class GroupEditorViewModel(
     }
 
     private fun getMemberUidsToDelete(): List<String> {
-        val currentMember = data?.members ?: return emptyList()
+        val currentMember = currentGroup?.members ?: return emptyList()
 
         val oldMemberUidToNameMap = currentMember.associateBy { member -> member.uid }
 
@@ -341,7 +390,7 @@ class GroupEditorViewModel(
     }
 
     private fun getMembersToUpdate(): List<MemberItem> {
-        val oldMembers = data?.members ?: return emptyList()
+        val oldMembers = currentGroup?.members ?: return emptyList()
 
         val oldMemberUidToNameMap = oldMembers
             .map { member -> member.uid to member.name }
@@ -363,6 +412,45 @@ class GroupEditorViewModel(
             error = null
         )
         return flowOf(dataState)
+    }
+
+    private fun showSelectCurrencyDialog() {
+        router.showDialog(
+            Dialog.SelectCurrency(
+                SelectCurrencyDialogArgs(
+                    selectedIsoCurrencyCode = selectedCurrency?.isoCode
+                )
+            )
+        )
+        router.setResultListener(Dialog.SelectCurrency::class) { currency ->
+            if (currency is CurrencyEntity) {
+                sendIntent(GroupEditorIntent.OnCurrencySelected(currency))
+            }
+        }
+    }
+
+    private fun onCurrencySelected(currency: CurrencyEntity): Flow<GroupEditorState> {
+        selectedCurrency = currency
+
+        dataState = dataState.copy(
+            currency = formatCurrency(currency)
+        )
+
+        return flowOf(dataState)
+    }
+
+    private fun determineDefaultCurrency(currencies: List<CurrencyEntity>): CurrencyEntity {
+        return currencies.first { currency ->
+            currency.isoCode == "EUR"
+        }
+    }
+
+    private fun formatCurrency(currency: CurrencyEntity): String {
+        return if (currency.symbol.isNotBlank()) {
+            currency.name + " - " + currency.symbol
+        } else {
+            currency.name
+        }
     }
 
     private fun validateEditGroupData(state: GroupEditorState.Data): ValidationResult {

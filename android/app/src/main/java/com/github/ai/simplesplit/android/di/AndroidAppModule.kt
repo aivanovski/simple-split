@@ -3,6 +3,7 @@ package com.github.ai.simplesplit.android.di
 import com.github.ai.simplesplit.android.data.api.ApiClient
 import com.github.ai.simplesplit.android.data.database.AppDatabase
 import com.github.ai.simplesplit.android.data.json.JsonSerializer
+import com.github.ai.simplesplit.android.data.repository.CurrencyRepository
 import com.github.ai.simplesplit.android.data.repository.ExpenseRepository
 import com.github.ai.simplesplit.android.data.repository.GroupCredentialsRepository
 import com.github.ai.simplesplit.android.data.repository.GroupRepository
@@ -25,6 +26,10 @@ import com.github.ai.simplesplit.android.presentation.dialogs.expenseDetails.Exp
 import com.github.ai.simplesplit.android.presentation.dialogs.expenseDetails.model.ExpenseDetailsDialogArgs
 import com.github.ai.simplesplit.android.presentation.dialogs.menuDialog.MenuDialogViewModel
 import com.github.ai.simplesplit.android.presentation.dialogs.menuDialog.model.MenuDialogArgs
+import com.github.ai.simplesplit.android.presentation.dialogs.selectCurrency.SelectCurrencyDialogCellFactory
+import com.github.ai.simplesplit.android.presentation.dialogs.selectCurrency.SelectCurrencyDialogViewModel
+import com.github.ai.simplesplit.android.presentation.dialogs.selectCurrency.SelectCurrencyInteractor
+import com.github.ai.simplesplit.android.presentation.dialogs.selectCurrency.model.SelectCurrencyDialogArgs
 import com.github.ai.simplesplit.android.presentation.screens.checkoutGroup.CheckoutGroupInteractor
 import com.github.ai.simplesplit.android.presentation.screens.checkoutGroup.CheckoutGroupViewModel
 import com.github.ai.simplesplit.android.presentation.screens.checkoutGroup.model.CheckoutGroupArgs
@@ -59,6 +64,7 @@ object AndroidAppModule {
         // Database
         single { AppDatabase.buildDatabase(get()) }
         single { get<AppDatabase>().groupCredentialsDao() }
+        single { get<AppDatabase>().currencyEntityDao() }
 
         // Api
         singleOf(::JsonSerializer)
@@ -69,6 +75,7 @@ object AndroidAppModule {
         singleOf(::GroupCredentialsRepository)
         singleOf(::ExpenseRepository)
         singleOf(::MemberRepository)
+        singleOf(::CurrencyRepository)
 
         // UseCases
         singleOf(::ParseGroupUrlUseCase)
@@ -82,10 +89,12 @@ object AndroidAppModule {
         singleOf(::ExpenseEditorInteractor)
         singleOf(::CheckoutGroupInteractor)
         singleOf(::SettingsInteractor)
+        singleOf(::SelectCurrencyInteractor)
 
         // CellFactories
         singleOf(::GroupDetailsCellFactory)
         singleOf(::ExpenseDetailsDialogCellFactory)
+        singleOf(::SelectCurrencyDialogCellFactory)
         singleOf(::SettingsCellFactory)
 
         // Router
@@ -158,6 +167,15 @@ object AndroidAppModule {
         }
         factory { (args: ExpenseDetailsDialogArgs) ->
             ExpenseDetailsDialogViewModel(
+                get(),
+                get(),
+                args
+            )
+        }
+        factory { (args: SelectCurrencyDialogArgs) ->
+            SelectCurrencyDialogViewModel(
+                get(),
+                get(),
                 get(),
                 get(),
                 args

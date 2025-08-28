@@ -7,7 +7,8 @@ CREATE TABLE IF NOT EXISTS groups (
     uid UUID PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     description VARCHAR(255) NOT NULL,
-    password_hash VARCHAR(255)
+    password_hash VARCHAR(255),
+    currency_iso_code VARCHAR(3) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS group_members (
@@ -37,4 +38,10 @@ CREATE TABLE IF NOT EXISTS split_between (
     group_uid UUID NOT NULL,
     member_uid UUID NOT NULL,
     PRIMARY KEY (expense_uid, member_uid) -- Composite primary key to ensure uniqueness
+);
+
+CREATE TABLE IF NOT EXISTS currencies (
+    iso_code VARCHAR(3) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    symbol VARCHAR(16) NOT NULL
 );

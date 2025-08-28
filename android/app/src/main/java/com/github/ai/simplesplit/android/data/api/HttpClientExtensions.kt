@@ -1,8 +1,6 @@
 package com.github.ai.simplesplit.android.data.api
 
 import arrow.core.Either
-import arrow.core.None
-import arrow.core.Option
 import arrow.core.raise.either
 import com.github.ai.simplesplit.android.model.exception.ApiException
 import com.github.ai.simplesplit.android.model.exception.InvalidResponseException
@@ -30,7 +28,7 @@ enum class RequestType {
 suspend inline fun <reified Request, reified Response> HttpClient.sendRequest(
     type: RequestType,
     url: String,
-    body: Option<Request> = None
+    body: Request? = null
 ): Either<ApiException, Response> {
     val client = this
 
@@ -41,12 +39,16 @@ suspend inline fun <reified Request, reified Response> HttpClient.sendRequest(
 
                 RequestType.POST -> client.post(url) {
                     contentType(ContentType.Application.Json)
-                    setBody(body.getOrNull())
+                    if (body != null) {
+                        setBody(body)
+                    }
                 }
 
                 RequestType.PUT -> client.put(url) {
                     contentType(ContentType.Application.Json)
-                    setBody(body.getOrNull())
+                    if (body != null) {
+                        setBody(body)
+                    }
                 }
 
                 RequestType.DELETE -> client.delete(url)
