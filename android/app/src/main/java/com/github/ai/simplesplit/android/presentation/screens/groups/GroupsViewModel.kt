@@ -31,13 +31,11 @@ import com.github.ai.simplesplit.android.utils.getStringOrNull
 import com.github.ai.simplesplit.android.utils.mutableStateFlow
 import com.github.ai.simplesplit.android.utils.parseCellId
 import com.github.ai.simplesplit.android.utils.toErrorMessage
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 
 class GroupsViewModel(
@@ -141,7 +139,7 @@ class GroupsViewModel(
                         emit(createScreenState(data))
                     }
                 )
-        }.flowOn(Dispatchers.IO)
+        }
     }
 
     private fun createScreenState(data: GroupsData): GroupsState {
@@ -178,7 +176,7 @@ class GroupsViewModel(
             interactor.removeGroup(groupUid)
 
             emitAll(loadData())
-        }.flowOn(Dispatchers.IO)
+        }
     }
 
     private fun navigateToGroupDetails(groupUid: String) {
@@ -373,7 +371,7 @@ class GroupsViewModel(
                 emit(GroupsState.Error(message))
                 return@flow
             }
-        }.flowOn(Dispatchers.IO)
+        }
     }
 
     private fun getGroupUidFromCellId(cellId: String): String? {

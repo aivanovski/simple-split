@@ -2,6 +2,7 @@ package com.github.ai.simplesplit.android.presentation.screens.groupDetails.cell
 
 import com.github.ai.simplesplit.android.R
 import com.github.ai.simplesplit.android.data.api.coverters.toCurrency
+import com.github.ai.simplesplit.android.domain.TimestampFormatter
 import com.github.ai.simplesplit.android.presentation.core.ResourceProvider
 import com.github.ai.simplesplit.android.presentation.core.compose.CornersShape
 import com.github.ai.simplesplit.android.presentation.core.compose.TextSize
@@ -38,7 +39,8 @@ import com.github.ai.split.api.GroupDto
 
 class GroupDetailsCellFactory(
     private val themeProvider: ThemeProvider,
-    private val resourceProvider: ResourceProvider
+    private val resources: ResourceProvider,
+    private val timestampFormatter: TimestampFormatter
 ) {
 
     fun createCells(
@@ -76,7 +78,9 @@ class GroupDetailsCellFactory(
         val members = group.members.map { member -> member.name }
             .joinToString(" - ")
 
-        return listOf(
+        val totalSpending = group.expenses.sumOf { expense -> expense.amount }
+
+        val models = mutableListOf(
             SpaceCellModel(
                 id = "top_space",
                 height = HalfMargin
@@ -95,7 +99,14 @@ class GroupDetailsCellFactory(
             ),
             ShapedSpaceCellModel(
                 id = "title_middle_space",
-                height = HalfMargin,
+                height = ElementMargin,
+                shape = CornersShape.NONE
+            ),
+            ShapedTextCellModel(
+                id = "members_title",
+                text = resources.getString(R.string.members_with_str, group.members.size),
+                textColor = themeProvider.theme.colors.primaryText,
+                textSize = TextSize.TITLE_MEDIUM,
                 shape = CornersShape.NONE
             ),
             ShapedTextCellModel(
@@ -104,13 +115,44 @@ class GroupDetailsCellFactory(
                 textColor = themeProvider.theme.colors.secondaryText,
                 textSize = TextSize.BODY_LARGE,
                 shape = CornersShape.NONE
-            ),
+            )
+        )
+
+        if (group.expenses.isNotEmpty()) {
+            models.addAll(
+                listOf(
+                    ShapedSpaceCellModel(
+                        id = "total_spending_space",
+                        height = ElementMargin,
+                        shape = CornersShape.NONE
+                    ),
+                    ShapedTextCellModel(
+                        id = "total_spending_title",
+                        text = resources.getString(R.string.total_spending),
+                        textColor = themeProvider.theme.colors.primaryText,
+                        textSize = TextSize.TITLE_MEDIUM,
+                        shape = CornersShape.NONE
+                    ),
+                    ShapedTextCellModel(
+                        id = "total_spending",
+                        text = totalSpending.formatAsMoney(group.currency.toCurrency()),
+                        textColor = themeProvider.theme.colors.secondaryText,
+                        textSize = TextSize.BODY_LARGE,
+                        shape = CornersShape.NONE
+                    )
+                )
+            )
+        }
+
+        models.add(
             ShapedSpaceCellModel(
                 id = "title_bottom_space",
                 height = GroupMargin,
                 shape = CornersShape.BOTTOM
             )
         )
+
+        return models
     }
 
     private fun createExpenseHeaderModels(): List<CellModel> {
@@ -121,7 +163,7 @@ class GroupDetailsCellFactory(
             ),
             HeaderCellModel(
                 id = "expense_header",
-                text = resourceProvider.getString(R.string.expenses),
+                text = resources.getString(R.string.expenses),
                 textSize = TextSize.TITLE_MEDIUM,
                 textColor = themeProvider.theme.colors.primaryText
             )
@@ -132,7 +174,7 @@ class GroupDetailsCellFactory(
         return listOf(
             EmptyMessageCellModel(
                 id = "empty_message",
-                message = resourceProvider.getString(R.string.no_expenses_message),
+                message = resources.getString(R.string.no_expenses_message),
                 height = EmptyMessageItemHeight
             )
         )
@@ -167,15 +209,18 @@ class GroupDetailsCellFactory(
                 )
             }
 
+            val date = timestampFormatter.formatShortDate(
+                expense.modified.timestampSeconds * 1000L
+            )
+
             models.add(
                 ExpenseCellModel(
                     id = CellId("expense", StringPayload(expense.uid)).format(),
                     title = expense.title,
-                    description = "Paid by $payerName", // TODO: string
+                    description = resources.getString(R.string.paid_by_with_str, payerName),
                     members = members,
                     amount = expense.amount.formatAsMoney(expense.currency.toCurrency()),
-                    // TODO: date should be implemented on server side
-                    date = "01 Jan",
+                    date = date,
                     shape = shape
                 )
             )
@@ -192,7 +237,7 @@ class GroupDetailsCellFactory(
             ),
             HeaderCellModel(
                 id = "settlement_header",
-                text = "How to Settle Debts", // TODO: string
+                text = resources.getString(R.string.how_to_settle_debts),
                 textSize = TextSize.TITLE_MEDIUM,
                 textColor = themeProvider.theme.colors.primaryText
             )
@@ -238,7 +283,7 @@ class GroupDetailsCellFactory(
             models.add(
                 SettlementCellModel(
                     id = "settlement_$idx",
-                    title = "${debtor.name} → ${creditor.name}",
+                    title = "${debtor.name}  >  ${creditor.name}",
                     amount = transaction.amount.formatAsMoney(currency),
                     shape = shape
                 )
@@ -249,7 +294,7 @@ class GroupDetailsCellFactory(
             models.add(
                 EmptyMessageCellModel(
                     id = "settlement_empty_message",
-                    message = resourceProvider.getString(R.string.no_debts_yet),
+                    message = resources.getString(R.string.no_debts_yet),
                     height = HugeMargin
                 )
             )

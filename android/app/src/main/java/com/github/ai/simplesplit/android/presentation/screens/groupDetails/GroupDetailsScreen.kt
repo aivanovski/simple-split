@@ -16,10 +16,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import com.github.ai.simplesplit.android.R
 import com.github.ai.simplesplit.android.presentation.core.compose.CenteredBox
+import com.github.ai.simplesplit.android.presentation.core.compose.CornersShape
 import com.github.ai.simplesplit.android.presentation.core.compose.ErrorMessageCard
 import com.github.ai.simplesplit.android.presentation.core.compose.ErrorState
+import com.github.ai.simplesplit.android.presentation.core.compose.TextSize
 import com.github.ai.simplesplit.android.presentation.core.compose.TopBar
 import com.github.ai.simplesplit.android.presentation.core.compose.TopBarMenuItem
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.CellViewModel
@@ -29,6 +33,9 @@ import com.github.ai.simplesplit.android.presentation.core.compose.cells.ui.Head
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.ui.ShapedSpaceCell
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.ui.ShapedTextCell
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.ui.SpaceCell
+import com.github.ai.simplesplit.android.presentation.core.compose.cells.ui.newShapedSpaceCellViewModel
+import com.github.ai.simplesplit.android.presentation.core.compose.cells.ui.newShapedTextCell
+import com.github.ai.simplesplit.android.presentation.core.compose.cells.ui.newSpaceCell
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.viewModel.DividerCellViewModel
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.viewModel.EmptyMessageCellViewModel
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.viewModel.HeaderCellViewModel
@@ -39,6 +46,9 @@ import com.github.ai.simplesplit.android.presentation.core.compose.preview.Theme
 import com.github.ai.simplesplit.android.presentation.core.compose.rememberCallback
 import com.github.ai.simplesplit.android.presentation.core.compose.rememberOnClickedCallback
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppTheme
+import com.github.ai.simplesplit.android.presentation.core.compose.theme.ElementMargin
+import com.github.ai.simplesplit.android.presentation.core.compose.theme.GroupMargin
+import com.github.ai.simplesplit.android.presentation.core.compose.theme.HalfMargin
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.LightTheme
 import com.github.ai.simplesplit.android.presentation.screens.groupDetails.cells.ui.ExpenseCell
 import com.github.ai.simplesplit.android.presentation.screens.groupDetails.cells.ui.SettlementCell
@@ -167,7 +177,58 @@ fun GroupDetailsDataPreview() {
     }
 }
 
+@Composable
 private fun newDataState() =
     GroupDetailsState.Data(
-        cellViewModels = listOf()
+        cellViewModels = listOf(
+            newSpaceCell(
+                height = HalfMargin
+            ),
+            newShapedSpaceCellViewModel(
+                height = GroupMargin,
+                shape = CornersShape.TOP
+            ),
+            newShapedTextCell(
+                text = "Trip to Disney Land",
+                textColor = AppTheme.theme.colors.primaryText,
+                textSize = TextSize.TITLE_LARGE,
+                shape = CornersShape.NONE
+            ),
+            newShapedSpaceCellViewModel(
+                height = ElementMargin,
+                shape = CornersShape.NONE
+            ),
+            newShapedTextCell(
+                text = stringResource(R.string.members_with_str, 5),
+                textColor = AppTheme.theme.colors.primaryText,
+                textSize = TextSize.TITLE_MEDIUM,
+                shape = CornersShape.NONE
+            ),
+            newShapedTextCell(
+                text = "Mickey Mouse - Donald Duck - Goofy - Minnie Mouse - Shlof",
+                textColor = AppTheme.theme.colors.secondaryText,
+                textSize = TextSize.BODY_LARGE,
+                shape = CornersShape.NONE
+            ),
+            newShapedSpaceCellViewModel(
+                height = ElementMargin,
+                shape = CornersShape.NONE
+            ),
+            newShapedTextCell(
+                text = stringResource(R.string.total_spending),
+                textColor = AppTheme.theme.colors.primaryText,
+                textSize = TextSize.TITLE_MEDIUM,
+                shape = CornersShape.NONE
+            ),
+            newShapedTextCell(
+                text = "$300",
+                textColor = AppTheme.theme.colors.secondaryText,
+                textSize = TextSize.BODY_LARGE,
+                shape = CornersShape.NONE
+            ),
+            newShapedSpaceCellViewModel(
+                height = GroupMargin,
+                shape = CornersShape.BOTTOM
+            )
+        )
     )

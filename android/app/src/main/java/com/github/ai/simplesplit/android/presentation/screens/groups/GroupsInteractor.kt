@@ -10,6 +10,7 @@ import com.github.ai.simplesplit.android.domain.usecase.CreateExportUrlUseCase
 import com.github.ai.simplesplit.android.domain.usecase.CreateGroupUrlUseCase
 import com.github.ai.simplesplit.android.model.exception.AppException
 import com.github.ai.simplesplit.android.presentation.screens.groups.model.GroupsData
+import com.github.ai.split.api.GroupDto
 import kotlinx.coroutines.flow.Flow
 
 class GroupsInteractor(
@@ -41,7 +42,7 @@ class GroupsInteractor(
             }
 
             GroupsData(
-                groups = groups,
+                groups = sortGroups(groups),
                 requestedCredentials = credentials,
                 currencies = currencies
             )
@@ -66,4 +67,23 @@ class GroupsInteractor(
 
     fun createShareUrl(credentials: GroupCredentials): String =
         groupUrlUseCase.createUrl(credentials)
+
+    private fun sortGroups(groups: List<GroupDto>): List<GroupDto> {
+        val groupsAndTimestamps = groups.map { group ->
+            val lastModified = if (group.expenses.isNotEmpty()) {
+                val lastTimestamp =
+                    group.expenses.maxOf { expense -> expense.modified.timestampSeconds }
+
+                lastTimestamp
+            } else {
+                group.modified.timestampSeconds
+            }
+
+            group to lastModified
+        }
+
+        return groupsAndTimestamps
+            .sortedByDescending { (_, timestamp) -> timestamp }
+            .map { (group, _) -> group }
+    }
 }

@@ -3,6 +3,7 @@ package com.github.ai.simplesplit.android.presentation.dialogs.expenseDetails
 import androidx.compose.ui.unit.dp
 import com.github.ai.simplesplit.android.R
 import com.github.ai.simplesplit.android.data.api.coverters.toCurrency
+import com.github.ai.simplesplit.android.domain.TimestampFormatter
 import com.github.ai.simplesplit.android.presentation.core.ResourceProvider
 import com.github.ai.simplesplit.android.presentation.core.compose.TextColor
 import com.github.ai.simplesplit.android.presentation.core.compose.TextSize
@@ -30,7 +31,8 @@ import com.github.ai.split.api.ExpenseDto
 
 class ExpenseDetailsDialogCellFactory(
     private val themeProvider: ThemeProvider,
-    private val resourceProvider: ResourceProvider
+    private val resources: ResourceProvider,
+    private val timestampFormatter: TimestampFormatter
 ) {
 
     fun createCells(
@@ -89,11 +91,31 @@ class ExpenseDetailsDialogCellFactory(
             )
         )
 
+        val created = expense.created.timestampSeconds * 1000L
+        val modified = expense.modified.timestampSeconds * 1000L
+
         cells.add(
             TextCellViewModel(
                 TextCellModel(
-                    id = "added_date",
-                    text = "added on 01 Jan 2025", // TODO: handle date
+                    id = "created_date",
+                    text = resources.getString(
+                        R.string.create_on_with_str,
+                        timestampFormatter.formatDateAndTime(created)
+                    ),
+                    textSize = TextSize.BODY_LARGE,
+                    textColor = TextColor.SECONDARY
+                )
+            )
+        )
+
+        cells.add(
+            TextCellViewModel(
+                TextCellModel(
+                    id = "modified_date",
+                    text = resources.getString(
+                        R.string.modified_on_with_str,
+                        timestampFormatter.formatDateAndTime(modified)
+                    ),
                     textSize = TextSize.BODY_LARGE,
                     textColor = TextColor.SECONDARY
                 )
@@ -222,7 +244,7 @@ class ExpenseDetailsDialogCellFactory(
                     MenuCellModel(
                         id = CellId.EDIT_MENU.name,
                         icon = AppIcon.EDIT.vector,
-                        title = resourceProvider.getString(R.string.edit),
+                        title = resources.getString(R.string.edit),
                         height = OneLineSmallItemHeight
                     ),
                     eventProvider
@@ -231,7 +253,7 @@ class ExpenseDetailsDialogCellFactory(
                     MenuCellModel(
                         id = CellId.REMOVE_MENU.name,
                         icon = AppIcon.REMOVE.vector,
-                        title = resourceProvider.getString(R.string.remove),
+                        title = resources.getString(R.string.remove),
                         height = OneLineSmallItemHeight
                     ),
                     eventProvider
