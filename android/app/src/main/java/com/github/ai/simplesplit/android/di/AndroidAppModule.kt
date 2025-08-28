@@ -10,6 +10,7 @@ import com.github.ai.simplesplit.android.data.repository.GroupRepository
 import com.github.ai.simplesplit.android.data.repository.MemberRepository
 import com.github.ai.simplesplit.android.data.settings.Settings
 import com.github.ai.simplesplit.android.data.settings.SettingsImpl
+import com.github.ai.simplesplit.android.domain.TimestampFormatter
 import com.github.ai.simplesplit.android.domain.usecase.CreateExportUrlUseCase
 import com.github.ai.simplesplit.android.domain.usecase.CreateGroupUrlUseCase
 import com.github.ai.simplesplit.android.domain.usecase.ParseGroupUrlUseCase
@@ -60,6 +61,7 @@ object AndroidAppModule {
         singleOf(::ThemeProviderImpl).bind(ThemeProvider::class)
         singleOf(::ResourceProviderImpl).bind(ResourceProvider::class)
         singleOf(::SettingsImpl).bind(Settings::class)
+        singleOf(::TimestampFormatter)
 
         // Database
         single { AppDatabase.buildDatabase(get()) }

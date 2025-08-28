@@ -86,7 +86,6 @@ fun SettlementCellPreview() {
             DividerCell(newDividerCell())
             SettlementCell(
                 newSettlementCell(
-                    text = "JohnJohnJohnJohn → JaneJaneJaneJaneJaneJane",
                     shape = CornersShape.BOTTOM
                 )
             )

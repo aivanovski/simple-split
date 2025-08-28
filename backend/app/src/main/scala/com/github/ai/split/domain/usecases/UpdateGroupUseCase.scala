@@ -14,6 +14,7 @@ import com.github.ai.split.entity.exception.DomainError
 import zio.*
 import zio.direct.*
 
+import java.time.{LocalDateTime, ZoneOffset}
 import java.util.UUID
 
 class UpdateGroupUseCase(
@@ -66,19 +67,25 @@ class UpdateGroupUseCase(
 
       _ <- updateMembers(groupUid = groupUid, newMembersOption = newMemberUids)
 
-      _ <- groupDao.update(
-        GroupEntity(
-          uid = groupUid,
-          title = newTitle.getOrElse(group.title),
-          description = newDescription.getOrElse(group.description),
-          passwordHash = if (newPassword.isDefined) {
-            Some(passwordService.hashPassword(newPassword.get))
-          } else {
-            group.passwordHash
-          },
-          currencyIsoCode = newCurrencyIsoCode.getOrElse(group.currencyIsoCode)
+      _ <- {
+        val modified = LocalDateTime.now(ZoneOffset.UTC)
+
+        groupDao.update(
+          GroupEntity(
+            uid = groupUid,
+            title = newTitle.getOrElse(group.title),
+            description = newDescription.getOrElse(group.description),
+            passwordHash = if (newPassword.isDefined) {
+              Some(passwordService.hashPassword(newPassword.get))
+            } else {
+              group.passwordHash
+            },
+            currencyIsoCode = newCurrencyIsoCode.getOrElse(group.currencyIsoCode),
+            created = group.created,
+            modified = modified
+          )
         )
-      )
+      }
     } yield groupUid
   }
 

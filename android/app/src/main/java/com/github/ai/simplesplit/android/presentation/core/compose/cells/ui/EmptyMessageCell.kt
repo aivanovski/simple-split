@@ -34,7 +34,7 @@ fun EmptyMessageCell(viewModel: EmptyMessageCellViewModel) {
         Text(
             text = model.message,
             textAlign = TextAlign.Center,
-            style = TextSize.BODY_MEDIUM.toTextStyle(),
+            style = TextSize.TITLE_MEDIUM.toTextStyle(),
             color = AppTheme.theme.colors.secondaryText
         )
     }

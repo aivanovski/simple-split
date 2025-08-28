@@ -1,15 +1,15 @@
 package com.github.ai.split.domain.usecases
 
-import com.github.ai.split.entity.db.{GroupEntity, GroupMemberEntity, GroupUid, MemberUid}
+import com.github.ai.split.entity.db.{GroupEntity, GroupUid}
 import com.github.ai.split.data.db.dao.{GroupEntityDao, GroupMemberEntityDao}
-import com.github.ai.split.data.db.repository.CurrencyRepository
 import com.github.ai.split.domain.PasswordService
-import com.github.ai.split.entity.{NewExpense, NewGroup}
+import com.github.ai.split.entity.NewGroup
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.some
 import zio.*
 import zio.direct.*
 
+import java.time.{LocalDateTime, ZoneOffset}
 import java.util.UUID
 
 class AddGroupUseCase(
@@ -30,6 +30,7 @@ class AddGroupUseCase(
       validateData(newGroup).run
 
       val groupUid = GroupUid(UUID.randomUUID())
+      val created = LocalDateTime.now(ZoneOffset.UTC)
 
       val group = groupDao
         .add(
@@ -42,7 +43,9 @@ class AddGroupUseCase(
             } else {
               None
             },
-            currencyIsoCode = newGroup.currencyIsoCode
+            currencyIsoCode = newGroup.currencyIsoCode,
+            created = created,
+            modified = created
           )
         )
         .run

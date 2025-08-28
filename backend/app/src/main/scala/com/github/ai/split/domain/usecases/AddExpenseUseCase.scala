@@ -28,6 +28,7 @@ import com.github.ai.split.domain.usecases.{ResolveUserReferencesUseCase, Valida
 import zio.*
 import zio.direct.*
 
+import java.time.{LocalDateTime, ZoneOffset}
 import java.util.UUID
 
 class AddExpenseUseCase(
@@ -92,6 +93,8 @@ class AddExpenseUseCase(
         )
       }
 
+      val time = LocalDateTime.now(ZoneOffset.UTC)
+
       val expense = expenseRepository
         .add(
           ExpenseWithRelations(
@@ -101,7 +104,9 @@ class AddExpenseUseCase(
               title = newExpense.title,
               description = newExpense.description,
               amount = newExpense.amount,
-              isSplitBetweenAll = newExpense.split == SplitBetweenAll
+              isSplitBetweenAll = newExpense.split == SplitBetweenAll,
+              created = time,
+              modified = time
             ),
             paidBy = paidBy,
             splitBetween = splitBetween

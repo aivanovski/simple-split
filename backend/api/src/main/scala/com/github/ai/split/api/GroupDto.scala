@@ -9,7 +9,9 @@ case class GroupDto(
   currency: CurrencyDto,
   members: List[MemberDto],
   expenses: List[ExpenseDto],
-  paybackTransactions: List[TransactionDto]
+  paybackTransactions: List[TransactionDto],
+  created: TimestampDto,
+  modified: TimestampDto
 )
 
 object GroupDto {

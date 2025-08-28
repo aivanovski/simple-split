@@ -4,17 +4,19 @@ import com.github.ai.split.data.db.dao.{GroupMemberEntityDao, PaidByEntityDao, S
 import com.github.ai.split.data.db.repository.{ExpenseRepository, GroupRepository}
 import com.github.ai.split.entity.{
   ExpenseWithRelations,
+  Member,
   Split,
   SplitBetweenAll,
   SplitBetweenMembers,
-  UserReference,
-  Member
+  UserReference
 }
 import com.github.ai.split.entity.db.{ExpenseEntity, ExpenseUid, GroupUid, MemberUid, PaidByEntity, SplitBetweenEntity}
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.some
 import com.github.ai.split.domain.usecases.ResolveUserReferencesUseCase
 import zio.*
+
+import java.time.{LocalDateTime, ZoneOffset}
 
 class UpdateExpenseUseCase(
   private val groupRepository: GroupRepository,
@@ -98,6 +100,8 @@ class UpdateExpenseUseCase(
           expense.entity.isSplitBetweenAll
         }
 
+        val modified = LocalDateTime.now(ZoneOffset.UTC)
+
         val newExpense = ExpenseWithRelations(
           entity = ExpenseEntity(
             uid = expense.entity.uid,
@@ -105,7 +109,9 @@ class UpdateExpenseUseCase(
             title = newTitle.getOrElse(expense.entity.title),
             description = newDescription.getOrElse(expense.entity.description),
             amount = newAmount.getOrElse(expense.entity.amount),
-            isSplitBetweenAll = isSplitBetweenAll
+            isSplitBetweenAll = isSplitBetweenAll,
+            created = expense.entity.created,
+            modified = modified
           ),
           paidBy = paidBy,
           splitBetween = splitBetween

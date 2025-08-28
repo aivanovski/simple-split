@@ -50,6 +50,12 @@
     <string name="expenses">Expenses</string>
     <string name="no_debts_yet">No debts yet</string>
     <string name="export_as_csv_file">Export as CSV file</string>
+    <string name="create_on_with_str">created on %s</string>
+    <string name="modified_on_with_str">modified on %s</string>
+    <string name="members_with_str">%s members:</string>
+    <string name="total_spending">Total spending:</string>
+    <string name="paid_by_with_str">Paid by %s</string>
+    <string name="how_to_settle_debts">How to Settle Debts</string>
 
     <!-- Expense Editor screen -->
     <string name="add_expense">Add Expense</string>
