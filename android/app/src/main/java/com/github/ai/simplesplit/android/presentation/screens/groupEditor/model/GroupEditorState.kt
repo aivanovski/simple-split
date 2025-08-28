@@ -14,6 +14,8 @@ sealed interface GroupEditorState {
         val title: String = StringUtils.EMPTY,
         val password: String = StringUtils.EMPTY,
         val confirmPassword: String = StringUtils.EMPTY,
+        val currency: String = StringUtils.EMPTY,
+        val isCurrencyExpanded: Boolean = false,
         val member: String = StringUtils.EMPTY,
         val members: List<MemberItem> = emptyList(),
         val titleError: String? = null,

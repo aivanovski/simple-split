@@ -1,6 +1,7 @@
 package com.github.ai.simplesplit.android.presentation.screens.groupDetails.cells
 
 import com.github.ai.simplesplit.android.R
+import com.github.ai.simplesplit.android.data.api.coverters.toCurrency
 import com.github.ai.simplesplit.android.presentation.core.ResourceProvider
 import com.github.ai.simplesplit.android.presentation.core.compose.CornersShape
 import com.github.ai.simplesplit.android.presentation.core.compose.TextSize
@@ -32,6 +33,7 @@ import com.github.ai.simplesplit.android.presentation.screens.groupDetails.cells
 import com.github.ai.simplesplit.android.utils.CellId
 import com.github.ai.simplesplit.android.utils.CellIdPayload.StringPayload
 import com.github.ai.simplesplit.android.utils.format
+import com.github.ai.simplesplit.android.utils.formatAsMoney
 import com.github.ai.split.api.GroupDto
 
 class GroupDetailsCellFactory(
@@ -171,7 +173,7 @@ class GroupDetailsCellFactory(
                     title = expense.title,
                     description = "Paid by $payerName", // TODO: string
                     members = members,
-                    amount = expense.amount.toString(),
+                    amount = expense.amount.formatAsMoney(expense.currency.toCurrency()),
                     // TODO: date should be implemented on server side
                     date = "01 Jan",
                     shape = shape
@@ -209,6 +211,7 @@ class GroupDetailsCellFactory(
 
         models.addAll(createSettlementHeaderModels())
 
+        val currency = group.currency.toCurrency()
         val userUidToUserMap = group.members.associateBy { user -> user.uid }
         val transactions = group.paybackTransactions
 
@@ -236,7 +239,7 @@ class GroupDetailsCellFactory(
                 SettlementCellModel(
                     id = "settlement_$idx",
                     title = "${debtor.name} → ${creditor.name}",
-                    amount = "%.2f".format(transaction.amount),
+                    amount = transaction.amount.formatAsMoney(currency),
                     shape = shape
                 )
             )

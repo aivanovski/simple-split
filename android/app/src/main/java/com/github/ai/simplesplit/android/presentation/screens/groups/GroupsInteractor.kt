@@ -3,6 +3,7 @@ package com.github.ai.simplesplit.android.presentation.screens.groups
 import arrow.core.Either
 import arrow.core.raise.either
 import com.github.ai.simplesplit.android.data.database.model.GroupCredentials
+import com.github.ai.simplesplit.android.data.repository.CurrencyRepository
 import com.github.ai.simplesplit.android.data.repository.GroupCredentialsRepository
 import com.github.ai.simplesplit.android.data.repository.GroupRepository
 import com.github.ai.simplesplit.android.domain.usecase.CreateExportUrlUseCase
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.Flow
 class GroupsInteractor(
     private val groupRepository: GroupRepository,
     private val credentialsRepository: GroupCredentialsRepository,
+    private val currencyRepository: CurrencyRepository,
     private val exportUrlUseCase: CreateExportUrlUseCase,
     private val groupUrlUseCase: CreateGroupUrlUseCase
 ) {
@@ -21,6 +23,7 @@ class GroupsInteractor(
     suspend fun loadData(): Either<AppException, GroupsData> =
         either {
             val credentials = credentialsRepository.getAll()
+            val currencies = currencyRepository.getAllOrDownload().bind()
 
             val groups = if (credentials.isNotEmpty()) {
                 val (uids, passwords) = credentials
@@ -39,7 +42,8 @@ class GroupsInteractor(
 
             GroupsData(
                 groups = groups,
-                requestedCredentials = credentials
+                requestedCredentials = credentials,
+                currencies = currencies
             )
         }
 

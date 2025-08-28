@@ -155,7 +155,7 @@ private fun RenderDataContent(
         AppTextField(
             value = state.amount,
             error = state.amountError,
-            label = stringResource(R.string.amount),
+            label = state.amountHint,
             onValueChange = { newValue ->
                 onIntent.invoke(ExpenseEditorIntent.OnAmountChanged(newValue))
             },

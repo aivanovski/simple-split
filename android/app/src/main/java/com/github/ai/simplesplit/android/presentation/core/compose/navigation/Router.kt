@@ -163,6 +163,12 @@ class RouterImpl : Router {
 
         val fragmentManager = getNavigatorOrThrow().getFragmentManager()
         val key = dialog::class.key()
+
+        Timber.d(
+            "removeActiveDialog: key=%s",
+            key
+        )
+
         val fragment = fragmentManager.findFragmentByTag(key)
         if (fragment != null && fragment is DialogFragment) {
             fragment.dismiss()

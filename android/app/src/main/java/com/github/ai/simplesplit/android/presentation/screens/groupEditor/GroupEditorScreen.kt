@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.github.ai.simplesplit.android.R
+import com.github.ai.simplesplit.android.presentation.core.compose.AppDropdownFieldNoMenu
 import com.github.ai.simplesplit.android.presentation.core.compose.AppTextField
 import com.github.ai.simplesplit.android.presentation.core.compose.CenteredBox
 import com.github.ai.simplesplit.android.presentation.core.compose.ErrorMessageCard
@@ -147,6 +148,9 @@ private fun RenderDataContent(
     val onConfirmPasswordToggleClick = rememberCallback { isVisible: Boolean ->
         onIntent.invoke(GroupEditorIntent.OnConfirmPasswordToggleClick(isVisible))
     }
+    val onCurrencyClick = rememberOnClickedCallback {
+        onIntent.invoke(GroupEditorIntent.OnCurrencyClick)
+    }
 
     Column(
         modifier = Modifier
@@ -196,6 +200,13 @@ private fun RenderDataContent(
         )
 
         Spacer(modifier = Modifier.height(SmallMargin))
+
+        AppDropdownFieldNoMenu(
+            label = stringResource(R.string.currency),
+            value = state.currency,
+            onClick = onCurrencyClick,
+            modifier = Modifier.fillMaxWidth()
+        )
 
         Row(
             modifier = Modifier.fillMaxWidth()
@@ -326,6 +337,7 @@ fun GroupEditorScreenDataPreview() {
 
 private fun newDataState() =
     GroupEditorState.Data(
+        currency = "United States Dollar - $",
         members = listOf(
             MemberItem("Donald"),
             MemberItem("Mickey")

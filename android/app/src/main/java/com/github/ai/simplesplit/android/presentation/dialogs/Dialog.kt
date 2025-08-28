@@ -4,6 +4,7 @@ import com.github.ai.simplesplit.android.presentation.core.compose.navigation.Re
 import com.github.ai.simplesplit.android.presentation.dialogs.confirmationDialog.model.ConfirmationDialogArgs
 import com.github.ai.simplesplit.android.presentation.dialogs.expenseDetails.model.ExpenseDetailsDialogArgs
 import com.github.ai.simplesplit.android.presentation.dialogs.menuDialog.model.MenuDialogArgs
+import com.github.ai.simplesplit.android.presentation.dialogs.selectCurrency.model.SelectCurrencyDialogArgs
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -22,5 +23,10 @@ sealed interface Dialog : ResultOwner {
     @Serializable
     data class ExpenseDetails(
         val args: ExpenseDetailsDialogArgs
+    ) : Dialog
+
+    @Serializable
+    data class SelectCurrency(
+        val args: SelectCurrencyDialogArgs
     ) : Dialog
 }

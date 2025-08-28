@@ -1,6 +1,7 @@
 package com.github.ai.simplesplit.android.presentation.screens.groups.cells
 
 import androidx.compose.ui.unit.dp
+import com.github.ai.simplesplit.android.data.api.coverters.toCurrency
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.CellEventProvider
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.CellViewModel
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.model.SpaceCellModel
@@ -11,6 +12,7 @@ import com.github.ai.simplesplit.android.presentation.screens.groups.model.Group
 import com.github.ai.simplesplit.android.utils.CellId
 import com.github.ai.simplesplit.android.utils.CellIdPayload.StringPayload
 import com.github.ai.simplesplit.android.utils.format
+import com.github.ai.simplesplit.android.utils.formatAsMoney
 
 class CellFactory {
 
@@ -34,7 +36,7 @@ class CellFactory {
                         title = group.title,
                         description = group.description,
                         members = members,
-                        amount = "%.2f".format(sum)
+                        amount = sum.formatAsMoney(group.currency.toCurrency())
                     ),
                     eventProvider
                 )

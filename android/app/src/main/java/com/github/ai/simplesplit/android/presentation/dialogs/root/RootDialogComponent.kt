@@ -7,6 +7,7 @@ import com.github.ai.simplesplit.android.presentation.dialogs.Dialog
 import com.github.ai.simplesplit.android.presentation.dialogs.confirmationDialog.ConfirmationDialogComponent
 import com.github.ai.simplesplit.android.presentation.dialogs.expenseDetails.ExpenseDetailsDialogComponent
 import com.github.ai.simplesplit.android.presentation.dialogs.menuDialog.MenuDialogComponent
+import com.github.ai.simplesplit.android.presentation.dialogs.selectCurrency.SelectCurrencyDialogComponent
 
 class RootDialogComponent(
     private val lifecycle: Lifecycle,
@@ -28,6 +29,12 @@ class RootDialogComponent(
             )
 
             is Dialog.ExpenseDetails -> ExpenseDetailsDialogComponent(
+                viewModelStoreOwner = viewModelStoreOwner,
+                lifecycle = lifecycle,
+                args = dialog.args
+            )
+
+            is Dialog.SelectCurrency -> SelectCurrencyDialogComponent(
                 viewModelStoreOwner = viewModelStoreOwner,
                 lifecycle = lifecycle,
                 args = dialog.args

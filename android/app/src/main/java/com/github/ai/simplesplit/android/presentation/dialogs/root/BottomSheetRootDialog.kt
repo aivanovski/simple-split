@@ -4,7 +4,11 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
 import arrow.core.getOrElse
 import com.github.ai.simplesplit.android.R
 import com.github.ai.simplesplit.android.data.json.JsonSerializer
@@ -47,7 +51,11 @@ class BottomSheetRootDialog : BottomSheetDialogFragment() {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
                 AppTheme(theme = themeProvider.theme) {
-                    dialogComponent.render()
+                    Box(
+                        modifier = Modifier.nestedScroll(rememberNestedScrollInteropConnection())
+                    ) {
+                        dialogComponent.render()
+                    }
                 }
             }
         }
