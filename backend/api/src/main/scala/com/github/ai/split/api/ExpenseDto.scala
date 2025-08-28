@@ -9,7 +9,9 @@ case class ExpenseDto(
   amount: Double,
   currency: CurrencyDto,
   paidBy: List[MemberDto],
-  splitBetween: List[MemberDto]
+  splitBetween: List[MemberDto],
+  created: TimestampDto,
+  modified: TimestampDto
 )
 
 object ExpenseDto {

@@ -10,5 +10,7 @@ data class GroupDto(
     val currency: CurrencyDto,
     val members: List<MemberDto>,
     val expenses: List<ExpenseDto>,
-    val paybackTransactions: List<TransactionDto>
+    val paybackTransactions: List<TransactionDto>,
+    val created: TimestampDto,
+    val modified: TimestampDto
 )

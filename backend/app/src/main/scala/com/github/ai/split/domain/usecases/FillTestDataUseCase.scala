@@ -27,6 +27,7 @@ import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.some
 import zio.{IO, ZIO}
 
+import java.time.{LocalDateTime, ZoneOffset}
 import java.util.UUID
 import java.util.concurrent.atomic.{AtomicInteger, AtomicLong, AtomicReference}
 
@@ -98,6 +99,7 @@ class FillTestDataUseCase(
   }
 
   private def insertGroup(group: Group): IO[DomainError, Unit] = {
+    val time = LocalDateTime.now(ZoneOffset.UTC)
     for {
       _ <- groupDao.add(
         GroupEntity(
@@ -105,7 +107,9 @@ class FillTestDataUseCase(
           title = group.title,
           description = group.description,
           passwordHash = Some(passwordService.hashPassword(group.password)),
-          currencyIsoCode = "EUR"
+          currencyIsoCode = "EUR",
+          created = time,
+          modified = time
         )
       )
 
@@ -136,6 +140,8 @@ class FillTestDataUseCase(
     groupUid: GroupUid,
     expense: Expense
   ): IO[DomainError, Unit] = {
+    val time = LocalDateTime.now(ZoneOffset.UTC)
+
     for {
       members <- groupRepository.getMembers(groupUid)
 
@@ -152,7 +158,9 @@ class FillTestDataUseCase(
           isSplitBetweenAll = expense.split match {
             case SplitBetweenAll => true
             case SplitBetweenMembers(_) => false
-          }
+          },
+          created = time,
+          modified = time
         )
       )
 

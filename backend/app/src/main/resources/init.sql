@@ -8,7 +8,9 @@ CREATE TABLE IF NOT EXISTS groups (
     title VARCHAR(255) NOT NULL,
     description VARCHAR(255) NOT NULL,
     password_hash VARCHAR(255),
-    currency_iso_code VARCHAR(3) NOT NULL
+    currency_iso_code VARCHAR(3) NOT NULL,
+    created TIMESTAMP NOT NULL,
+    modified TIMESTAMP NOT NULl
 );
 
 CREATE TABLE IF NOT EXISTS group_members (
@@ -23,7 +25,9 @@ CREATE TABLE IF NOT EXISTS expenses (
     title VARCHAR(255) NOT NULL,
     description VARCHAR(255) NOT NULL,
     amount DOUBLE NOT NULL,
-    is_split_between_all BOOLEAN DEFAULT FALSE
+    is_split_between_all BOOLEAN DEFAULT FALSE,
+    created TIMESTAMP NOT NULL,
+    modified TIMESTAMP NOT NULl
 );
 
 CREATE TABLE IF NOT EXISTS paid_by (

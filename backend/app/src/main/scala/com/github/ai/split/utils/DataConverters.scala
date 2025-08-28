@@ -1,7 +1,7 @@
 package com.github.ai.split.utils
 
 import com.github.ai.split.entity.{ExpenseWithRelations, Transaction}
-import com.github.ai.split.api.{CurrencyDto, ExpenseDto, GroupDto, MemberDto, TransactionDto}
+import com.github.ai.split.api.{CurrencyDto, ExpenseDto, GroupDto, MemberDto, TimestampDto, TransactionDto}
 import com.github.ai.split.entity.db.{
   CurrencyEntity,
   ExpenseEntity,
@@ -16,9 +16,9 @@ import com.github.ai.split.entity.db.{
 }
 import com.github.ai.split.entity.exception.DomainError
 import zio.*
-import zio.direct.*
 
-import java.util.UUID
+import java.time.format.DateTimeFormatter
+import java.time.{LocalDateTime, ZoneOffset}
 
 def toExpenseDto(
   expense: ExpenseWithRelations,
@@ -74,7 +74,9 @@ def toExpenseDto(
     amount = expense.amount,
     currency = toCurrencyDto(currency),
     paidBy = paidByUsers,
-    splitBetween = splitBetweenUsers
+    splitBetween = splitBetweenUsers,
+    created = toTimestampDto(expense.created),
+    modified = toTimestampDto(expense.modified)
   )
 }
 
@@ -162,7 +164,9 @@ def toGroupDto(
     currency = toCurrencyDto(currency),
     members = memberDtos,
     expenses = transformedExpenses,
-    paybackTransactions = paybackTransactions.map(transaction => toTransactionDto(transaction))
+    paybackTransactions = paybackTransactions.map(transaction => toTransactionDto(transaction)),
+    created = toTimestampDto(group.created),
+    modified = toTimestampDto(group.modified)
   )
 }
 
@@ -183,3 +187,13 @@ def toCurrencyDto(
     name = currency.name,
     symbol = currency.symbol
   )
+
+def toTimestampDto(
+  dateTime: LocalDateTime
+): TimestampDto =
+  TimestampDto(
+    timestampSeconds = dateTime.toEpochSecond(ZoneOffset.UTC),
+    formatted = dateTime.format(TIMESTAMP_FORMAT)
+  )
+
+private val TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")

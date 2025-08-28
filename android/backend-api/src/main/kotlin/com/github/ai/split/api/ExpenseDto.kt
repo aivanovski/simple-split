@@ -10,5 +10,7 @@ data class ExpenseDto(
     val amount: Double,
     val currency: CurrencyDto,
     val paidBy: List<MemberDto>,
-    val splitBetween: List<MemberDto>
+    val splitBetween: List<MemberDto>,
+    val created: TimestampDto,
+    val modified: TimestampDto
 )
