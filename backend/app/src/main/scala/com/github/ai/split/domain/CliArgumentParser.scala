@@ -1,27 +1,72 @@
 package com.github.ai.split.domain
 
 import com.github.ai.split.utils.some
-import com.github.ai.split.entity.CliArguments
-import com.github.ai.split.entity.exception.DomainError
+import com.github.ai.split.entity.{CliArguments, HttpProtocol}
+import com.github.ai.split.entity.exception.{DomainError, ParsingError}
 import zio.*
+import zio.direct.*
+
+import scala.collection.mutable
 
 class CliArgumentParser {
 
   def parse(): ZIO[ZIOAppArgs, DomainError, CliArguments] = {
-    for {
-      appArgs <- ZIO.service[ZIOAppArgs]
-      parsedArgs <- parseArguments(appArgs.getArgs.toArray)
-    } yield parsedArgs
+    defer {
+      val args = ZIO.service[ZIOAppArgs].run
+      parseArguments(args.getArgs.toList).run
+    }
   }
 
-  private def parseArguments(args: Array[String]): IO[DomainError, CliArguments] = {
-    ZIO.foldLeft(args)(CliArguments()) { (acc, arg) =>
-      arg match {
-        case "--in-memory-db" => ZIO.succeed(acc.copy(isUseInMemoryDatabase = true))
-        case "--populate-data" => ZIO.succeed(acc.copy(isPopulateTestData = true))
-        case arg =>
-          ZIO.fail(DomainError(message = s"Unexpected argument: $arg".some))
+  private def parseArguments(args: List[String]): IO[DomainError, CliArguments] = {
+    ZIO
+      .attempt {
+        var useInMemoryDb = false
+        var populateData = false
+        var protocol: Option[HttpProtocol] = None
+
+        val queue = mutable.Queue[String]()
+        queue.addAll(args)
+
+        while (queue.nonEmpty) {
+          val optionName = queue.removeHead()
+          optionName match {
+            case CliOptions.InMemoryDb.cliName => useInMemoryDb = true
+            case CliOptions.PopulateData.cliName => populateData = true
+            case CliOptions.Protocol.cliName => {
+              val protocolValue = queue
+                .removeHeadOption()
+                .flatMap(value => HttpProtocol.fromString(value))
+
+              protocolValue match {
+                case Some(p) => protocol = Some(p)
+                case None =>
+                  throw new ParsingError(
+                    s"Invalid option: ${CliOptions.Protocol.cliName}. Expected 'http' or 'https'"
+                  )
+              }
+            }
+
+            case _ =>
+              throw new ParsingError(s"Invalid option specified: '$optionName'")
+          }
+        }
+
+        if (protocol.isEmpty) {
+          throw new ParsingError(s"Option '${CliOptions.Protocol.cliName}' is required ")
+        }
+
+        CliArguments(
+          isUseInMemoryDatabase = useInMemoryDb,
+          isPopulateTestData = populateData,
+          protocol = protocol.get
+        )
       }
-    }
+      .mapError(error => DomainError(cause = error.some))
+  }
+
+  private enum CliOptions(val cliName: String) {
+    case InMemoryDb extends CliOptions("--in-memory-db")
+    case PopulateData extends CliOptions("--populate-data")
+    case Protocol extends CliOptions("--protocol")
   }
 }
