@@ -7,3 +7,7 @@ class DomainError(
       message.orNull,
       cause.orNull
     )
+
+class ParsingError(
+  message: String
+) extends DomainError(message = Some(message), cause = None)

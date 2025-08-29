@@ -13,7 +13,7 @@ class ApiClient(
   type ApiResponse = ZIO[Scope, Throwable, Response]
 
   private val DefaultPassword = "abc123"
-  private val baseUrl = "http://127.0.0.1:8080"
+  private val baseUrl = "https://127.0.0.1:8443"
 
   def getGroup(
     uid: String = Groups.TripToDisneyLand,

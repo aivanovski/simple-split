@@ -35,7 +35,7 @@ class SettingsImpl(
 
     override var httpLogLevel: LogLevel
         get() {
-            return prefs.pull<String>(HTTP_LOG_LEVEL.key, StringUtils.EMPTY).let { name ->
+            return prefs.pull(HTTP_LOG_LEVEL.key, StringUtils.EMPTY).let { name ->
                 LogLevel.entries.find { level -> level.name == name }
                     ?: LogLevel.INFO
             }

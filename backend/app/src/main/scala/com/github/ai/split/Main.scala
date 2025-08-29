@@ -4,6 +4,7 @@ import com.github.ai.split.data.currency.CurrencyParser
 import com.github.ai.split.domain.CliArgumentParser
 import com.github.ai.split.domain.usecases.{FillTestDataUseCase, StartUpServerUseCase}
 import com.github.ai.split.entity.CliArguments
+import com.github.ai.split.entity.HttpProtocol.{HTTP, HTTPS}
 import com.github.ai.split.presentation.routes.{CurrencyRoutes, ExpenseRoutes, ExportRoutes, GroupRoutes, MemberRoutes}
 import io.getquill.SnakeCase
 import io.getquill.jdbczio.Quill
@@ -11,6 +12,7 @@ import zio.*
 import zio.http.*
 import zio.logging.LogFormat
 import zio.logging.backend.SLF4J
+import zio.direct.*
 
 object Main extends ZIOAppDefault {
 
@@ -24,19 +26,39 @@ object Main extends ZIOAppDefault {
     Runtime.removeDefaultLoggers >>> SLF4J.slf4j(LogFormat.colored)
   }
 
-  private def application() = {
-    for {
-      startupUseCase <- ZIO.service[StartUpServerUseCase]
-      _ <- startupUseCase.startUpServer()
-      _ <- Server.serve(routes)
-    } yield ()
+  private def application() = defer {
+    val startUpUseCase = ZIO.service[StartUpServerUseCase].run
+    startUpUseCase.startUpServer().run
+
+    Server.serve(routes).run
+
+    ()
+  }
+
+  private def createServerConfig(
+    arguments: CliArguments
+  ) = defer {
+    arguments.protocol match {
+      case HTTP =>
+        Server.Config.default
+          .port(arguments.getPort())
+
+      case HTTPS =>
+        Server.Config.default
+          .port(arguments.getPort())
+          .ssl(SSLConfig.fromFile("dev-data/server.crt", "dev-data/server.key"))
+    }
   }
 
   override def run: ZIO[ZIOAppArgs, Throwable, Unit] = {
     for {
       arguments <- CliArgumentParser().parse()
-      _ <- ZIO.logInfo(s"Starting application with arguments:")
-      _ <- ZIO.logInfo(arguments.toReadableString())
+      _ <- ZIO.logInfo(s"Starting server on port ${arguments.getPort()}")
+      _ <- ZIO.logInfo(s"   isUseInMemoryDatabase=${arguments.isUseInMemoryDatabase}")
+      _ <- ZIO.logInfo(s"   isPopulateTestData=${arguments.isPopulateTestData}")
+      _ <- ZIO.logInfo(s"   protocol=${arguments.protocol}")
+
+      serverConfig <- createServerConfig(arguments)
 
       _ <- application().provide(
         // Application arguments
@@ -96,7 +118,8 @@ object Main extends ZIOAppDefault {
 
         // Others
         Layers.currencyParser,
-        Server.defaultWithPort(8080),
+        Server.live,
+        ZLayer.succeed(serverConfig),
         Quill.H2.fromNamingStrategy(SnakeCase),
         if (arguments.isUseInMemoryDatabase) {
           Quill.DataSource.fromPrefix("test-h2db")
