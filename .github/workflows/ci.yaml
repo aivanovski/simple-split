@@ -56,6 +56,15 @@ jobs:
           distribution: 'zulu'
           java-version: 17
 
+      - name: Setup SBT
+        uses: sbt/setup-sbt@v1
+
+      - name: Cache Dependencies
+        uses: coursier/cache-action@v6
+
+      - name: Build API jar
+        run: cd android && ./setup-api.sh
+
       - name: Build debug apk
         run: cd android && ./gradlew app:assembleDebug
 
@@ -99,56 +108,3 @@ jobs:
         with:
           name: simple-split-backend.jar
           path: ./backend/app/target/scala-3.7.1/simple-split-backend.jar
-
-  transpile-and-check-api:
-    name: Transpile API and check it is up to date
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v4
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
-
-      - name: Setup SBT
-        uses: sbt/setup-sbt@v1
-
-      - name: Cache Dependencies
-        uses: coursier/cache-action@v6
-
-      - name: Generate new API classes
-        run: |
-          # Backup current generated files
-          cp -r android/backend-api/src/main/kotlin android/backend-api/src/main/kotlin-backup
-          # Remove current generated files
-          rm -r android/backend-api/src/main/kotlin/com
-          # Generate new API classes
-          cd backend && sbt codegen/generateKotlinClasses
-
-      - name: Check if API classes are up to date
-        run: |
-          # Compare generated files with committed files
-          if ! diff -r android/backend-api/src/main/kotlin android/backend-api/src/main/kotlin-backup > /dev/null 2>&1; then
-            echo "❌ API classes are NOT up to date!"
-            echo "Run the following commands to update API:"
-            echo ""
-            echo "  cd backend"
-            echo "  sbt codegen/generateKotlinClasses"
-            echo ""
-            echo "Then commit the updated files."
-            echo ""
-            echo "Differences found:"
-            diff -r android/backend-api/src/main/kotlin android/backend-api/src/main/kotlin-backup || true
-            exit 1
-          else
-            echo "✅ API classes are up to date!"
-          fi
-
-          # Remove backup-file
-          rm -r android/backend-api/src/main/kotlin-backup
-
-      - name: Compile transpiled API
-        run: cd android && ./gradlew backend-api:assemble
