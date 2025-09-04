@@ -7,12 +7,15 @@ val zioHttp = "3.0.1"
 val gsonVersion = "2.11.0"
 
 ThisBuild / scalaVersion := scala3Version
-ThisBuild / version := "0.1.0-SNAPSHOT"
+ThisBuild / version := "0.1.0"
 
 lazy val api = project
   .in(file("api"))
   .settings(
     name := "simple-split-api",
+    artifactName := { (sv: ScalaVersion, module: ModuleID, artifact: Artifact) =>
+      artifact.name + "." + artifact.extension
+    },
     libraryDependencies ++= Seq(
       "com.google.code.gson" % "gson" % gsonVersion
     )
