@@ -61,7 +61,8 @@ class ApiClient(
 
         return httpClient.sendRequest<Unit, GetGroupsResponse>(
             type = RequestType.GET,
-            url = "$baseUrl/group?ids=$idsStr&passwords=$passwordsStr"
+            url = "$baseUrl/group?ids=$idsStr&passwords=$passwordsStr",
+            jsonSerializer = jsonSerializer
         )
     }
 
@@ -69,7 +70,8 @@ class ApiClient(
         httpClient.sendRequest<PostGroupRequest, PostGroupResponse>(
             type = RequestType.POST,
             url = "$baseUrl/group",
-            body = request
+            body = request,
+            jsonSerializer = jsonSerializer
         )
 
     suspend fun postExpense(
@@ -79,7 +81,8 @@ class ApiClient(
         httpClient.sendRequest<PostExpenseRequest, PostExpenseResponse>(
             type = RequestType.POST,
             url = "$baseUrl/expense?password=$password",
-            body = request
+            body = request,
+            jsonSerializer = jsonSerializer
         )
 
     suspend fun putExpense(
@@ -90,7 +93,8 @@ class ApiClient(
         httpClient.sendRequest(
             type = RequestType.PUT,
             url = "$baseUrl/expense/$expenseUid?password=$password",
-            body = request
+            body = request,
+            jsonSerializer = jsonSerializer
         )
 
     suspend fun removeExpense(
@@ -99,7 +103,8 @@ class ApiClient(
     ): Either<ApiException, DeleteExpenseResponse> =
         httpClient.sendRequest<Unit, DeleteExpenseResponse>(
             type = RequestType.DELETE,
-            url = "$baseUrl/expense/$expenseUid?password=$password"
+            url = "$baseUrl/expense/$expenseUid?password=$password",
+            jsonSerializer = jsonSerializer
         )
 
     suspend fun putGroup(
@@ -110,7 +115,8 @@ class ApiClient(
         httpClient.sendRequest<PutGroupRequest, PutGroupResponse>(
             type = RequestType.PUT,
             url = "$baseUrl/group/$uid?password=$password",
-            body = request
+            body = request,
+            jsonSerializer = jsonSerializer
         )
 
     suspend fun postMember(
@@ -120,7 +126,8 @@ class ApiClient(
         httpClient.sendRequest(
             type = RequestType.POST,
             url = "$baseUrl/member?password=$password",
-            body = request
+            body = request,
+            jsonSerializer = jsonSerializer
         )
 
     suspend fun removeMember(
@@ -129,7 +136,8 @@ class ApiClient(
     ): Either<ApiException, DeleteMemberResponse> =
         httpClient.sendRequest<Unit, DeleteMemberResponse>(
             type = RequestType.DELETE,
-            url = "$baseUrl/member/$memberUid?password=$password"
+            url = "$baseUrl/member/$memberUid?password=$password",
+            jsonSerializer = jsonSerializer
         )
 
     suspend fun putMember(
@@ -140,13 +148,15 @@ class ApiClient(
         httpClient.sendRequest<PutMemberRequest, PutMemberResponse>(
             type = RequestType.PUT,
             url = "$baseUrl/member/$memberUid?password=$password",
-            body = request
+            body = request,
+            jsonSerializer = jsonSerializer
         )
 
     suspend fun getCurrencies(): Either<ApiException, GetCurrenciesResponse> =
         httpClient.sendRequest<Unit, GetCurrenciesResponse>(
             type = RequestType.GET,
-            url = "$baseUrl/currency"
+            url = "$baseUrl/currency",
+            jsonSerializer = jsonSerializer
         )
 
     companion object {

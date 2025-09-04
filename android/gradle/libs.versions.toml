@@ -41,6 +41,7 @@ truth = "1.4.4"
 jgit = "6.2.0.202206071550-r"
 ksprefs = "2.4.1"
 constraintLayoutCompose = "1.0.1"
+gson = "2.13.1"
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
@@ -120,3 +121,4 @@ mordant = { module = "com.github.ajalt.mordant:mordant", version.ref = "mordant"
 truth = { module = "com.google.truth:truth", version.ref = "truth" }
 jgit = { module = "org.eclipse.jgit:org.eclipse.jgit", version.ref = "jgit" }
 ksprefs = { module = "com.github.cioccarellia:ksprefs", version.ref = "ksprefs" }
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }

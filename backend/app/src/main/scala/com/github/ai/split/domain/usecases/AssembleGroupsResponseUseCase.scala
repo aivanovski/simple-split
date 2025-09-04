@@ -1,14 +1,12 @@
 package com.github.ai.split.domain.usecases
 
-import com.github.ai.split.data.db.dao.{GroupEntityDao, GroupMemberEntityDao, PaidByEntityDao, SplitBetweenEntityDao}
 import com.github.ai.split.api.GroupDto
+import com.github.ai.split.data.db.dao.{GroupEntityDao, GroupMemberEntityDao, PaidByEntityDao, SplitBetweenEntityDao}
 import com.github.ai.split.data.db.repository.{ExpenseRepository, GroupRepository}
 import com.github.ai.split.entity.db.GroupUid
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.toGroupDto
 import zio.*
-
-import java.util.UUID
 
 class AssembleGroupsResponseUseCase(
   private val groupRepository: GroupRepository,

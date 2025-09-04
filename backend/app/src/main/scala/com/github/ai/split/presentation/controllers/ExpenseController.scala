@@ -10,6 +10,7 @@ import com.github.ai.split.domain.usecases.{
 }
 import com.github.ai.split.api.request.{PostExpenseRequest, PutExpenseRequest}
 import com.github.ai.split.api.response.{DeleteExpenseResponse, PostExpenseResponse, PutExpenseResponse}
+import com.github.ai.split.data.JsonSerializer
 import com.github.ai.split.data.db.repository.ExpenseRepository
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.domain.AccessResolverService
@@ -25,10 +26,7 @@ import com.github.ai.split.entity.{
 }
 import zio.*
 import zio.http.*
-import zio.json.*
 import zio.direct.*
-
-import java.util.UUID
 
 class ExpenseController(
   private val expenseRepository: ExpenseRepository,
@@ -37,36 +35,37 @@ class ExpenseController(
   private val assembleExpenseUseCase: AssembleExpenseUseCase,
   private val assembleGroupUseCase: AssembleGroupResponseUseCase,
   private val updateExpenseUseCase: UpdateExpenseUseCase,
-  private val removeExpenseUseCase: RemoveExpenseUseCase
+  private val removeExpenseUseCase: RemoveExpenseUseCase,
+  private val jsonSerializer: JsonSerializer
 ) {
 
   def createExpense(
     request: Request
   ): IO[DomainError, Response] = {
     for {
-      body <- request.body.parse[PostExpenseRequest]
+      body <- jsonSerializer.deserializer(request.body.asString, classOf[PostExpenseRequest])
       groupUid <- body.groupUid.parseUid().map(uid => GroupUid(uid))
       password <- parsePasswordParam(request)
       _ <- accessResolver.canAccessToGroup(groupUid = groupUid, password = password)
 
-      paidBy <- parsePaidBy(paidByUids = body.paidBy.map(_.uid))
+      paidBy <- parsePaidBy(paidByUids = body.paidBy.toScalaList().map(_.uid))
       split <- parseSplit(
-        isSplitEqually = body.isSplitBetweenAll.getOrElse(false),
-        splitUids = body.splitBetween.getOrElse(List.empty).map(_.uid)
+        isSplitEqually = Option(body.isSplitBetweenAll).exists(_.booleanValue()),
+        splitUids = body.splitBetween.toScalaList().map(_.uid)
       )
 
       expense <- addExpenseUseCase.addExpenseToGroup(
         groupUid = groupUid,
         newExpense = NewExpense(
           title = body.title.trim,
-          description = body.description.map(_.trim).getOrElse(""),
+          description = body.description,
           amount = body.amount,
           paidBy = paidBy,
           split = split
         )
       )
       expenseDto <- assembleExpenseUseCase.assembleExpenseDto(expenseUid = expense.uid)
-    } yield Response.json(PostExpenseResponse(expenseDto).toJsonPretty)
+    } yield Response.json(jsonSerializer.serialize(PostExpenseResponse(expenseDto)))
   }
 
   def updateExpense(
@@ -77,22 +76,27 @@ class ExpenseController(
       password <- parsePasswordParam(request)
       _ <- accessResolver.canAccessToExpense(expenseUid = expenseUid, password = password)
 
-      data <- request.body.parse[PutExpenseRequest]
+      data <- jsonSerializer.deserializer(request.body.asString, classOf[PutExpenseRequest])
 
-      newPaidBy <-
-        if (data.paidBy.isDefined) {
+      newPaidBy <- {
+        val paidBy = data.paidBy.toScalaList()
+        if (paidBy.nonEmpty) {
           parsePaidBy(
-            paidByUids = data.paidBy.getOrElse(List.empty).map(_.uid)
+            paidByUids = paidBy.map(_.uid)
           ).map(paidBy => Some(paidBy))
         } else {
           ZIO.succeed(None)
         }
+      }
 
       newSplit <-
-        if (data.splitBetween.isDefined || data.isSplitBetweenAll.isDefined) {
+        val splitBetween = data.splitBetween.toScalaList()
+        val isSplitBetweenAll = Option(data.isSplitBetweenAll).map(_.booleanValue())
+
+        if (splitBetween.nonEmpty || isSplitBetweenAll.isDefined) {
           parseSplit(
-            isSplitEqually = data.isSplitBetweenAll.getOrElse(false),
-            splitUids = data.splitBetween.getOrElse(List.empty).map(_.uid)
+            isSplitEqually = isSplitBetweenAll.getOrElse(false),
+            splitUids = splitBetween.map(_.uid)
           )
             .map(split => Some(split))
         } else {
@@ -101,15 +105,15 @@ class ExpenseController(
 
       _ <- updateExpenseUseCase.updateExpense(
         expenseUid = expenseUid,
-        newTitle = data.title.map(_.trim).filter(_.nonEmpty),
-        newDescription = data.description.map(_.trim).filter(_.nonEmpty),
-        newAmount = data.amount,
+        newTitle = Option(data.title).map(_.trim).filter(_.nonEmpty),
+        newDescription = Option(data.description).map(_.trim).filter(_.nonEmpty),
+        newAmount = Option(data.amount).map(_.doubleValue()),
         newPaidBy = newPaidBy,
         newSplit = newSplit
       )
 
       expenseDto <- assembleExpenseUseCase.assembleExpenseDto(expenseUid = expenseUid)
-    } yield Response.json(PutExpenseResponse(expenseDto).toJsonPretty)
+    } yield Response.json(jsonSerializer.serialize(PutExpenseResponse(expenseDto)))
   }
 
   def removeExpense(
@@ -125,7 +129,7 @@ class ExpenseController(
 
       val groupDto = assembleGroupUseCase.assembleGroupDto(expense.groupUid).run
 
-      Response.json(DeleteExpenseResponse(groupDto).toJsonPretty)
+      Response.json(jsonSerializer.serialize(DeleteExpenseResponse(groupDto)))
     }
   }
 

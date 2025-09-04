@@ -2,8 +2,8 @@ package com.github.ai.simplesplit.android.presentation.dialogs.expenseDetails
 
 import androidx.compose.ui.unit.dp
 import com.github.ai.simplesplit.android.R
-import com.github.ai.simplesplit.android.data.api.coverters.toCurrency
 import com.github.ai.simplesplit.android.domain.TimestampFormatter
+import com.github.ai.simplesplit.android.model.Expense
 import com.github.ai.simplesplit.android.presentation.core.ResourceProvider
 import com.github.ai.simplesplit.android.presentation.core.compose.TextColor
 import com.github.ai.simplesplit.android.presentation.core.compose.TextSize
@@ -27,7 +27,6 @@ import com.github.ai.simplesplit.android.presentation.core.compose.theme.OneLine
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.ThemeProvider
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.TinyMargin
 import com.github.ai.simplesplit.android.utils.formatAsMoney
-import com.github.ai.split.api.ExpenseDto
 
 class ExpenseDetailsDialogCellFactory(
     private val themeProvider: ThemeProvider,
@@ -36,7 +35,7 @@ class ExpenseDetailsDialogCellFactory(
 ) {
 
     fun createCells(
-        expense: ExpenseDto,
+        expense: Expense,
         eventProvider: CellEventProvider
     ): List<CellViewModel> {
         val cells = mutableListOf<CellViewModel>()
@@ -50,7 +49,7 @@ class ExpenseDetailsDialogCellFactory(
     }
 
     private fun createTitleSection(
-        expense: ExpenseDto,
+        expense: Expense,
         eventProvider: CellEventProvider
     ): List<CellViewModel> {
         val cells = mutableListOf<CellViewModel>()
@@ -64,7 +63,7 @@ class ExpenseDetailsDialogCellFactory(
             )
         )
 
-        val currency = expense.currency.toCurrency()
+        val currency = expense.currency
 
         // Title
         cells.add(
@@ -91,8 +90,8 @@ class ExpenseDetailsDialogCellFactory(
             )
         )
 
-        val created = expense.created.timestampSeconds * 1000L
-        val modified = expense.modified.timestampSeconds * 1000L
+        val created = expense.createdSeconds * 1000L
+        val modified = expense.modifiedSeconds * 1000L
 
         cells.add(
             TextCellViewModel(
@@ -144,7 +143,7 @@ class ExpenseDetailsDialogCellFactory(
         return cells
     }
 
-    private fun createPayerSection(expense: ExpenseDto): List<CellViewModel> {
+    private fun createPayerSection(expense: Expense): List<CellViewModel> {
         val cells = mutableListOf<CellViewModel>()
 
         cells.add(
@@ -156,14 +155,14 @@ class ExpenseDetailsDialogCellFactory(
             )
         )
 
-        val currency = expense.currency.toCurrency()
-
         for ((index, payer) in expense.paidBy.withIndex()) {
             cells.add(
                 TextCellViewModel(
                     TextCellModel(
                         id = "payer_$index",
-                        text = payer.name + " paid " + expense.amount.formatAsMoney(currency),
+                        text = payer.name + " paid " + expense.amount.formatAsMoney(
+                            expense.currency
+                        ),
                         textSize = TextSize.BODY_LARGE,
                         textColor = TextColor.PRIMARY
                     )
@@ -174,7 +173,7 @@ class ExpenseDetailsDialogCellFactory(
         return cells
     }
 
-    private fun createSplitSection(expense: ExpenseDto): List<CellViewModel> {
+    private fun createSplitSection(expense: Expense): List<CellViewModel> {
         val cells = mutableListOf<CellViewModel>()
 
         cells.add(
@@ -186,7 +185,7 @@ class ExpenseDetailsDialogCellFactory(
             )
         )
 
-        val currency = expense.currency.toCurrency()
+        val currency = expense.currency
         val payerUid = expense.paidBy.firstOrNull()?.uid.orEmpty()
         val debtors = expense.splitBetween.filter { splitMember -> splitMember.uid != payerUid }
 

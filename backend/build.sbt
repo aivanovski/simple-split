@@ -4,6 +4,7 @@ val zioJsonVersion = "0.6.2"
 val circeVersion = "0.14.10"
 val zioDirect = "1.0.0-RC7"
 val zioHttp = "3.0.1"
+val gsonVersion = "2.11.0"
 
 ThisBuild / scalaVersion := scala3Version
 ThisBuild / version := "0.1.0-SNAPSHOT"
@@ -13,7 +14,7 @@ lazy val api = project
   .settings(
     name := "simple-split-api",
     libraryDependencies ++= Seq(
-      "dev.zio" %% "zio-json" % zioJsonVersion
+      "com.google.code.gson" % "gson" % gsonVersion
     )
   )
 
@@ -70,7 +71,6 @@ lazy val codegen = project
     name := "simple-split-codegen",
     libraryDependencies ++= Seq(
       "dev.zio" %% "zio" % zioVersion,
-      "dev.zio" %% "zio-json" % zioJsonVersion,
       "dev.zio" %% "zio-direct" % zioDirect
     ),
     generateKotlinClasses := {
@@ -92,9 +92,7 @@ lazy val apiClient = project
 
     libraryDependencies ++= Seq(
       "dev.zio" %% "zio" % zioVersion,
-      "dev.zio" %% "zio-json" % zioJsonVersion,
       "dev.zio" %% "zio-direct" % zioDirect,
-      "dev.zio" %% "zio-http" % zioHttp,
-      "dev.zio" %% "zio-json" % zioJsonVersion
+      "dev.zio" %% "zio-http" % zioHttp
     )
   )

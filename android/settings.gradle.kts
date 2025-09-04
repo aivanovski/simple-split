@@ -8,7 +8,4 @@ pluginManagement {
 
 rootProject.name = "simple-split-android"
 
-include(
-    ":app",
-    ":backend-api"
-)
+include(":app")

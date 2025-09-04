@@ -118,6 +118,7 @@ object Main extends ZIOAppDefault {
 
         // Others
         Layers.currencyParser,
+        Layers.jsonSerialized,
         Server.live,
         ZLayer.succeed(serverConfig),
         Quill.H2.fromNamingStrategy(SnakeCase),

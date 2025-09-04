@@ -9,5 +9,14 @@ class DomainError(
     )
 
 class ParsingError(
-  message: String
-) extends DomainError(message = Some(message), cause = None)
+  message: String,
+  cause: Option[Throwable] = None
+) extends DomainError(message = Some(message), cause = cause)
+
+class JsonDeserializationError(
+  typeOf: Class[?],
+  cause: Option[Throwable] = None
+) extends ParsingError(
+      message = s"Unable to deserialize type: ${typeOf.getTypeName}",
+      cause = cause
+    )

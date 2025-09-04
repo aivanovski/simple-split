@@ -3,6 +3,7 @@ package com.github.ai.simplesplit.android.presentation.screens.groups
 import androidx.annotation.StringRes
 import androidx.lifecycle.viewModelScope
 import com.github.ai.simplesplit.android.R
+import com.github.ai.simplesplit.android.data.api.coverters.toGroup
 import com.github.ai.simplesplit.android.data.database.model.GroupCredentials
 import com.github.ai.simplesplit.android.model.ErrorMessage
 import com.github.ai.simplesplit.android.presentation.core.ResourceProvider
@@ -189,7 +190,7 @@ class GroupsViewModel(
         router.navigateTo(
             Screen.GroupDetails(
                 GroupDetailsArgs(
-                    group = groupAndCreds.first,
+                    group = groupAndCreds.first.toGroup(),
                     password = groupAndCreds.second.password
                 )
             )

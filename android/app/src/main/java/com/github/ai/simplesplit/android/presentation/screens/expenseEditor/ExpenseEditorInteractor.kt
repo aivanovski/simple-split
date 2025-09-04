@@ -25,12 +25,12 @@ class ExpenseEditorInteractor(
     ): Either<AppException, ExpenseDto> =
         either {
             val request = PutExpenseRequest(
-                title = title,
-                description = null,
-                amount = amount,
-                paidBy = if (payerUid != null) listOf(UserUidDto(uid = payerUid)) else null,
-                isSplitBetweenAll = true,
-                splitBetween = null
+                title,
+                null,
+                amount,
+                if (payerUid != null) listOf(UserUidDto(payerUid)) else emptyList(),
+                true,
+                null
             )
 
             expenseRepository.updateExpense(
@@ -51,13 +51,13 @@ class ExpenseEditorInteractor(
                 ?: raise(AppException(message = "Failed to load credentials for group"))
 
             val request = PostExpenseRequest(
-                groupUid = groupUid,
-                title = title,
-                amount = amount,
-                description = "",
-                paidBy = listOf(UserUidDto(uid = payerUid)),
-                isSplitBetweenAll = true,
-                splitBetween = null
+                groupUid,
+                title,
+                "",
+                amount,
+                listOf(UserUidDto(payerUid)),
+                true,
+                null
             )
 
             expenseRepository.createExpense(

@@ -2,6 +2,7 @@ package com.github.ai.simplesplit.android.di
 
 import com.github.ai.simplesplit.android.data.api.ApiClient
 import com.github.ai.simplesplit.android.data.database.AppDatabase
+import com.github.ai.simplesplit.android.data.json.ArgumentSerializer
 import com.github.ai.simplesplit.android.data.json.JsonSerializer
 import com.github.ai.simplesplit.android.data.repository.CurrencyRepository
 import com.github.ai.simplesplit.android.data.repository.ExpenseRepository
@@ -62,6 +63,7 @@ object AndroidAppModule {
         singleOf(::ResourceProviderImpl).bind(ResourceProvider::class)
         singleOf(::SettingsImpl).bind(Settings::class)
         singleOf(::TimestampFormatter)
+        singleOf(::ArgumentSerializer)
 
         // Database
         single { AppDatabase.buildDatabase(get()) }

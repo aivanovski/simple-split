@@ -57,8 +57,8 @@ class GroupEditorInteractor(
                 memberRepository.createMember(
                     password = credentials.password,
                     request = PostMemberRequest(
-                        groupUid = credentials.groupUid,
-                        name = memberName
+                        credentials.groupUid,
+                        memberName
                     )
                 ).bind()
             }
@@ -75,7 +75,7 @@ class GroupEditorInteractor(
                     memberUid = memberUid,
                     password = credentials.password,
                     request = PutMemberRequest(
-                        name = memberName
+                        memberName
                     )
                 ).bind()
             }
@@ -87,11 +87,11 @@ class GroupEditorInteractor(
                     password = credentials.password,
                     uid = credentials.groupUid,
                     request = PutGroupRequest(
-                        title = newTitle,
-                        password = newPassword,
-                        description = null,
-                        currencyIsoCode = newCurrencyIsoCode,
-                        members = null
+                        newTitle,
+                        newPassword,
+                        null,
+                        newCurrencyIsoCode,
+                        null
                     )
                 ).bind().group
             } else {
@@ -112,12 +112,12 @@ class GroupEditorInteractor(
     ): Either<AppException, GroupDto> =
         either {
             val request = PostGroupRequest(
-                password = password,
-                title = title,
-                description = null,
-                currencyIsoCode = currencyIsoCode,
-                members = members.map { UserNameDto(name = it) },
-                expenses = null
+                password,
+                title,
+                null,
+                currencyIsoCode,
+                members.map { UserNameDto(it) },
+                null
             )
 
             val response = groupRepository.createGroup(request).bind()

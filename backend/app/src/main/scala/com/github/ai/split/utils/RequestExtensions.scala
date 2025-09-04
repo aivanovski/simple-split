@@ -3,25 +3,9 @@ package com.github.ai.split.utils
 import com.github.ai.split.entity.exception.DomainError
 import zio.IO
 import zio.ZIO
-import zio.http.{Body, Request}
-import zio.json.*
-import zio.direct.*
+import zio.http.Request
 
 import java.util.UUID
-
-extension (body: Body) {
-
-  def parse[T](implicit decoder: JsonDecoder[T]): IO[DomainError, T] = {
-    defer {
-      val text = body.asString.mapError(error => new DomainError(cause = error.some)).run
-
-      ZIO
-        .fromEither(text.fromJson[T](using decoder))
-        .mapError(message => DomainError(message = s"Invalid request format: $message".some))
-        .run
-    }
-  }
-}
 
 extension (request: Request) {
   def getLastUrlParameter(): ZIO[Any, DomainError, String] = {

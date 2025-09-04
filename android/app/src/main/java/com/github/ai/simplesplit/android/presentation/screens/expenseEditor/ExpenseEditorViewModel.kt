@@ -1,7 +1,6 @@
 package com.github.ai.simplesplit.android.presentation.screens.expenseEditor
 
 import com.github.ai.simplesplit.android.R
-import com.github.ai.simplesplit.android.data.api.coverters.toCurrency
 import com.github.ai.simplesplit.android.presentation.core.ResourceProvider
 import com.github.ai.simplesplit.android.presentation.core.compose.navigation.Router
 import com.github.ai.simplesplit.android.presentation.core.mvi.MviViewModel
@@ -49,7 +48,7 @@ class ExpenseEditorViewModel(
             emit(ExpenseEditorState.Loading)
 
             val memberNames = args.group.members.map { member -> member.name }
-            val currency = args.group.currency.toCurrency()
+            val currency = args.group.currency
 
             when (args.mode) {
                 ExpenseEditorMode.NewExpense -> {

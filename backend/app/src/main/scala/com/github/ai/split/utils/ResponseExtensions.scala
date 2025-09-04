@@ -3,11 +3,10 @@ package com.github.ai.split.utils
 import com.github.ai.split.api.ErrorMessageDto
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.*
+import com.google.gson.GsonBuilder
 import zio.http.{Body, Response, Status}
-import zio.json.*
 
 import java.nio.charset.StandardCharsets.UTF_8
-import java.nio.charset.{Charset, StandardCharsets}
 import java.util.Base64
 import scala.annotation.tailrec
 
@@ -31,15 +30,18 @@ extension (exception: DomainError) {
       .toList
 
     val response = ErrorMessageDto(
-      message = if (hasMessage) exception.message.map(_.trim) else None,
-      exception = exceptionToPrint.toString.trim,
-      stacktraceBase64 = encodedStacktrace,
-      stacktraceLines = stacktraceLines
+      if (hasMessage) exception.message.map(_.trim).getOrElse("") else null,
+      exceptionToPrint.toString.trim,
+      encodedStacktrace,
+      stacktraceLines.toJavaList()
     )
+
+    // TODO: use JsonSerializable
+    val gson = GsonBuilder().setPrettyPrinting().create()
 
     Response.error(
       status = Status.BadRequest,
-      body = Body.fromString(response.toJsonPretty, UTF_8)
+      body = Body.fromString(gson.toJson(gson), UTF_8)
     )
   }
 
