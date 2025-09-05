@@ -2,7 +2,9 @@ package com.github.ai.simplesplit.android.data.database.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 
+@Serializable
 @Entity("currencies")
 data class CurrencyEntity(
     @PrimaryKey

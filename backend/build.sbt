@@ -4,16 +4,20 @@ val zioJsonVersion = "0.6.2"
 val circeVersion = "0.14.10"
 val zioDirect = "1.0.0-RC7"
 val zioHttp = "3.0.1"
+val gsonVersion = "2.11.0"
 
 ThisBuild / scalaVersion := scala3Version
-ThisBuild / version := "0.1.0-SNAPSHOT"
+ThisBuild / version := "0.1.0"
 
 lazy val api = project
   .in(file("api"))
   .settings(
     name := "simple-split-api",
+    artifactName := { (sv: ScalaVersion, module: ModuleID, artifact: Artifact) =>
+      artifact.name + "." + artifact.extension
+    },
     libraryDependencies ++= Seq(
-      "dev.zio" %% "zio-json" % zioJsonVersion
+      "com.google.code.gson" % "gson" % gsonVersion
     )
   )
 
@@ -61,23 +65,6 @@ lazy val app = project
     )
   )
 
-lazy val generateKotlinClasses = taskKey[Unit]("Generate Kotlin API classes")
-
-lazy val codegen = project
-  .in(file("codegen"))
-  .dependsOn(api)
-  .settings(
-    name := "simple-split-codegen",
-    libraryDependencies ++= Seq(
-      "dev.zio" %% "zio" % zioVersion,
-      "dev.zio" %% "zio-json" % zioJsonVersion,
-      "dev.zio" %% "zio-direct" % zioDirect
-    ),
-    generateKotlinClasses := {
-      (Compile / runMain).toTask(" com.github.ai.split.codegen.TranspilerMain api/src/main/scala ./../android/backend-api/src/main/kotlin").value
-    },
-  )
-
 lazy val apiClient = project
   .in(file("api-client"))
   .dependsOn(api)
@@ -92,9 +79,7 @@ lazy val apiClient = project
 
     libraryDependencies ++= Seq(
       "dev.zio" %% "zio" % zioVersion,
-      "dev.zio" %% "zio-json" % zioJsonVersion,
       "dev.zio" %% "zio-direct" % zioDirect,
-      "dev.zio" %% "zio-http" % zioHttp,
-      "dev.zio" %% "zio-json" % zioJsonVersion
+      "dev.zio" %% "zio-http" % zioHttp
     )
   )

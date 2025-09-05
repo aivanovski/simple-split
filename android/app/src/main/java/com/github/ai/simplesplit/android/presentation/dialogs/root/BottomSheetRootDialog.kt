@@ -11,7 +11,7 @@ import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
 import arrow.core.getOrElse
 import com.github.ai.simplesplit.android.R
-import com.github.ai.simplesplit.android.data.json.JsonSerializer
+import com.github.ai.simplesplit.android.data.json.ArgumentSerializer
 import com.github.ai.simplesplit.android.databinding.ComposeViewBinding
 import com.github.ai.simplesplit.android.di.GlobalInjector.inject
 import com.github.ai.simplesplit.android.presentation.core.compose.theme.AppTheme
@@ -22,9 +22,9 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 class BottomSheetRootDialog : BottomSheetDialogFragment() {
 
     private val themeProvider: ThemeProvider by inject()
+    private val serializer: ArgumentSerializer by inject()
 
     private val dialogArgs: Dialog by lazy {
-        val serializer = JsonSerializer()
         val args = arguments?.getString(ARGS)
         serializer.deserialize<Dialog>(args ?: "").getOrElse {
             throw IllegalArgumentException("Dialog args not found")
@@ -67,18 +67,17 @@ class BottomSheetRootDialog : BottomSheetDialogFragment() {
         private const val ARGS = "args"
 
         fun newInstance(dialog: Dialog): BottomSheetDialogFragment {
-            val serialized = JsonSerializer()
+            val fragment = BottomSheetRootDialog()
 
             val args = Bundle()
                 .apply {
                     // TODO: should be optimized
-                    putString(ARGS, serialized.serialize(dialog))
+                    putString(ARGS, fragment.serializer.serialize(dialog))
                 }
 
-            return BottomSheetRootDialog()
-                .apply {
-                    arguments = args
-                }
+            fragment.arguments = args
+
+            return fragment
         }
     }
 }

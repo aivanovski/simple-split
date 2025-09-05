@@ -2,9 +2,11 @@ package com.github.ai.split.client
 
 import com.github.ai.split.api.{NewExpenseDto, UserNameDto, UserUidDto}
 import com.github.ai.split.api.request.{PostExpenseRequest, PostGroupRequest, PostMemberRequest, PutMemberRequest}
+import com.google.gson.GsonBuilder
 import zio.*
-import zio.json.*
 import zio.http.*
+
+import scala.jdk.CollectionConverters.*
 
 class ApiClient(
   private val client: Client
@@ -12,6 +14,7 @@ class ApiClient(
 
   type ApiResponse = ZIO[Scope, Throwable, Response]
 
+  private val gson = GsonBuilder().setPrettyPrinting().create()
   private val DefaultPassword = "abc123"
   private val baseUrl = "https://127.0.0.1:8443"
 
@@ -35,49 +38,47 @@ class ApiClient(
   }
 
   def postGroup(): ApiResponse = {
+    val body = PostGroupRequest(
+      DefaultPassword,
+      "Oktoberfest",
+      "Amazing party",
+      "USD",
+      List("Bob", "Alan").map(UserNameDto(_)).asJava,
+      List(
+        NewExpenseDto(
+          "Traditional Beer & Pretzels",
+          "Authentic Bavarian beer and pretzels at Oktoberfest",
+          45.50,
+          List(UserNameDto("Bob")).asJava,
+          true,
+          List.empty.asJava
+        ),
+        // Option 2: Entry tickets
+        NewExpenseDto(
+          "Oktoberfest Entry Tickets",
+          "Entry tickets for the beer festival",
+          24.00,
+          List(UserNameDto("Alan")).asJava,
+          true,
+          List.empty.asJava
+        ),
+
+        // Option 3: Traditional food
+        NewExpenseDto(
+          "Bratwurst and Sauerkraut",
+          "Traditional Bavarian sausages and sauerkraut",
+          32.75,
+          List(UserNameDto("Bob")).asJava,
+          true,
+          List.empty.asJava
+        )
+      ).asJava
+    )
+
     client.request(
       Request.post(
         path = s"$baseUrl/group",
-        body = Body.fromString(
-          PostGroupRequest(
-            password = DefaultPassword,
-            title = "Oktoberfest",
-            description = Some("Amazing party"),
-            currencyIsoCode = "USD",
-            members = Some(List("Bob", "Alan").map(UserNameDto(_))),
-            expenses = Some(
-              List(
-                NewExpenseDto(
-                  title = "Traditional Beer & Pretzels",
-                  description = Some("Authentic Bavarian beer and pretzels at Oktoberfest"),
-                  amount = 45.50,
-                  paidBy = List(UserNameDto("Bob")),
-                  isSplitBetweenAll = Some(true),
-                  splitBetween = None
-                ),
-                // Option 2: Entry tickets
-                NewExpenseDto(
-                  title = "Oktoberfest Entry Tickets",
-                  description = Some("Entry tickets for the beer festival"),
-                  amount = 24.00,
-                  paidBy = List(UserNameDto("Alan")),
-                  isSplitBetweenAll = Some(true),
-                  splitBetween = None
-                ),
-
-                // Option 3: Traditional food
-                NewExpenseDto(
-                  title = "Bratwurst and Sauerkraut",
-                  description = Some("Traditional Bavarian sausages and sauerkraut"),
-                  amount = 32.75,
-                  paidBy = List(UserNameDto("Bob")),
-                  isSplitBetweenAll = Some(true),
-                  splitBetween = None
-                )
-              )
-            )
-          ).toJsonPretty
-        )
+        body = Body.fromString(gson.toJson(body))
       )
     )
   }
@@ -86,20 +87,20 @@ class ApiClient(
     password: String = DefaultPassword,
     title: String = "Beer"
   ): ApiResponse = {
+    val body = PostExpenseRequest(
+      Groups.TripToDisneyLand,
+      title,
+      "",
+      18.0,
+      List(UserUidDto(Users.Mickey)).asJava,
+      true,
+      List.empty.asJava
+    )
+
     client.request(
       Request.post(
         path = s"$baseUrl/expense?password=$password",
-        body = Body.fromString(
-          PostExpenseRequest(
-            groupUid = Groups.TripToDisneyLand,
-            title = title,
-            description = None,
-            amount = 18.0,
-            paidBy = List(UserUidDto(Users.Mickey)),
-            isSplitBetweenAll = Some(true),
-            splitBetween = None
-          ).toJsonPretty
-        )
+        body = Body.fromString(gson.toJson(body))
       )
     )
   }
@@ -109,15 +110,15 @@ class ApiClient(
     groupUid: String = Groups.TripToDisneyLand,
     userName: String = "Bob"
   ): ApiResponse = {
+    val body = PostMemberRequest(
+      groupUid,
+      userName
+    )
+
     client.request(
       Request.post(
         path = s"$baseUrl/member?password=$password",
-        body = Body.fromString(
-          PostMemberRequest(
-            groupUid = groupUid,
-            name = userName
-          ).toJsonPretty
-        )
+        body = Body.fromString(gson.toJson(body))
       )
     )
   }
@@ -142,9 +143,9 @@ class ApiClient(
       Request.put(
         path = s"$baseUrl/member/$memberUid?password=$password",
         body = Body.fromString(
-          PutMemberRequest(
-            name = newName
-          ).toJsonPretty
+          gson.toJson(
+            PutMemberRequest(newName)
+          )
         )
       )
     )

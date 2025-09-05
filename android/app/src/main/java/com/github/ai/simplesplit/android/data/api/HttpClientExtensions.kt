@@ -1,7 +1,9 @@
 package com.github.ai.simplesplit.android.data.api
 
 import arrow.core.Either
+import arrow.core.computations.ResultEffect.bind
 import arrow.core.raise.either
+import com.github.ai.simplesplit.android.data.json.JsonSerializer
 import com.github.ai.simplesplit.android.model.exception.ApiException
 import com.github.ai.simplesplit.android.model.exception.InvalidResponseException
 import com.github.ai.simplesplit.android.model.exception.NetworkException
@@ -13,6 +15,7 @@ import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
@@ -28,7 +31,8 @@ enum class RequestType {
 suspend inline fun <reified Request, reified Response> HttpClient.sendRequest(
     type: RequestType,
     url: String,
-    body: Request? = null
+    body: Request? = null,
+    jsonSerializer: JsonSerializer
 ): Either<ApiException, Response> {
     val client = this
 
@@ -40,14 +44,14 @@ suspend inline fun <reified Request, reified Response> HttpClient.sendRequest(
                 RequestType.POST -> client.post(url) {
                     contentType(ContentType.Application.Json)
                     if (body != null) {
-                        setBody(body)
+                        setBody(jsonSerializer.serialize(body))
                     }
                 }
 
                 RequestType.PUT -> client.put(url) {
                     contentType(ContentType.Application.Json)
                     if (body != null) {
-                        setBody(body)
+                        setBody(jsonSerializer.serialize(body))
                     }
                 }
 
@@ -59,21 +63,25 @@ suspend inline fun <reified Request, reified Response> HttpClient.sendRequest(
 
         val status = response.status
         if (status != HttpStatusCode.OK) {
-            // TODO: Kotlin serializer cannot parse quoted json object from server
-            val errorBody = Either
-                .catch { response.body<ErrorMessageDto>() }
+            val errorText = response.bodyAsText()
+            val error = jsonSerializer
+                .deserialize<ErrorMessageDto>(errorText)
                 .getOrNull()
 
             raise(
                 InvalidResponseException(
                     statusCode = status.value,
-                    errorMessage = errorBody
+                    errorMessage = error
                 )
             )
         }
 
-        Either.catch { response.body<Response>() }
+        jsonSerializer.deserialize<Response>(response.bodyAsText())
             .mapLeft { error -> ApiException(cause = error) }
             .bind()
+
+        // Either.catch { response.body<Response>() }
+        //     .mapLeft { error -> ApiException(cause = error) }
+        //     .bind()
     }
 }

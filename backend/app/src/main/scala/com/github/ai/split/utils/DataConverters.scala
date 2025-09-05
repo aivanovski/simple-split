@@ -68,15 +68,15 @@ def toExpenseDto(
       }
     }
   } yield ExpenseDto(
-    uid = expense.uid.toString,
-    title = expense.title,
-    description = expense.description.some,
-    amount = expense.amount,
-    currency = toCurrencyDto(currency),
-    paidBy = paidByUsers,
-    splitBetween = splitBetweenUsers,
-    created = toTimestampDto(expense.created),
-    modified = toTimestampDto(expense.modified)
+    expense.uid.toString,
+    expense.title,
+    expense.description,
+    expense.amount,
+    toCurrencyDto(currency),
+    paidByUsers.toJavaList(),
+    splitBetweenUsers.toJavaList(),
+    toTimestampDto(expense.created),
+    toTimestampDto(expense.modified)
   )
 }
 
@@ -95,8 +95,8 @@ def toMemberDtos(
         .fromOption(userOption)
         .map(user =>
           MemberDto(
-            uid = memberUid.toString,
-            name = user.name
+            memberUid.toString,
+            user.name
           )
         )
         .mapError(_ => DomainError(message = "User not found".some))
@@ -158,15 +158,15 @@ def toGroupDto(
       )
     )
   } yield GroupDto(
-    uid = group.uid.toString,
-    title = group.title,
-    description = group.description,
-    currency = toCurrencyDto(currency),
-    members = memberDtos,
-    expenses = transformedExpenses,
-    paybackTransactions = paybackTransactions.map(transaction => toTransactionDto(transaction)),
-    created = toTimestampDto(group.created),
-    modified = toTimestampDto(group.modified)
+    group.uid.toString,
+    group.title,
+    group.description,
+    toCurrencyDto(currency),
+    memberDtos.toJavaList(),
+    transformedExpenses.toJavaList(),
+    paybackTransactions.map(transaction => toTransactionDto(transaction)).toJavaList(),
+    toTimestampDto(group.created),
+    toTimestampDto(group.modified)
   )
 }
 
@@ -174,26 +174,26 @@ def toTransactionDto(
   transaction: Transaction
 ): TransactionDto =
   TransactionDto(
-    creditorUid = transaction.creditor.toString,
-    debtorUid = transaction.debtor.toString,
-    amount = transaction.amount
+    transaction.creditor.toString,
+    transaction.debtor.toString,
+    transaction.amount
   )
 
 def toCurrencyDto(
   currency: CurrencyEntity
 ): CurrencyDto =
   CurrencyDto(
-    isoCode = currency.isoCode,
-    name = currency.name,
-    symbol = currency.symbol
+    currency.isoCode,
+    currency.name,
+    currency.symbol
   )
 
 def toTimestampDto(
   dateTime: LocalDateTime
 ): TimestampDto =
   TimestampDto(
-    timestampSeconds = dateTime.toEpochSecond(ZoneOffset.UTC),
-    formatted = dateTime.format(TIMESTAMP_FORMAT)
+    dateTime.toEpochSecond(ZoneOffset.UTC),
+    dateTime.format(TIMESTAMP_FORMAT)
   )
 
 private val TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")

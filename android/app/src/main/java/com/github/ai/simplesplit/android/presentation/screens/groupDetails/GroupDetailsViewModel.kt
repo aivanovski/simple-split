@@ -2,6 +2,7 @@ package com.github.ai.simplesplit.android.presentation.screens.groupDetails
 
 import androidx.annotation.StringRes
 import com.github.ai.simplesplit.android.R
+import com.github.ai.simplesplit.android.data.api.coverters.toGroup
 import com.github.ai.simplesplit.android.data.database.model.GroupCredentials
 import com.github.ai.simplesplit.android.presentation.core.ResourceProvider
 import com.github.ai.simplesplit.android.presentation.core.compose.cells.CellEvent
@@ -187,9 +188,9 @@ class GroupDetailsViewModel(
                 ifLeft = { error ->
                     emit(GroupDetailsState.Error(error.toErrorMessage(resources)))
                 },
-                ifRight = { group ->
-                    data = group
-                    emit(createScreenState(group))
+                ifRight = { groupDto ->
+                    data = groupDto.toGroup()
+                    emit(createScreenState(groupDto))
                 }
             )
         }.flowOn(Dispatchers.IO)
@@ -215,7 +216,7 @@ class GroupDetailsViewModel(
                     emit(newState)
                 },
                 ifRight = { group ->
-                    data = group
+                    data = group.toGroup()
                     emit(createScreenState(group))
                 }
             )

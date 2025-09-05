@@ -130,10 +130,11 @@ dependencies {
     implementation(libs.ktorClientOkhttp)
     implementation(libs.ktorClientLogging)
     implementation(libs.ktorClientNegotiation)
-    implementation(libs.ktorSerializationJson)
+    // implementation(libs.ktorSerializationJson)
 
     // Json
     implementation(libs.kotlinx.json)
+    implementation(libs.gson)
 
     // Arrow
     implementation(libs.arrow.core)
@@ -144,7 +145,7 @@ dependencies {
     implementation(libs.decompose.extensions)
 
     // Api
-    implementation(project(":backend-api"))
+    implementation(files("libs/simple-split-api.jar"))
 
     // Preferences
     implementation(libs.ksprefs)

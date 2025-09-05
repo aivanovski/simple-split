@@ -20,19 +20,26 @@ import com.github.ai.split.entity.{
   NewGroup,
   NewUser,
   SplitBetweenAll,
-  SplitBetweenMembers,
-  UserReference
+  SplitBetweenMembers
 }
 import com.github.ai.split.api.request.{PostGroupRequest, PutGroupRequest}
 import com.github.ai.split.api.response.{GetGroupsResponse, PostGroupResponse, PutGroupResponse}
+import com.github.ai.split.data.JsonSerializer
 import com.github.ai.split.entity.Access.{DENIED, GRANTED}
 import com.github.ai.split.entity.FileExtension.{CSV, HTML}
-import com.github.ai.split.entity.db.{ExpenseEntity, GroupMemberEntity, GroupUid, UserEntity, UserUid}
+import com.github.ai.split.entity.db.{GroupUid, UserUid}
 import com.github.ai.split.entity.exception.DomainError
-import com.github.ai.split.utils.{getLastUrlParameter, parse, parsePasswordParam, parseUid, parseUidFromUrl, some}
+import com.github.ai.split.utils.{
+  toJavaList,
+  toScalaList,
+  getLastUrlParameter,
+  parsePasswordParam,
+  parseUid,
+  parseUidFromUrl,
+  some
+}
 import zio.{IO, ZIO}
 import zio.http.{Body, Charsets, Header, Headers, MediaType, Request, Response, Status}
-import zio.json.*
 import zio.direct.*
 
 import java.util.UUID
@@ -47,7 +54,8 @@ class GroupController(
   private val assembleGroupUseCase: AssembleGroupResponseUseCase,
   private val assembleGroupsUseCase: AssembleGroupsResponseUseCase,
   private val updateGroupUseCase: UpdateGroupUseCase,
-  private val exportDataUseCase: ExportGroupDataUseCase
+  private val exportDataUseCase: ExportGroupDataUseCase,
+  private val jsonSerializer: JsonSerializer
 ) {
 
   def getGroups(
@@ -68,13 +76,15 @@ class GroupController(
 
       groups <- assembleGroupsUseCase.assembleGroupDtos(uids = grantedGroupsUids)
       errors <- ZIO
-        .succeed(deniedGroupUids.map { uid =>
-          GetGroupErrorDto(
-            uid = uid.toString,
-            message = "Not found"
-          )
-        })
-    } yield Response.json(GetGroupsResponse(groups, errors).toJsonPretty)
+        .succeed(
+          deniedGroupUids.map { uid =>
+            GetGroupErrorDto(
+              uid.toString,
+              "Not found"
+            )
+          }
+        )
+    } yield Response.json(jsonSerializer.serialize(GetGroupsResponse(groups.toJavaList(), errors.toJavaList())))
   }
 
   def updateGroup(
@@ -85,9 +95,9 @@ class GroupController(
       password <- parsePasswordParam(request)
       _ <- accessResolver.canAccessToGroup(groupUid = groupUid, password = password)
 
-      data <- request.body.parse[PutGroupRequest]
+      data <- jsonSerializer.deserializer(request.body.asString, classOf[PutGroupRequest])
       newMembers <- {
-        val newMembers = data.members.getOrElse(List.empty)
+        val newMembers = data.members.toScalaList()
         if (newMembers.nonEmpty) {
           ZIO
             .collectAll(
@@ -101,37 +111,37 @@ class GroupController(
 
       _ <- updateGroupUseCase.updateGroup(
         groupUid = groupUid,
-        newPassword = data.password.map(_.trim).filter(_.nonEmpty),
-        newTitle = data.title.map(_.trim).filter(_.nonEmpty),
-        newDescription = data.description.map(_.trim).filter(_.nonEmpty),
-        newCurrencyIsoCode = data.currencyIsoCode.map(_.trim).filter(_.nonEmpty),
+        newPassword = Option(data.password).map(_.trim).filter(_.nonEmpty),
+        newTitle = Option(data.title).map(_.trim).filter(_.nonEmpty),
+        newDescription = Option(data.description).map(_.trim).filter(_.nonEmpty),
+        newCurrencyIsoCode = Option(data.currencyIsoCode).map(_.trim).filter(_.nonEmpty),
         newMemberUids = newMembers
       )
 
       groupDto <- assembleGroupUseCase.assembleGroupDto(groupUid = groupUid)
-    } yield Response.json(PutGroupResponse(groupDto).toJsonPretty)
+    } yield Response.json(jsonSerializer.serialize(PutGroupResponse(groupDto)))
   }
 
   def createGroup(
     request: Request
   ): IO[DomainError, Response] = {
     for {
-      data <- request.body.parse[PostGroupRequest]
+      data <- jsonSerializer.deserializer(request.body.asString, classOf[PostGroupRequest])
 
       newExpenses <- parseNewExpenses(
-        expenses = data.expenses.getOrElse(List.empty)
+        expenses = data.expenses.toScalaList()
       )
 
       newGroup <- {
         val newUsers = data.members
-          .getOrElse(List.empty)
+          .toScalaList()
           .map(member => NewUser(name = member.name))
 
         addGroupUseCase.addGroup(
           NewGroup(
             password = data.password.trim,
             title = data.title.trim,
-            description = data.description.getOrElse(""),
+            description = data.description.trim,
             currencyIsoCode = data.currencyIsoCode.trim,
             members = newUsers,
             expenses = newExpenses
@@ -140,7 +150,7 @@ class GroupController(
       }
 
       groupDto <- assembleGroupUseCase.assembleGroupDto(groupUid = newGroup.uid)
-    } yield Response.json(PostGroupResponse(groupDto).toJsonPretty)
+    } yield Response.json(jsonSerializer.serialize(PostGroupResponse(groupDto)))
   }
 
   def exportGroup(
@@ -179,16 +189,16 @@ class GroupController(
     expenses: List[NewExpenseDto]
   ): IO[DomainError, List[NewExpense]] = {
     val newExpenses = expenses.map { expense =>
-      val isSplitBetweenAll = expense.isSplitBetweenAll.getOrElse(true)
+      val isSplitBetweenAll = Some(expense.isSplitBetweenAll).map(_.booleanValue()).getOrElse(true)
       val splitMembers = expense.splitBetween
-        .getOrElse(List.empty)
+        .toScalaList()
         .map(splitMember => NameReference(name = splitMember.name))
 
       NewExpense(
         title = expense.title,
-        description = expense.description.getOrElse(""),
+        description = expense.description,
         amount = expense.amount,
-        paidBy = expense.paidBy.map(payer => NameReference(name = payer.name)),
+        paidBy = expense.paidBy.toScalaList().map(payer => NameReference(name = payer.name)),
         split = if (isSplitBetweenAll) SplitBetweenAll else SplitBetweenMembers(splitMembers)
       )
     }

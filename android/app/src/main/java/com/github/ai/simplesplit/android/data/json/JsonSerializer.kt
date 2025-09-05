@@ -3,27 +3,25 @@ package com.github.ai.simplesplit.android.data.json
 import arrow.core.Either
 import arrow.core.raise.either
 import com.github.ai.simplesplit.android.model.exception.ParsingException
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
+import com.google.gson.GsonBuilder
+import com.google.gson.JsonSyntaxException
 
 class JsonSerializer {
 
-    @OptIn(ExperimentalSerializationApi::class)
-    val json = Json {
-        explicitNulls = false
-        ignoreUnknownKeys = true
-    }
+    val gson = GsonBuilder()
+        .setPrettyPrinting()
+        .create()
 
     inline fun <reified T> deserialize(text: String): Either<ParsingException, T> =
         either {
             try {
-                json.decodeFromString(text)
-            } catch (exception: SerializationException) {
+                gson.fromJson(text, T::class.java)
+            } catch (exception: JsonSyntaxException) {
                 raise(ParsingException(cause = exception))
             }
         }
 
-    inline fun <reified T> serialize(data: T): String = json.encodeToString(data)
+    inline fun <reified T> serialize(data: T): String {
+        return gson.toJson(data)
+    }
 }

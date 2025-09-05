@@ -10,13 +10,13 @@ import com.github.ai.split.domain.usecases.{
 }
 import com.github.ai.split.api.request.{PostMemberRequest, PutMemberRequest}
 import com.github.ai.split.api.response.{DeleteMemberResponse, PostMemberResponse, PutMemberResponse}
+import com.github.ai.split.data.JsonSerializer
 import com.github.ai.split.domain.AccessResolverService
 import com.github.ai.split.entity.db.{GroupUid, MemberUid}
-import com.github.ai.split.utils.{parse, parsePasswordParam, parseUid, parseUidFromUrl}
+import com.github.ai.split.utils.{parsePasswordParam, parseUid, parseUidFromUrl}
 import com.github.ai.split.entity.exception.DomainError
 import zio.*
 import zio.http.{Request, Response}
-import zio.json.*
 import zio.direct.*
 
 class MemberController(
@@ -27,7 +27,8 @@ class MemberController(
   private val addMemberUseCase: AddMembersUseCase,
   private val removeMembersUseCase: RemoveMembersUseCase,
   private val updateMemberUseCase: UpdateMemberUseCase,
-  private val assembleGroupUseCase: AssembleGroupResponseUseCase
+  private val assembleGroupUseCase: AssembleGroupResponseUseCase,
+  private val jsonSerializer: JsonSerializer
 ) {
 
   def createMember(
@@ -35,7 +36,7 @@ class MemberController(
   ): IO[DomainError, Response] = {
     for {
       password <- parsePasswordParam(request)
-      body <- request.body.parse[PostMemberRequest]
+      body <- jsonSerializer.deserializer(request.body.asString, classOf[PostMemberRequest])
       groupUid <- body.groupUid.parseUid().map(uid => GroupUid(uid))
       _ <- accessResolverService.canAccessToGroup(groupUid = groupUid, password = password)
 
@@ -44,7 +45,7 @@ class MemberController(
         name = body.name
       )
       groupDto <- assembleGroupUseCase.assembleGroupDto(groupUid)
-    } yield Response.json(PostMemberResponse(groupDto).toJsonPretty)
+    } yield Response.json(jsonSerializer.serialize(PostMemberResponse(groupDto)))
   }
 
   def updateMember(
@@ -53,13 +54,14 @@ class MemberController(
     defer {
       val password = parsePasswordParam(request).run
       val memberUid = parseUidFromUrl(request).map(uid => MemberUid(uid)).run
-      val body = request.body.parse[PutMemberRequest].run
+      val body = jsonSerializer.deserializer(request.body.asString, classOf[PutMemberRequest]).run
+
       accessResolver.canAccessToMember(memberUid = memberUid, password = password).run
 
       val member = updateMemberUseCase.updateMember(memberUid = memberUid, newName = body.name).run
 
       val groupDto = assembleGroupUseCase.assembleGroupDto(groupUid = member.groupUid).run
-      Response.json(PutMemberResponse(groupDto).toJsonPretty)
+      Response.json(jsonSerializer.serialize(PutMemberResponse(groupDto)))
     }
   }
 
@@ -76,6 +78,6 @@ class MemberController(
       _ <- removeMembersUseCase.removeMemberByUids(memberUids = List(memberUid))
 
       groupDto <- assembleGroupUseCase.assembleGroupDto(groupUid = group.uid)
-    } yield Response.json(DeleteMemberResponse(groupDto).toJsonPretty)
+    } yield Response.json(jsonSerializer.serialize(DeleteMemberResponse(groupDto)))
   }
 }
