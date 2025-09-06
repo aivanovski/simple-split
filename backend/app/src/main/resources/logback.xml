@@ -22,5 +22,5 @@
 
     <logger name="io.netty" level="INFO" />
     <logger name="com.zaxxer" level="INFO" />
-    <logger name="io.getquill" level="INFO" />
+    <logger name="slick" level="INFO" />
 </configuration>

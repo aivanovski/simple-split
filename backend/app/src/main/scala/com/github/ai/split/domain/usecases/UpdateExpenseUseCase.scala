@@ -10,7 +10,15 @@ import com.github.ai.split.entity.{
   SplitBetweenMembers,
   UserReference
 }
-import com.github.ai.split.entity.db.{ExpenseEntity, ExpenseUid, GroupUid, MemberUid, PaidByEntity, SplitBetweenEntity}
+import com.github.ai.split.entity.db.{
+  ExpenseEntity,
+  ExpenseUid,
+  GroupUid,
+  MemberUid,
+  PaidByEntity,
+  SplitBetweenEntity,
+  Timestamp
+}
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.some
 import com.github.ai.split.domain.usecases.ResolveUserReferencesUseCase
@@ -111,7 +119,7 @@ class UpdateExpenseUseCase(
             amount = newAmount.getOrElse(expense.entity.amount),
             isSplitBetweenAll = isSplitBetweenAll,
             created = expense.entity.created,
-            modified = modified
+            modified = Timestamp.now()
           ),
           paidBy = paidBy,
           splitBetween = splitBetween

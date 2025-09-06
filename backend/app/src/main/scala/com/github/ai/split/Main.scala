@@ -1,13 +1,12 @@
 package com.github.ai.split
 
 import com.github.ai.split.data.currency.CurrencyParser
+import com.github.ai.split.data.db.AppDatabase
 import com.github.ai.split.domain.CliArgumentParser
 import com.github.ai.split.domain.usecases.{FillTestDataUseCase, StartUpServerUseCase}
 import com.github.ai.split.entity.CliArguments
 import com.github.ai.split.entity.HttpProtocol.{HTTP, HTTPS}
 import com.github.ai.split.presentation.routes.{CurrencyRoutes, ExpenseRoutes, ExportRoutes, GroupRoutes, MemberRoutes}
-import io.getquill.SnakeCase
-import io.getquill.jdbczio.Quill
 import zio.*
 import zio.http.*
 import zio.logging.LogFormat
@@ -102,6 +101,9 @@ object Main extends ZIOAppDefault {
         Layers.passwordService,
         Layers.accessResolverService,
 
+        // Database
+        Layers.appDatabase,
+
         // Repositories
         Layers.expenseRepository,
         Layers.groupRepository,
@@ -120,13 +122,7 @@ object Main extends ZIOAppDefault {
         Layers.currencyParser,
         Layers.jsonSerialized,
         Server.live,
-        ZLayer.succeed(serverConfig),
-        Quill.H2.fromNamingStrategy(SnakeCase),
-        if (arguments.isUseInMemoryDatabase) {
-          Quill.DataSource.fromPrefix("test-h2db")
-        } else {
-          Quill.DataSource.fromPrefix("h2db")
-        }
+        ZLayer.succeed(serverConfig)
       )
     } yield ()
   }

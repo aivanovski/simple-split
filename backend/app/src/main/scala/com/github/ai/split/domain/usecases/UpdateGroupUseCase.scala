@@ -9,7 +9,7 @@ import com.github.ai.split.data.db.dao.{
 }
 import com.github.ai.split.domain.usecases.AddMembersUseCase
 import com.github.ai.split.domain.PasswordService
-import com.github.ai.split.entity.db.{GroupEntity, GroupMemberEntity, GroupUid, MemberUid, UserUid}
+import com.github.ai.split.entity.db.{GroupEntity, GroupMemberEntity, GroupUid, MemberUid, Timestamp, UserUid}
 import com.github.ai.split.entity.exception.DomainError
 import zio.*
 import zio.direct.*
@@ -68,21 +68,19 @@ class UpdateGroupUseCase(
       _ <- updateMembers(groupUid = groupUid, newMembersOption = newMemberUids)
 
       _ <- {
-        val modified = LocalDateTime.now(ZoneOffset.UTC)
-
         groupDao.update(
           GroupEntity(
             uid = groupUid,
             title = newTitle.getOrElse(group.title),
             description = newDescription.getOrElse(group.description),
-            passwordHash = if (newPassword.isDefined) {
-              Some(passwordService.hashPassword(newPassword.get))
+            passwordHash = if (newPassword.nonEmpty) {
+              passwordService.hashPassword(newPassword.get)
             } else {
               group.passwordHash
             },
             currencyIsoCode = newCurrencyIsoCode.getOrElse(group.currencyIsoCode),
             created = group.created,
-            modified = modified
+            modified = Timestamp.now()
           )
         )
       }

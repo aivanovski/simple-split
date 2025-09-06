@@ -1,6 +1,6 @@
 package com.github.ai.split.domain.usecases
 
-import com.github.ai.split.entity.db.{GroupEntity, GroupUid}
+import com.github.ai.split.entity.db.{GroupEntity, GroupUid, Timestamp}
 import com.github.ai.split.data.db.dao.{GroupEntityDao, GroupMemberEntityDao}
 import com.github.ai.split.domain.PasswordService
 import com.github.ai.split.entity.NewGroup
@@ -30,7 +30,7 @@ class AddGroupUseCase(
       validateData(newGroup).run
 
       val groupUid = GroupUid(UUID.randomUUID())
-      val created = LocalDateTime.now(ZoneOffset.UTC)
+      val created = Timestamp.now()
 
       val group = groupDao
         .add(
@@ -39,9 +39,9 @@ class AddGroupUseCase(
             title = newGroup.title,
             description = newGroup.description,
             passwordHash = if (newGroup.password.nonEmpty) {
-              passwordService.hashPassword(newGroup.password).some
+              passwordService.hashPassword(newGroup.password)
             } else {
-              None
+              ""
             },
             currencyIsoCode = newGroup.currencyIsoCode,
             created = created,

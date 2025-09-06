@@ -1,75 +1,33 @@
 package com.github.ai.split.data.db.dao
 
-import com.github.ai.split.entity.db.{PaidByEntity, SplitBetweenEntity, ExpenseUid, GroupUid}
+import com.github.ai.split.data.db.AppDatabase
+import com.github.ai.split.data.db.{given}
+import com.github.ai.split.entity.db.{ExpenseUid, GroupUid, SplitBetweenEntity}
 import com.github.ai.split.entity.exception.DomainError
-import com.github.ai.split.utils.toDomainError
-import io.getquill.{SnakeCase, querySchema}
-import io.getquill.jdbczio.Quill
-import io.getquill.generic.*
-import io.getquill.*
+import slick.jdbc.PostgresProfile.api.*
 import zio.IO
 
-import java.sql.SQLException
-
 class SplitBetweenEntityDao(
-  quill: Quill.H2[SnakeCase]
-) {
-
-  import quill._
+  db: AppDatabase
+) extends Dao(db = db.context, table = db.SplitBetweenTable) {
 
   def getAll(): IO[DomainError, List[SplitBetweenEntity]] = {
-    val query = quote {
-      querySchema[SplitBetweenEntity]("split_between")
-    }
-
-    run(query)
-      .mapError(_.toDomainError())
+    queryAll()
   }
 
   def getByExpenseUid(expenseUid: ExpenseUid): IO[DomainError, List[SplitBetweenEntity]] = {
-    val query = quote {
-      querySchema[SplitBetweenEntity]("split_between")
-        .filter(_.expenseUid == lift(expenseUid))
-    }
-
-    run(query)
-      .mapError(_.toDomainError())
+    query(table => table.expenseUid === expenseUid)
   }
 
   def getByGroupUid(groupUid: GroupUid): IO[DomainError, List[SplitBetweenEntity]] = {
-    val query = quote {
-      querySchema[SplitBetweenEntity]("split_between")
-        .filter(_.groupUid == lift(groupUid))
-    }
-
-    run(query)
-      .mapError(_.toDomainError())
+    query(table => table.groupUid === groupUid)
   }
 
   def add(splits: List[SplitBetweenEntity]): IO[DomainError, List[SplitBetweenEntity]] = {
-    val insertQuery = quote {
-      liftQuery(splits).foreach { split =>
-        querySchema[SplitBetweenEntity]("split_between")
-          .insertValue(split)
-      }
-    }
-
-    val result: IO[SQLException, List[Long]] = run(insertQuery)
-
-    result
-      .map(_ => splits)
-      .mapError(_.toDomainError())
+    insertAll(splits)
   }
 
   def removeByExpenseUid(expenseUid: ExpenseUid): IO[DomainError, Unit] = {
-    val deleteQuery = quote {
-      querySchema[SplitBetweenEntity]("split_between")
-        .filter(_.expenseUid == lift(expenseUid))
-        .delete
-    }
-
-    run(deleteQuery)
-      .map(_ => ())
-      .mapError(_.toDomainError())
+    delete(table => table.expenseUid === expenseUid)
   }
 }
