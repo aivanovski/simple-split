@@ -11,6 +11,7 @@ import com.github.ai.split.entity.db.{
   MemberUid,
   PaidByEntity,
   SplitBetweenEntity,
+  Timestamp,
   UserEntity,
   UserUid
 }
@@ -68,7 +69,7 @@ def toExpenseDto(
       }
     }
   } yield ExpenseDto(
-    expense.uid.toString,
+    expense.uid.value.toString,
     expense.title,
     expense.description,
     expense.amount,
@@ -95,7 +96,7 @@ def toMemberDtos(
         .fromOption(userOption)
         .map(user =>
           MemberDto(
-            memberUid.toString,
+            memberUid.value.toString,
             user.name
           )
         )
@@ -158,7 +159,7 @@ def toGroupDto(
       )
     )
   } yield GroupDto(
-    group.uid.toString,
+    group.uid.value.toString,
     group.title,
     group.description,
     toCurrencyDto(currency),
@@ -174,8 +175,8 @@ def toTransactionDto(
   transaction: Transaction
 ): TransactionDto =
   TransactionDto(
-    transaction.creditor.toString,
-    transaction.debtor.toString,
+    transaction.creditor.value.toString,
+    transaction.debtor.value.toString,
     transaction.amount
   )
 
@@ -189,11 +190,14 @@ def toCurrencyDto(
   )
 
 def toTimestampDto(
-  dateTime: LocalDateTime
-): TimestampDto =
+  timestamp: Timestamp
+): TimestampDto = {
+  val time = LocalDateTime.ofEpochSecond(timestamp.seconds, 0, ZoneOffset.UTC)
+
   TimestampDto(
-    dateTime.toEpochSecond(ZoneOffset.UTC),
-    dateTime.format(TIMESTAMP_FORMAT)
+    timestamp.seconds,
+    time.format(TIMESTAMP_FORMAT)
   )
+}
 
 private val TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")

@@ -35,7 +35,7 @@ class AccessResolverService(
                   case Some(group) =>
                     AccessResolutionResult(
                       uid = groupUid,
-                      access = if (passwordService.isPasswordMatch(password, group.passwordHash.getOrElse(""))) {
+                      access = if (passwordService.isPasswordMatch(password, group.passwordHash)) {
                         GRANTED
                       } else {
                         DENIED
@@ -93,14 +93,14 @@ class AccessResolverService(
 
   private def isPasswordMatch(
     password: String,
-    passwordHash: Option[String]
+    passwordHash: String
   ): IO[DomainError, Unit] = {
     if (password.isEmpty && passwordHash.isEmpty) {
       ZIO.unit
     } else {
       val isMatch = passwordService.isPasswordMatch(
         password = password,
-        hashedPassword = passwordHash.getOrElse("")
+        hashedPassword = passwordHash
       )
 
       if (isMatch) {

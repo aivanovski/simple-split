@@ -1,75 +1,33 @@
 package com.github.ai.split.data.db.dao
 
-import com.github.ai.split.entity.db.{ExpenseUid, PaidByEntity, GroupUid}
+import com.github.ai.split.data.db.AppDatabase
+import com.github.ai.split.data.db.{given}
+import com.github.ai.split.entity.db.{ExpenseUid, GroupUid, PaidByEntity}
 import com.github.ai.split.entity.exception.DomainError
-import com.github.ai.split.utils.toDomainError
-import io.getquill.{SnakeCase, querySchema}
-import io.getquill.jdbczio.Quill
-import io.getquill.generic.*
-import io.getquill.*
-import zio.*
-
-import java.sql.SQLException
+import slick.jdbc.PostgresProfile.api.*
+import zio.{IO, ZIO}
 
 class PaidByEntityDao(
-  quill: Quill.H2[SnakeCase]
-) {
-
-  import quill._
+  db: AppDatabase
+) extends Dao(db = db.context, table = db.PaidByTable) {
 
   def getAll(): IO[DomainError, List[PaidByEntity]] = {
-    val query = quote {
-      querySchema[PaidByEntity]("paid_by")
-    }
-
-    run(query)
-      .mapError(_.toDomainError())
+    queryAll()
   }
 
   def getByExpenseUid(expenseUid: ExpenseUid): IO[DomainError, List[PaidByEntity]] = {
-    val query = quote {
-      querySchema[PaidByEntity]("paid_by")
-        .filter(_.expenseUid == lift(expenseUid))
-    }
-
-    run(query)
-      .mapError(_.toDomainError())
+    query(table => table.expenseUid === expenseUid)
   }
 
   def getByGroupUid(groupUid: GroupUid): IO[DomainError, List[PaidByEntity]] = {
-    val query = quote {
-      querySchema[PaidByEntity]("paid_by")
-        .filter(_.groupUid == lift(groupUid))
-    }
-
-    run(query)
-      .mapError(_.toDomainError())
+    query(table => table.groupUid === groupUid)
   }
 
   def add(payers: List[PaidByEntity]): IO[DomainError, List[PaidByEntity]] = {
-    val insertQuery = quote {
-      liftQuery(payers).foreach { payer =>
-        querySchema[PaidByEntity]("paid_by")
-          .insertValue(payer)
-      }
-    }
-
-    val result: IO[SQLException, List[Long]] = run(insertQuery)
-
-    result
-      .map(_ => payers)
-      .mapError(_.toDomainError())
+    insertAll(payers)
   }
 
   def removeByExpenseUid(expenseUid: ExpenseUid): IO[DomainError, Unit] = {
-    val deleteQuery = quote {
-      querySchema[PaidByEntity]("paid_by")
-        .filter(_.expenseUid == lift(expenseUid))
-        .delete
-    }
-
-    run(deleteQuery)
-      .map(_ => ())
-      .mapError(_.toDomainError())
+    delete(table => table.expenseUid === expenseUid)
   }
 }

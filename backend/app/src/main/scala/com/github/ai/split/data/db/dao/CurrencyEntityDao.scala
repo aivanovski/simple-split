@@ -1,111 +1,58 @@
 package com.github.ai.split.data.db.dao
 
+import com.github.ai.split.data.db.AppDatabase
 import com.github.ai.split.entity.db.CurrencyEntity
 import com.github.ai.split.entity.exception.DomainError
-import com.github.ai.split.utils.toDomainError
 import com.github.ai.split.utils.some
-import io.getquill.jdbczio.Quill
-import io.getquill.generic.*
-import io.getquill.*
-import zio.*
+import zio.{IO, ZIO}
+import slick.jdbc.PostgresProfile.api.*
 
 class CurrencyEntityDao(
-  quill: Quill.H2[SnakeCase]
-) {
+  db: AppDatabase
+) extends Dao(db = db.context, table = db.CurrencyTable) {
 
-  import quill._
+  private val table = db.CurrencyTable
 
   def getAll(): IO[DomainError, List[CurrencyEntity]] = {
-    val query = quote {
-      querySchema[CurrencyEntity]("currencies")
-    }
-
-    run(query)
-      .mapError(_.toDomainError())
+    queryAll()
   }
 
   def findByIsoCode(isoCode: String): IO[DomainError, Option[CurrencyEntity]] = {
-    val query = quote {
-      querySchema[CurrencyEntity]("currencies")
-        .filter(_.isoCode == lift(isoCode))
-    }
-
-    for {
-      currencies <- run(query).mapError(_.toDomainError())
-    } yield currencies.headOption
+    queryOne(t => t.isoCode === isoCode)
   }
 
   def getByIsoCode(isoCode: String): IO[DomainError, CurrencyEntity] = {
-    val query = quote {
-      querySchema[CurrencyEntity]("currencies")
-        .filter(_.isoCode == lift(isoCode))
-    }
-
-    for {
-      currencies <- run(query).mapError(_.toDomainError())
-      currency <-
-        if (currencies.nonEmpty) {
-          ZIO.succeed(currencies.head)
-        } else {
-          ZIO.fail(DomainError(message = s"Failed to find currency by ISO code: $isoCode".some))
-        }
-    } yield currency
+    queryOne(t => t.isoCode === isoCode)
+      .flatMap { option =>
+        ZIO
+          .fromOption(option)
+          .mapError(_ => DomainError(message = s"Failed to find currency by ISO code: $isoCode".some))
+      }
   }
 
   def getByIsoCodes(isoCodes: List[String]): IO[DomainError, List[CurrencyEntity]] = {
     val isoCodeSet = isoCodes.toSet
 
-    val query = quote {
-      querySchema[CurrencyEntity]("currencies")
-        .filter(currency => liftQuery(isoCodeSet).contains(currency.isoCode))
-    }
-
-    for {
-      currencies <- run(query).mapError(_.toDomainError())
-      _ <-
-        if (currencies.size != isoCodeSet.size) {
+    query(t => t.isoCode inSet isoCodeSet)
+      .flatMap { currencies =>
+        if (currencies.size == isoCodeSet.size) {
+          ZIO.succeed(currencies.toList)
+        } else {
           val foundIsoCodes = currencies.map(_.isoCode).toSet
           val notFoundIsoCodes = isoCodeSet.diff(foundIsoCodes).mkString(", ")
           ZIO.fail(DomainError(message = s"Failed to find currencies: $notFoundIsoCodes".some))
-        } else {
-          ZIO.succeed(())
         }
-    } yield currencies
+      }
   }
 
   def add(currency: CurrencyEntity): IO[DomainError, CurrencyEntity] = {
-    run(
-      quote {
-        querySchema[CurrencyEntity]("currencies")
-          .insertValue(lift(currency))
-      }
-    )
-      .map(_ => currency)
-      .mapError(_.toDomainError())
-  }
-
-  def addBatch(currencies: List[CurrencyEntity]): IO[DomainError, List[CurrencyEntity]] = {
-    run(
-      quote {
-        liftQuery(currencies).foreach(currency =>
-          querySchema[CurrencyEntity]("currencies")
-            .insertValue(currency)
-        )
-      }
-    )
-      .map(_ => currencies)
-      .mapError(_.toDomainError())
+    insert(currency)
   }
 
   def update(currency: CurrencyEntity): IO[DomainError, CurrencyEntity] = {
-    val updateQuery = quote {
-      querySchema[CurrencyEntity]("currencies")
-        .filter(_.isoCode == lift(currency.isoCode))
-        .updateValue(lift(currency))
-    }
-
-    run(updateQuery)
-      .map(_ => currency)
-      .mapError(_.toDomainError())
+    updateOne(
+      predicate = { entity => entity.isoCode === currency.isoCode },
+      entity = currency
+    )
   }
 }

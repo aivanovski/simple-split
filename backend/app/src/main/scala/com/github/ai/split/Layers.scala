@@ -2,6 +2,7 @@ package com.github.ai.split
 
 import com.github.ai.split.data.JsonSerializer
 import com.github.ai.split.data.currency.CurrencyParser
+import com.github.ai.split.data.db.{AppDatabase, DatabaseConnectionFactory}
 import com.github.ai.split.data.db.dao.{
   CurrencyEntityDao,
   ExpenseEntityDao,
@@ -49,8 +50,15 @@ import zio.{ZIO, ZLayer}
 
 object Layers {
 
+  // Database
+  val appDatabase = ZLayer.fromZIO {
+    for {
+      db <- DatabaseConnectionFactory().create()
+    } yield AppDatabase(db)
+  }
+
   // Dao's
-  val userDao = ZLayer.fromFunction(UserEntityDao(_))
+  val userDao = ZLayer.fromFunction(UserEntityDao(_, _))
   val groupDao = ZLayer.fromFunction(GroupEntityDao(_))
   val groupMemberDao = ZLayer.fromFunction(GroupMemberEntityDao(_))
   val expenseDao = ZLayer.fromFunction(ExpenseEntityDao(_))
@@ -86,7 +94,7 @@ object Layers {
   val removeExpenseUseCase = ZLayer.fromFunction(RemoveExpenseUseCase(_))
   val exportGroupDataUseCase = ZLayer.fromFunction(ExportGroupDataUseCase(_, _))
   val updateMemberUseCase = ZLayer.fromFunction(UpdateMemberUseCase(_, _, _, _))
-  val startUpServerUseCase = ZLayer.fromFunction(StartUpServerUseCase(_, _, _))
+  val startUpServerUseCase = ZLayer.fromFunction(StartUpServerUseCase(_, _, _, _))
   val fillCurrencyDataUseCase = ZLayer.fromFunction(FillCurrencyDataUseCase(_, _))
   val validateCurrencyUseCase = ZLayer.fromFunction(ValidateCurrencyUseCase(_))
 

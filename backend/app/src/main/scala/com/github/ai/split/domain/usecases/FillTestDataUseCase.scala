@@ -20,6 +20,7 @@ import com.github.ai.split.entity.db.{
   MemberUid,
   PaidByEntity,
   SplitBetweenEntity,
+  Timestamp,
   UserEntity,
   UserUid
 }
@@ -99,14 +100,14 @@ class FillTestDataUseCase(
   }
 
   private def insertGroup(group: Group): IO[DomainError, Unit] = {
-    val time = LocalDateTime.now(ZoneOffset.UTC)
+    val time = Timestamp.now()
     for {
       _ <- groupDao.add(
         GroupEntity(
           uid = group.uid,
           title = group.title,
           description = group.description,
-          passwordHash = Some(passwordService.hashPassword(group.password)),
+          passwordHash = passwordService.hashPassword(group.password),
           currencyIsoCode = "EUR",
           created = time,
           modified = time
@@ -140,7 +141,7 @@ class FillTestDataUseCase(
     groupUid: GroupUid,
     expense: Expense
   ): IO[DomainError, Unit] = {
-    val time = LocalDateTime.now(ZoneOffset.UTC)
+    val time = Timestamp.now()
 
     for {
       members <- groupRepository.getMembers(groupUid)

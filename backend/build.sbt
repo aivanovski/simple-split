@@ -56,9 +56,10 @@ lazy val app = project
       "com.auth0" % "java-jwt" % "4.5.0",
 
       // Database
-      "io.getquill" %% "quill-zio" % "4.8.6",
-      "io.getquill" %% "quill-jdbc-zio" % "4.8.6",
       "com.h2database" % "h2" % "2.3.232",
+      "org.postgresql" % "postgresql" % "42.7.3",
+      "com.typesafe.slick" %% "slick" % "3.6.1",
+      "com.typesafe.slick" %% "slick-hikaricp" % "3.6.1",
 
       // Password Hashing
       "org.mindrot" % "jbcrypt" % "0.4",

@@ -20,6 +20,7 @@ import com.github.ai.split.entity.db.{
   MemberUid,
   PaidByEntity,
   SplitBetweenEntity,
+  Timestamp,
   UserEntity
 }
 import com.github.ai.split.utils.*
@@ -93,7 +94,7 @@ class AddExpenseUseCase(
         )
       }
 
-      val time = LocalDateTime.now(ZoneOffset.UTC)
+      val time = Timestamp.now()
 
       val expense = expenseRepository
         .add(
