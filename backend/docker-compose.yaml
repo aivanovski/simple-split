@@ -1,40 +1,15 @@
 version: "3.8"
 services:
-  db:
-    image: postgres:15
-    restart: always
-    environment:
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-    ports:
-      - "5432:5432"
-    volumes:
-      - ss-db:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
   app:
     build: .
     ports:
       - "4281:8080"
       - "4282:8443"
-    depends_on:
-      db:
-        condition: service_healthy
     environment:
-      - POSTGRES_HOST=db
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - DATABASE_URL=jdbc:sqlite:/app-data/db/simple-split.sqlite?journal_mode=WAL&busy_timeout=30000
     volumes:
       - ss-app-data:/app-data
 
 volumes:
-  ss-db:
-    driver: local
   ss-app-data:
     driver: local

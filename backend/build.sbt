@@ -46,6 +46,7 @@ lazy val app = project
       "dev.zio" %% "zio-http" % zioHttp,
       "dev.zio" %% "zio-json" % zioJsonVersion,
       "dev.zio" %% "zio-direct" % zioDirect,
+      "io.github.cdimascio" % "dotenv-java" % "3.2.0",
 
       // Logging
       "dev.zio" %% "zio-logging" % "2.3.2",
@@ -56,10 +57,9 @@ lazy val app = project
       "com.auth0" % "java-jwt" % "4.5.0",
 
       // Database
-      "com.h2database" % "h2" % "2.3.232",
-      "org.postgresql" % "postgresql" % "42.7.3",
       "com.typesafe.slick" %% "slick" % "3.6.1",
       "com.typesafe.slick" %% "slick-hikaricp" % "3.6.1",
+      "org.xerial" % "sqlite-jdbc" % "3.51.1.0",
 
       // Password Hashing
       "org.mindrot" % "jbcrypt" % "0.4",

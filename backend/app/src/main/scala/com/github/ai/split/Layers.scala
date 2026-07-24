@@ -40,6 +40,7 @@ import com.github.ai.split.domain.usecases.{
   ValidateExpenseUseCase,
   ValidateMemberNameUseCase
 }
+import com.github.ai.split.entity.CliArguments
 import com.github.ai.split.presentation.controllers.{
   CurrencyController,
   ExpenseController,
@@ -47,14 +48,17 @@ import com.github.ai.split.presentation.controllers.{
   MemberController
 }
 import zio.{ZIO, ZLayer}
+import zio.direct.*
 
 object Layers {
 
   // Database
-  val appDatabase = ZLayer.fromZIO {
-    for {
-      db <- DatabaseConnectionFactory().create()
-    } yield AppDatabase(db)
+  val appDatabase = ZLayer.scoped {
+    defer {
+      val arguments = ZIO.service[CliArguments].run
+      val db = DatabaseConnectionFactory().create(arguments.isUseInMemoryDatabase).run
+      AppDatabase(db)
+    }
   }
 
   // Dao's

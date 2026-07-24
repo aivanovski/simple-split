@@ -6,6 +6,6 @@ RUN sbt app/assembly
 
 FROM openjdk:17
 EXPOSE 8080 8443
-RUN mkdir /app /data /app-data
+RUN mkdir /app /data /app-data /app-data/db
 COPY --from=build /home/sbtuser/src/app/target/scala-*/simple-split-backend.jar /app/simplesplit-backend.jar
 ENTRYPOINT ["java", "-jar", "/app/simplesplit-backend.jar", "--protocol", "http"]
