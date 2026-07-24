@@ -6,7 +6,13 @@ services:
       - "4281:8080"
       - "4282:8443"
     environment:
+      - PROTOCOL=http
+      - SERVER_CERTIFICATE_PATH=/keys/server.crt
+      - SERVER_PRIVATE_KEY_PATH=/keys/server.key
       - DATABASE_URL=jdbc:sqlite:/app-data/db/simple-split.sqlite?journal_mode=WAL&busy_timeout=30000
+      - DATABASE_MAX_POOL_SIZE=4
+      - DATABASE_MIN_IDLE=1
+      - POPULATE_TEST_DATA=false
     volumes:
       - ss-app-data:/app-data
 

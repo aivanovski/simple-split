@@ -2,9 +2,9 @@ package com.github.ai.split
 
 import com.github.ai.split.data.currency.CurrencyParser
 import com.github.ai.split.data.db.AppDatabase
-import com.github.ai.split.domain.CliArgumentParser
+import com.github.ai.split.domain.ApplicationConfigLoader
 import com.github.ai.split.domain.usecases.{FillTestDataUseCase, StartUpServerUseCase}
-import com.github.ai.split.entity.CliArguments
+import com.github.ai.split.entity.ApplicationConfig
 import com.github.ai.split.entity.HttpProtocol.{HTTP, HTTPS}
 import com.github.ai.split.presentation.routes.{CurrencyRoutes, ExpenseRoutes, ExportRoutes, GroupRoutes, MemberRoutes}
 import com.github.ai.split.openapi.ApiEndpoints
@@ -36,8 +36,8 @@ object Main extends ZIOAppDefault {
         .timestamp(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ssAZ"))
         .highlight(_ => LogColor.BLUE)
         |-| LogFormat.bracketStart + LogFormat.loggerName(
-          LoggerNameExtractor.trace
-        ) + LogFormat.bracketEnd |-|
+        LoggerNameExtractor.trace
+      ) + LogFormat.bracketEnd |-|
         LogFormat.fiberId |-| LogFormat.level.highlight |-| LogFormat.line.highlight
 
     Runtime.removeDefaultLoggers >>> SLF4J.slf4j(logFormat)
@@ -53,94 +53,100 @@ object Main extends ZIOAppDefault {
   }
 
   private def createServerConfig(
-    arguments: CliArguments
+    config: ApplicationConfig
   ) = defer {
-    arguments.protocol match {
+    config.server.protocol match {
       case HTTP =>
         Server.Config.default
-          .port(arguments.getPort())
+          .port(8080)
 
       case HTTPS =>
         Server.Config.default
-          .port(arguments.getPort())
-          .ssl(SSLConfig.fromFile("dev-data/server.crt", "dev-data/server.key"))
+          .port(8443)
+          .ssl(SSLConfig.fromFile(config.server.certificatePath, config.server.privateKeyPath))
     }
   }
 
-  override def run: ZIO[ZIOAppArgs, Throwable, Unit] = {
-    for {
-      arguments <- CliArgumentParser().parse()
-      _ <- ZIO.logInfo(s"Starting server on port ${arguments.getPort()}")
-      _ <- ZIO.logInfo(s"   isUseInMemoryDatabase=${arguments.isUseInMemoryDatabase}")
-      _ <- ZIO.logInfo(s"   isPopulateTestData=${arguments.isPopulateTestData}")
-      _ <- ZIO.logInfo(s"   protocol=${arguments.protocol}")
+  override def run: ZIO[ZIOAppArgs, Throwable, Unit] = defer {
+    val config = ApplicationConfigLoader().loadConfig().run
+    val port = config.server.protocol match {
+      case HTTP => 8080
+      case HTTPS => 8443
+    }
 
-      serverConfig <- createServerConfig(arguments)
+    ZIO.logInfo(s"Starting server on port $port").run
+    ZIO.logInfo(s"   database.url=${config.database.url}").run
+    ZIO.logInfo(s"   database.maximumPoolSize=${config.database.maximumPoolSize}").run
+    ZIO.logInfo(s"   database.minimumIdle=${config.database.minimumIdle}").run
+    ZIO.logInfo(s"   populateTestData=${config.populateTestData}").run
+    ZIO.logInfo(s"   protocol=${config.server.protocol}").run
 
-      _ <- application().provide(
-        // Application arguments
-        ZLayer.succeed(arguments),
+    val serverConfig = createServerConfig(config).run
 
-        // Use-Cases
-        Layers.addUserUseCase,
-        Layers.getAllUsersUseCase,
-        Layers.addGroupUseCase,
-        Layers.getGroupByUidUseCase,
-        Layers.addMemberUseCase,
-        Layers.addExpenseUseCase,
-        Layers.convertToTransactionsUseCase,
-        Layers.calculateSettlementUseCase,
-        Layers.fillTestDataUseCase,
-        Layers.updateGroupUseCase,
-        Layers.updateExpenseUseCase,
-        Layers.removeMembersUseCase,
-        Layers.resolveUserReferencesUseCase,
-        Layers.validateMemberNameUseCase,
-        Layers.validateExpenseUseCase,
-        Layers.removeExpenseUseCase,
-        Layers.exportGroupDataUseCase,
-        Layers.updateMemberUseCase,
-        Layers.startUpServerUseCase,
-        Layers.fillCurrencyDataUseCase,
-        Layers.validateCurrencyUseCase,
+    application().provide(
+      // Application config
+      ZLayer.succeed(config),
 
-        // Response assemblers use cases
-        Layers.assembleGroupResponseUseCase,
-        Layers.assembleGroupsResponseUseCase,
-        Layers.assembleExpenseUseCase,
+      // Use-Cases
+      Layers.addUserUseCase,
+      Layers.getAllUsersUseCase,
+      Layers.addGroupUseCase,
+      Layers.getGroupByUidUseCase,
+      Layers.addMemberUseCase,
+      Layers.addExpenseUseCase,
+      Layers.convertToTransactionsUseCase,
+      Layers.calculateSettlementUseCase,
+      Layers.fillTestDataUseCase,
+      Layers.updateGroupUseCase,
+      Layers.updateExpenseUseCase,
+      Layers.removeMembersUseCase,
+      Layers.resolveUserReferencesUseCase,
+      Layers.validateMemberNameUseCase,
+      Layers.validateExpenseUseCase,
+      Layers.removeExpenseUseCase,
+      Layers.exportGroupDataUseCase,
+      Layers.updateMemberUseCase,
+      Layers.startUpServerUseCase,
+      Layers.fillCurrencyDataUseCase,
+      Layers.validateCurrencyUseCase,
 
-        // Controllers
-        Layers.memberController,
-        Layers.groupController,
-        Layers.expenseController,
-        Layers.currencyController,
+      // Response assemblers use cases
+      Layers.assembleGroupResponseUseCase,
+      Layers.assembleGroupsResponseUseCase,
+      Layers.assembleExpenseUseCase,
 
-        // Services
-        Layers.passwordService,
-        Layers.accessResolverService,
+      // Controllers
+      Layers.memberController,
+      Layers.groupController,
+      Layers.expenseController,
+      Layers.currencyController,
 
-        // Database
-        Layers.appDatabase,
+      // Services
+      Layers.passwordService,
+      Layers.accessResolverService,
 
-        // Repositories
-        Layers.expenseRepository,
-        Layers.groupRepository,
-        Layers.currencyRepository,
+      // Database
+      Layers.appDatabase,
 
-        // Dao
-        Layers.expenseDao,
-        Layers.groupDao,
-        Layers.groupMemberDao,
-        Layers.userDao,
-        Layers.paidByDao,
-        Layers.splitBetweenDao,
-        Layers.currencyDao,
+      // Repositories
+      Layers.expenseRepository,
+      Layers.groupRepository,
+      Layers.currencyRepository,
 
-        // Others
-        Layers.currencyParser,
-        Server.live,
-        ZLayer.succeed(serverConfig)
-      )
-    } yield ()
+      // Dao
+      Layers.expenseDao,
+      Layers.groupDao,
+      Layers.groupMemberDao,
+      Layers.userDao,
+      Layers.paidByDao,
+      Layers.splitBetweenDao,
+      Layers.currencyDao,
+
+      // Others
+      Layers.currencyParser,
+      Server.live,
+      ZLayer.succeed(serverConfig)
+    ).run
+    ()
   }
 }

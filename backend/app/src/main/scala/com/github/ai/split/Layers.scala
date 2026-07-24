@@ -39,7 +39,7 @@ import com.github.ai.split.domain.usecases.{
   ValidateExpenseUseCase,
   ValidateMemberNameUseCase
 }
-import com.github.ai.split.entity.CliArguments
+import com.github.ai.split.entity.ApplicationConfig
 import com.github.ai.split.presentation.controllers.{
   CurrencyController,
   ExpenseController,
@@ -54,8 +54,8 @@ object Layers {
   // Database
   val appDatabase = ZLayer.scoped {
     defer {
-      val arguments = ZIO.service[CliArguments].run
-      val db = DatabaseConnectionFactory().create(arguments.isUseInMemoryDatabase).run
+      val config = ZIO.service[ApplicationConfig].run
+      val db = DatabaseConnectionFactory(config.database).create().run
       AppDatabase(db)
     }
   }

@@ -71,7 +71,7 @@ out/
 
 # Development and application files
 backend/app-data
-backend/dev-data
+backend/keys/
 
 # Env files
 .env
