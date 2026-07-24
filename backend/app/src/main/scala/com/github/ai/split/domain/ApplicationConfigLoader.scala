@@ -56,7 +56,7 @@ class ApplicationConfigLoader {
   private def readBooleanRequired(dotenv: Dotenv, key: String): IO[EnvironmentError, Boolean] = defer {
     val value = readRequired(dotenv, key).run
     value.toLowerCase match {
-      case "true"  => true
+      case "true" => true
       case "false" => false
       case _ =>
         ZIO

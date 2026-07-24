@@ -36,8 +36,8 @@ object Main extends ZIOAppDefault {
         .timestamp(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ssAZ"))
         .highlight(_ => LogColor.BLUE)
         |-| LogFormat.bracketStart + LogFormat.loggerName(
-        LoggerNameExtractor.trace
-      ) + LogFormat.bracketEnd |-|
+          LoggerNameExtractor.trace
+        ) + LogFormat.bracketEnd |-|
         LogFormat.fiberId |-| LogFormat.level.highlight |-| LogFormat.line.highlight
 
     Runtime.removeDefaultLoggers >>> SLF4J.slf4j(logFormat)
@@ -83,70 +83,72 @@ object Main extends ZIOAppDefault {
 
     val serverConfig = createServerConfig(config).run
 
-    application().provide(
-      // Application config
-      ZLayer.succeed(config),
+    application()
+      .provide(
+        // Application config
+        ZLayer.succeed(config),
 
-      // Use-Cases
-      Layers.addUserUseCase,
-      Layers.getAllUsersUseCase,
-      Layers.addGroupUseCase,
-      Layers.getGroupByUidUseCase,
-      Layers.addMemberUseCase,
-      Layers.addExpenseUseCase,
-      Layers.convertToTransactionsUseCase,
-      Layers.calculateSettlementUseCase,
-      Layers.fillTestDataUseCase,
-      Layers.updateGroupUseCase,
-      Layers.updateExpenseUseCase,
-      Layers.removeMembersUseCase,
-      Layers.resolveUserReferencesUseCase,
-      Layers.validateMemberNameUseCase,
-      Layers.validateExpenseUseCase,
-      Layers.removeExpenseUseCase,
-      Layers.exportGroupDataUseCase,
-      Layers.updateMemberUseCase,
-      Layers.startUpServerUseCase,
-      Layers.fillCurrencyDataUseCase,
-      Layers.validateCurrencyUseCase,
+        // Use-Cases
+        Layers.addUserUseCase,
+        Layers.getAllUsersUseCase,
+        Layers.addGroupUseCase,
+        Layers.getGroupByUidUseCase,
+        Layers.addMemberUseCase,
+        Layers.addExpenseUseCase,
+        Layers.convertToTransactionsUseCase,
+        Layers.calculateSettlementUseCase,
+        Layers.fillTestDataUseCase,
+        Layers.updateGroupUseCase,
+        Layers.updateExpenseUseCase,
+        Layers.removeMembersUseCase,
+        Layers.resolveUserReferencesUseCase,
+        Layers.validateMemberNameUseCase,
+        Layers.validateExpenseUseCase,
+        Layers.removeExpenseUseCase,
+        Layers.exportGroupDataUseCase,
+        Layers.updateMemberUseCase,
+        Layers.startUpServerUseCase,
+        Layers.fillCurrencyDataUseCase,
+        Layers.validateCurrencyUseCase,
 
-      // Response assemblers use cases
-      Layers.assembleGroupResponseUseCase,
-      Layers.assembleGroupsResponseUseCase,
-      Layers.assembleExpenseUseCase,
+        // Response assemblers use cases
+        Layers.assembleGroupResponseUseCase,
+        Layers.assembleGroupsResponseUseCase,
+        Layers.assembleExpenseUseCase,
 
-      // Controllers
-      Layers.memberController,
-      Layers.groupController,
-      Layers.expenseController,
-      Layers.currencyController,
+        // Controllers
+        Layers.memberController,
+        Layers.groupController,
+        Layers.expenseController,
+        Layers.currencyController,
 
-      // Services
-      Layers.passwordService,
-      Layers.accessResolverService,
+        // Services
+        Layers.passwordService,
+        Layers.accessResolverService,
 
-      // Database
-      Layers.appDatabase,
+        // Database
+        Layers.appDatabase,
 
-      // Repositories
-      Layers.expenseRepository,
-      Layers.groupRepository,
-      Layers.currencyRepository,
+        // Repositories
+        Layers.expenseRepository,
+        Layers.groupRepository,
+        Layers.currencyRepository,
 
-      // Dao
-      Layers.expenseDao,
-      Layers.groupDao,
-      Layers.groupMemberDao,
-      Layers.userDao,
-      Layers.paidByDao,
-      Layers.splitBetweenDao,
-      Layers.currencyDao,
+        // Dao
+        Layers.expenseDao,
+        Layers.groupDao,
+        Layers.groupMemberDao,
+        Layers.userDao,
+        Layers.paidByDao,
+        Layers.splitBetweenDao,
+        Layers.currencyDao,
 
-      // Others
-      Layers.currencyParser,
-      Server.live,
-      ZLayer.succeed(serverConfig)
-    ).run
+        // Others
+        Layers.currencyParser,
+        Server.live,
+        ZLayer.succeed(serverConfig)
+      )
+      .run
     ()
   }
 }
