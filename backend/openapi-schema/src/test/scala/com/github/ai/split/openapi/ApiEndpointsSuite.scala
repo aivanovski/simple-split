@@ -6,6 +6,9 @@ class ApiEndpointsSuite extends munit.FunSuite {
 
     assert(schema.contains("/export/{groupIdAndExtension}"))
     assert(schema.contains("text/csv"))
+    assert(schema.contains("/signup"))
+    assert(schema.contains("/login"))
+    assert(schema.contains("/auth/refresh"))
   }
 
   test("generated schema can be represented as YAML") {

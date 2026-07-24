@@ -1,6 +1,23 @@
 package com.github.ai.split.api.response
 
-import com.github.ai.split.api.{CurrencyDto, ExpenseDto, GetGroupErrorDto, GroupDto}
+import com.github.ai.split.api.{CurrencyDto, ExpenseDto, GetGroupErrorDto, GroupDto, UserDto}
+
+final case class SignupResponse(
+  token: String,
+  refreshToken: String,
+  user: UserDto
+)
+
+final case class LoginResponse(
+  token: String,
+  refreshToken: String,
+  user: UserDto
+)
+
+final case class RefreshTokenResponse(
+  token: String,
+  refreshToken: String
+)
 
 final case class GetCurrenciesResponse(currencies: List[CurrencyDto])
 

@@ -2,6 +2,19 @@ package com.github.ai.split.api.request
 
 import com.github.ai.split.api.{NewExpenseDto, UserNameDto, UserUidDto}
 
+final case class SignupRequest(
+  name: String,
+  email: String,
+  password: String
+)
+
+final case class LoginRequest(
+  email: String,
+  password: String
+)
+
+final case class RefreshTokenRequest(refreshToken: String)
+
 final case class PostGroupRequest(
   password: String,
   title: String,

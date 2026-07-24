@@ -16,6 +16,11 @@ final case class MemberDto(
   name: String
 )
 
+final case class UserDto(
+  name: String,
+  email: String
+)
+
 final case class UserNameDto(name: String)
 
 final case class UserUidDto(uid: String)

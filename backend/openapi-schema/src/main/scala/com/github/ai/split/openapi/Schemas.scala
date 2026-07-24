@@ -9,6 +9,7 @@ object Schemas {
   given Schema[CurrencyDto] = DeriveSchema.gen
   given Schema[TimestampDto] = DeriveSchema.gen
   given Schema[MemberDto] = DeriveSchema.gen
+  given Schema[UserDto] = DeriveSchema.gen
   given Schema[UserNameDto] = DeriveSchema.gen
   given Schema[UserUidDto] = DeriveSchema.gen
   given Schema[TransactionDto] = DeriveSchema.gen
@@ -19,6 +20,9 @@ object Schemas {
   given Schema[ErrorMessageDto] = DeriveSchema.gen
 
   given Schema[PostGroupRequest] = DeriveSchema.gen
+  given Schema[SignupRequest] = DeriveSchema.gen
+  given Schema[LoginRequest] = DeriveSchema.gen
+  given Schema[RefreshTokenRequest] = DeriveSchema.gen
   given Schema[PutGroupRequest] = DeriveSchema.gen
   given Schema[PostMemberRequest] = DeriveSchema.gen
   given Schema[PutMemberRequest] = DeriveSchema.gen
@@ -26,6 +30,9 @@ object Schemas {
   given Schema[PutExpenseRequest] = DeriveSchema.gen
 
   given Schema[GetCurrenciesResponse] = DeriveSchema.gen
+  given Schema[SignupResponse] = DeriveSchema.gen
+  given Schema[LoginResponse] = DeriveSchema.gen
+  given Schema[RefreshTokenResponse] = DeriveSchema.gen
   given Schema[GetGroupsResponse] = DeriveSchema.gen
   given Schema[PostGroupResponse] = DeriveSchema.gen
   given Schema[PutGroupResponse] = DeriveSchema.gen

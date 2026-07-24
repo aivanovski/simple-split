@@ -25,6 +25,24 @@ object ApiEndpoints {
   private def endpoint[PathInput](route: RoutePattern[PathInput]) =
     Endpoint(route).outError[ErrorMessageDto](Status.BadRequest, Doc.p("Bad request"))
 
+  val signup =
+    endpoint(Method.POST / "signup")
+      .in[SignupRequest]
+      .out[SignupResponse](Doc.p("Created user and authentication tokens"))
+      .tag("authentication")
+
+  val login =
+    endpoint(Method.POST / "login")
+      .in[LoginRequest]
+      .out[LoginResponse](Doc.p("Authentication tokens"))
+      .tag("authentication")
+
+  val refreshToken =
+    endpoint(Method.POST / "auth" / "refresh")
+      .in[RefreshTokenRequest]
+      .out[RefreshTokenResponse](Doc.p("Refreshed authentication tokens"))
+      .tag("authentication")
+
   val getGroups =
     endpoint(Method.GET / "group")
       .query(QueryCodec.query[String]("ids"))
@@ -97,6 +115,9 @@ object ApiEndpoints {
       .tag("groups")
 
   val all = List(
+    signup,
+    login,
+    refreshToken,
     getGroups,
     postGroup,
     putGroup,

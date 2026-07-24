@@ -6,7 +6,7 @@ import com.github.ai.split.domain.ApplicationEnvironmentLoader
 import com.github.ai.split.domain.usecases.{FillTestDataUseCase, StartUpServerUseCase}
 import com.github.ai.split.entity.ApplicationEnvironment
 import com.github.ai.split.entity.HttpProtocol.{HTTP, HTTPS}
-import com.github.ai.split.presentation.routes.{CurrencyRoutes, ExpenseRoutes, ExportRoutes, GroupRoutes, MemberRoutes}
+import com.github.ai.split.presentation.routes.{AuthRoutes, CurrencyRoutes, ExpenseRoutes, ExportRoutes, GroupRoutes, MemberRoutes}
 import com.github.ai.split.openapi.ApiEndpoints
 import com.github.ai.split.utils.RequestLogger
 import zio.*
@@ -22,7 +22,8 @@ import java.time.format.DateTimeFormatter
 object Main extends ZIOAppDefault {
 
   private val routes =
-    (GroupRoutes.routes()
+    (AuthRoutes.routes()
+      ++ GroupRoutes.routes()
       ++ ExportRoutes.routes()
       ++ MemberRoutes.routes()
       ++ ExpenseRoutes.routes()
@@ -117,6 +118,7 @@ object Main extends ZIOAppDefault {
         Layers.assembleExpenseUseCase,
 
         // Controllers
+        Layers.authController,
         Layers.memberController,
         Layers.groupController,
         Layers.expenseController,
@@ -124,6 +126,7 @@ object Main extends ZIOAppDefault {
 
         // Services
         Layers.passwordService,
+        Layers.authService,
         Layers.accessResolverService,
 
         // Database
@@ -139,6 +142,7 @@ object Main extends ZIOAppDefault {
         Layers.groupDao,
         Layers.groupMembershipDao,
         Layers.memberDao,
+        Layers.userDao,
         Layers.paidByDao,
         Layers.splitBetweenDao,
         Layers.currencyDao,
