@@ -7,7 +7,7 @@ import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.{some}
 import zio.{IO, ZIO}
 import zio.direct.*
-import slick.jdbc.PostgresProfile.api.*
+import slick.jdbc.SQLiteProfile.api.*
 
 class UserEntityDao(
   db: AppDatabase,

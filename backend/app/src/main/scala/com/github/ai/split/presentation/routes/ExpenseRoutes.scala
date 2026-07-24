@@ -1,6 +1,7 @@
 package com.github.ai.split.presentation.routes
 
-import com.github.ai.split.utils.toDomainResponse
+import com.github.ai.split.openapi.ApiEndpoints
+import com.github.ai.split.utils.toErrorMessageDto
 import com.github.ai.split.presentation.controllers.ExpenseController
 import zio.ZIO
 import zio.http.*
@@ -8,23 +9,20 @@ import zio.http.*
 object ExpenseRoutes {
 
   def routes() = Routes(
-    Method.POST / "expense" -> Handler.fromFunctionZIO[Request] { (request: Request) =>
-      for {
-        controller <- ZIO.service[ExpenseController]
-        response <- controller.createExpense(request).mapError(_.toDomainResponse)
-      } yield response
+    ApiEndpoints.postExpense.implement { case (password, body) =>
+      ZIO
+        .serviceWithZIO[ExpenseController](_.createExpense(password.getOrElse(""), body))
+        .mapError(_.toErrorMessageDto)
     },
-    Method.PUT / "expense" / string("expenseId") -> Handler.fromFunctionZIO[Request] { (request: Request) =>
-      for {
-        controller <- ZIO.service[ExpenseController]
-        response <- controller.updateExpense(request).mapError(_.toDomainResponse)
-      } yield response
+    ApiEndpoints.putExpense.implement { case (expenseId, password, body) =>
+      ZIO
+        .serviceWithZIO[ExpenseController](_.updateExpense(expenseId, password.getOrElse(""), body))
+        .mapError(_.toErrorMessageDto)
     },
-    Method.DELETE / "expense" / string("expenseId") -> Handler.fromFunctionZIO[Request] { (request: Request) =>
-      for {
-        controller <- ZIO.service[ExpenseController]
-        response <- controller.removeExpense(request).mapError(_.toDomainResponse)
-      } yield response
+    ApiEndpoints.deleteExpense.implement { case (expenseId, password) =>
+      ZIO
+        .serviceWithZIO[ExpenseController](_.removeExpense(expenseId, password.getOrElse("")))
+        .mapError(_.toErrorMessageDto)
     }
   )
 }

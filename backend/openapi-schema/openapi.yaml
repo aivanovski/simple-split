@@ -1,0 +1,861 @@
+openapi: 3.1.0
+info:
+  title: Simple Split API
+  version: 0.1.0
+paths:
+  /expense:
+    description: |
+      - expenses
+    post:
+      tags:
+      - expenses
+      description: |
+        - expenses
+      parameters:
+      - name: password
+        in: query
+        required: true
+        schema:
+          type:
+          - string
+          - 'null'
+        allowReserved: false
+        style: form
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostExpenseRequest'
+        required: true
+      responses:
+        '200':
+          description: |+
+            Created expense
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostExpenseResponse'
+        '400':
+          description: |+
+            Bad request
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessageDto'
+  /currency:
+    description: |
+      - currencies
+    get:
+      tags:
+      - currencies
+      description: |
+        - currencies
+      responses:
+        '200':
+          description: |+
+            Supported currencies
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCurrenciesResponse'
+        '400':
+          description: |+
+            Bad request
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessageDto'
+  /member/{memberId}:
+    description: |
+      - members
+    put:
+      tags:
+      - members
+      description: |
+        - members
+      parameters:
+      - name: password
+        in: query
+        required: true
+        schema:
+          type:
+          - string
+          - 'null'
+        allowReserved: false
+        style: form
+      - name: memberId
+        in: path
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutMemberRequest'
+        required: true
+      responses:
+        '200':
+          description: |+
+            Group containing the updated member
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutMemberResponse'
+        '400':
+          description: |+
+            Bad request
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessageDto'
+    delete:
+      tags:
+      - members
+      description: |
+        - members
+      parameters:
+      - name: password
+        in: query
+        required: true
+        schema:
+          type:
+          - string
+          - 'null'
+        allowReserved: false
+        style: form
+      - name: memberId
+        in: path
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        '200':
+          description: |+
+            Group after removing the member
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteMemberResponse'
+        '400':
+          description: |+
+            Bad request
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessageDto'
+  /export/{groupIdAndExtension}:
+    description: |
+      - groups
+    get:
+      tags:
+      - groups
+      description: |
+        - groups
+      parameters:
+      - name: password
+        in: query
+        required: true
+        schema:
+          type:
+          - string
+          - 'null'
+        allowReserved: false
+        style: form
+      - name: groupIdAndExtension
+        in: path
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        '200':
+          description: |+
+            Exported group data
+
+          content:
+            text/csv:
+              schema:
+                type: string
+        '400':
+          description: |+
+            Bad request
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessageDto'
+  /expense/{expenseId}:
+    description: |
+      - expenses
+    put:
+      tags:
+      - expenses
+      description: |
+        - expenses
+      parameters:
+      - name: password
+        in: query
+        required: true
+        schema:
+          type:
+          - string
+          - 'null'
+        allowReserved: false
+        style: form
+      - name: expenseId
+        in: path
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutExpenseRequest'
+        required: true
+      responses:
+        '200':
+          description: |+
+            Updated expense
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutExpenseResponse'
+        '400':
+          description: |+
+            Bad request
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessageDto'
+    delete:
+      tags:
+      - expenses
+      description: |
+        - expenses
+      parameters:
+      - name: password
+        in: query
+        required: true
+        schema:
+          type:
+          - string
+          - 'null'
+        allowReserved: false
+        style: form
+      - name: expenseId
+        in: path
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        '200':
+          description: |+
+            Group after removing the expense
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteExpenseResponse'
+        '400':
+          description: |+
+            Bad request
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessageDto'
+  /member:
+    description: |
+      - members
+    post:
+      tags:
+      - members
+      description: |
+        - members
+      parameters:
+      - name: password
+        in: query
+        required: true
+        schema:
+          type:
+          - string
+          - 'null'
+        allowReserved: false
+        style: form
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostMemberRequest'
+        required: true
+      responses:
+        '200':
+          description: |+
+            Group containing the created member
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostMemberResponse'
+        '400':
+          description: |+
+            Bad request
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessageDto'
+  /group:
+    description: |
+      - groups
+    get:
+      tags:
+      - groups
+      description: |
+        - groups
+      parameters:
+      - name: ids
+        in: query
+        required: true
+        schema:
+          type: string
+        allowReserved: false
+        style: form
+      - name: passwords
+        in: query
+        required: true
+        schema:
+          type: string
+        allowReserved: false
+        style: form
+      responses:
+        '200':
+          description: |+
+            Groups matching the supplied credentials
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetGroupsResponse'
+        '400':
+          description: |+
+            Bad request
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessageDto'
+    post:
+      tags:
+      - groups
+      description: |
+        - groups
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostGroupRequest'
+        required: true
+      responses:
+        '200':
+          description: |+
+            Created group
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostGroupResponse'
+        '400':
+          description: |+
+            Bad request
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessageDto'
+  /group/{groupId}:
+    description: |
+      - groups
+    put:
+      tags:
+      - groups
+      description: |
+        - groups
+      parameters:
+      - name: password
+        in: query
+        required: true
+        schema:
+          type:
+          - string
+          - 'null'
+        allowReserved: false
+        style: form
+      - name: groupId
+        in: path
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutGroupRequest'
+        required: true
+      responses:
+        '200':
+          description: |+
+            Updated group
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutGroupResponse'
+        '400':
+          description: |+
+            Bad request
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessageDto'
+components:
+  schemas:
+    GroupDto:
+      type: object
+      properties:
+        description:
+          type: string
+        paybackTransactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransactionDto'
+        modified:
+          $ref: '#/components/schemas/TimestampDto'
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/MemberDto'
+        title:
+          type: string
+        expenses:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExpenseDto'
+        created:
+          $ref: '#/components/schemas/TimestampDto'
+        currency:
+          $ref: '#/components/schemas/CurrencyDto'
+        uid:
+          type: string
+      required:
+      - uid
+      - title
+      - description
+      - currency
+      - members
+      - expenses
+      - paybackTransactions
+      - created
+      - modified
+    PostMemberRequest:
+      type: object
+      properties:
+        groupUid:
+          type: string
+        name:
+          type: string
+      required:
+      - groupUid
+      - name
+    GetCurrenciesResponse:
+      type: object
+      properties:
+        currencies:
+          type: array
+          items:
+            $ref: '#/components/schemas/CurrencyDto'
+      required:
+      - currencies
+    UserUidDto:
+      type: object
+      properties:
+        uid:
+          type: string
+      required:
+      - uid
+    PostGroupResponse:
+      type: object
+      properties:
+        group:
+          $ref: '#/components/schemas/GroupDto'
+      required:
+      - group
+    PutExpenseRequest:
+      type: object
+      properties:
+        splitBetween:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserUidDto'
+          description: If not set, this field defaults to the value of the default annotation.
+          default: [
+            ]
+        description:
+          type:
+          - string
+          - 'null'
+          description: If not set, this field defaults to the value of the default annotation.
+          default: null
+        amount:
+          type:
+          - number
+          - 'null'
+          format: double
+          description: If not set, this field defaults to the value of the default annotation.
+          default: null
+        isSplitBetweenAll:
+          type:
+          - boolean
+          - 'null'
+          description: If not set, this field defaults to the value of the default annotation.
+          default: null
+        paidBy:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserUidDto'
+          description: If not set, this field defaults to the value of the default annotation.
+          default: [
+            ]
+        title:
+          type:
+          - string
+          - 'null'
+          description: If not set, this field defaults to the value of the default annotation.
+          default: null
+    PostExpenseResponse:
+      type: object
+      properties:
+        expense:
+          $ref: '#/components/schemas/ExpenseDto'
+      required:
+      - expense
+    PutMemberResponse:
+      type: object
+      properties:
+        group:
+          $ref: '#/components/schemas/GroupDto'
+      required:
+      - group
+    PostExpenseRequest:
+      type: object
+      properties:
+        splitBetween:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserUidDto'
+        description:
+          type: string
+        isSplitBetweenAll:
+          type:
+          - boolean
+          - 'null'
+        paidBy:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserUidDto'
+        title:
+          type: string
+        groupUid:
+          type: string
+        amount:
+          type: number
+          format: double
+      required:
+      - groupUid
+      - title
+      - description
+      - amount
+      - paidBy
+      - splitBetween
+    NewExpenseDto:
+      type: object
+      properties:
+        splitBetween:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserNameDto'
+        description:
+          type: string
+        amount:
+          type: number
+          format: double
+        isSplitBetweenAll:
+          type:
+          - boolean
+          - 'null'
+        paidBy:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserNameDto'
+        title:
+          type: string
+      required:
+      - title
+      - description
+      - amount
+      - paidBy
+      - splitBetween
+    UserNameDto:
+      type: object
+      properties:
+        name:
+          type: string
+      required:
+      - name
+    GetGroupsResponse:
+      type: object
+      properties:
+        groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupDto'
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/GetGroupErrorDto'
+      required:
+      - groups
+      - errors
+    DeleteExpenseResponse:
+      type: object
+      properties:
+        group:
+          $ref: '#/components/schemas/GroupDto'
+      required:
+      - group
+    CurrencyDto:
+      type: object
+      properties:
+        isoCode:
+          type: string
+        name:
+          type: string
+        symbol:
+          type: string
+      required:
+      - isoCode
+      - name
+      - symbol
+    ExpenseDto:
+      type: object
+      properties:
+        splitBetween:
+          type: array
+          items:
+            $ref: '#/components/schemas/MemberDto'
+        description:
+          type: string
+        amount:
+          type: number
+          format: double
+        modified:
+          $ref: '#/components/schemas/TimestampDto'
+        paidBy:
+          type: array
+          items:
+            $ref: '#/components/schemas/MemberDto'
+        title:
+          type: string
+        created:
+          $ref: '#/components/schemas/TimestampDto'
+        currency:
+          $ref: '#/components/schemas/CurrencyDto'
+        uid:
+          type: string
+      required:
+      - uid
+      - title
+      - description
+      - amount
+      - currency
+      - paidBy
+      - splitBetween
+      - created
+      - modified
+    PutGroupRequest:
+      type: object
+      properties:
+        currencyIsoCode:
+          type:
+          - string
+          - 'null'
+          description: If not set, this field defaults to the value of the default annotation.
+          default: null
+        description:
+          type:
+          - string
+          - 'null'
+          description: If not set, this field defaults to the value of the default annotation.
+          default: null
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserUidDto'
+          description: If not set, this field defaults to the value of the default annotation.
+          default: [
+            ]
+        title:
+          type:
+          - string
+          - 'null'
+          description: If not set, this field defaults to the value of the default annotation.
+          default: null
+        password:
+          type:
+          - string
+          - 'null'
+          description: If not set, this field defaults to the value of the default annotation.
+          default: null
+    PostMemberResponse:
+      type: object
+      properties:
+        group:
+          $ref: '#/components/schemas/GroupDto'
+      required:
+      - group
+    PutExpenseResponse:
+      type: object
+      properties:
+        expense:
+          $ref: '#/components/schemas/ExpenseDto'
+      required:
+      - expense
+    TransactionDto:
+      type: object
+      properties:
+        creditorUid:
+          type: string
+        debtorUid:
+          type: string
+        amount:
+          type: number
+          format: double
+      required:
+      - creditorUid
+      - debtorUid
+      - amount
+    PostGroupRequest:
+      type: object
+      properties:
+        currencyIsoCode:
+          type: string
+        description:
+          type: string
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserNameDto'
+        title:
+          type: string
+        expenses:
+          type: array
+          items:
+            $ref: '#/components/schemas/NewExpenseDto'
+        password:
+          type: string
+      required:
+      - password
+      - title
+      - description
+      - currencyIsoCode
+      - members
+      - expenses
+    PutGroupResponse:
+      type: object
+      properties:
+        group:
+          $ref: '#/components/schemas/GroupDto'
+      required:
+      - group
+    MemberDto:
+      type: object
+      properties:
+        uid:
+          type: string
+        name:
+          type: string
+      required:
+      - uid
+      - name
+    TimestampDto:
+      type: object
+      properties:
+        timestampSeconds:
+          type: integer
+          format: int64
+        formatted:
+          type: string
+      required:
+      - timestampSeconds
+      - formatted
+    GetGroupErrorDto:
+      type: object
+      properties:
+        uid:
+          type: string
+        message:
+          type: string
+      required:
+      - uid
+      - message
+    ErrorMessageDto:
+      type: object
+      properties:
+        message:
+          type:
+          - string
+          - 'null'
+        exception:
+          type: string
+        stacktraceBase64:
+          type: string
+        stacktraceLines:
+          type: array
+          items:
+            type: string
+      required:
+      - exception
+      - stacktraceBase64
+      - stacktraceLines
+    DeleteMemberResponse:
+      type: object
+      properties:
+        group:
+          $ref: '#/components/schemas/GroupDto'
+      required:
+      - group
+    PutMemberRequest:
+      type: object
+      properties:
+        name:
+          type: string
+      required:
+      - name

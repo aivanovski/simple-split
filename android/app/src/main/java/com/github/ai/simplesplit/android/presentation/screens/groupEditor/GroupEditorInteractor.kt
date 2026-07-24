@@ -11,11 +11,11 @@ import com.github.ai.simplesplit.android.data.repository.MemberRepository
 import com.github.ai.simplesplit.android.model.exception.AppException
 import com.github.ai.simplesplit.android.presentation.screens.groupEditor.model.GroupEditorData
 import com.github.ai.split.api.GroupDto
+import com.github.ai.split.api.PostGroupRequest
+import com.github.ai.split.api.PostMemberRequest
+import com.github.ai.split.api.PutGroupRequest
+import com.github.ai.split.api.PutMemberRequest
 import com.github.ai.split.api.UserNameDto
-import com.github.ai.split.api.request.PostGroupRequest
-import com.github.ai.split.api.request.PostMemberRequest
-import com.github.ai.split.api.request.PutGroupRequest
-import com.github.ai.split.api.request.PutMemberRequest
 
 typealias UserUidAndName = Pair<String, String>
 
@@ -112,12 +112,12 @@ class GroupEditorInteractor(
     ): Either<AppException, GroupDto> =
         either {
             val request = PostGroupRequest(
-                password,
-                title,
-                null,
-                currencyIsoCode,
-                members.map { UserNameDto(it) },
-                null
+                password = password,
+                title = title,
+                description = "",
+                currencyIsoCode = currencyIsoCode,
+                members = members.map { UserNameDto(it) },
+                expenses = emptyList()
             )
 
             val response = groupRepository.createGroup(request).bind()

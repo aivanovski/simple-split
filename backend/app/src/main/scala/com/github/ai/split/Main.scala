@@ -2,27 +2,45 @@ package com.github.ai.split
 
 import com.github.ai.split.data.currency.CurrencyParser
 import com.github.ai.split.data.db.AppDatabase
-import com.github.ai.split.domain.CliArgumentParser
+import com.github.ai.split.domain.ApplicationConfigLoader
 import com.github.ai.split.domain.usecases.{FillTestDataUseCase, StartUpServerUseCase}
-import com.github.ai.split.entity.CliArguments
+import com.github.ai.split.entity.ApplicationConfig
 import com.github.ai.split.entity.HttpProtocol.{HTTP, HTTPS}
 import com.github.ai.split.presentation.routes.{CurrencyRoutes, ExpenseRoutes, ExportRoutes, GroupRoutes, MemberRoutes}
+import com.github.ai.split.openapi.ApiEndpoints
+import com.github.ai.split.utils.RequestLogger
 import zio.*
 import zio.http.*
-import zio.logging.LogFormat
+import zio.logging.{LogColor, LogFormat, LoggerNameExtractor}
 import zio.logging.backend.SLF4J
 import zio.direct.*
+import zio.http.endpoint.openapi.SwaggerUI
+import zio.http.codec.PathCodec.path
+
+import java.time.format.DateTimeFormatter
 
 object Main extends ZIOAppDefault {
 
-  private val routes = GroupRoutes.routes()
-    ++ ExportRoutes.routes()
-    ++ MemberRoutes.routes()
-    ++ ExpenseRoutes.routes()
-    ++ CurrencyRoutes.routes()
+  private val routes =
+    (GroupRoutes.routes()
+      ++ ExportRoutes.routes()
+      ++ MemberRoutes.routes()
+      ++ ExpenseRoutes.routes()
+      ++ CurrencyRoutes.routes()
+      ++ SwaggerUI.routes("docs" / "openapi", ApiEndpoints.openApi))
+      @@ RequestLogger.requestLogger
 
   override val bootstrap: ZLayer[Any, Nothing, Unit] = {
-    Runtime.removeDefaultLoggers >>> SLF4J.slf4j(LogFormat.colored)
+    val logFormat: LogFormat =
+      LogFormat
+        .timestamp(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ssAZ"))
+        .highlight(_ => LogColor.BLUE)
+        |-| LogFormat.bracketStart + LogFormat.loggerName(
+          LoggerNameExtractor.trace
+        ) + LogFormat.bracketEnd |-|
+        LogFormat.fiberId |-| LogFormat.level.highlight |-| LogFormat.line.highlight
+
+    Runtime.removeDefaultLoggers >>> SLF4J.slf4j(logFormat)
   }
 
   private def application() = defer {
@@ -35,33 +53,40 @@ object Main extends ZIOAppDefault {
   }
 
   private def createServerConfig(
-    arguments: CliArguments
+    config: ApplicationConfig
   ) = defer {
-    arguments.protocol match {
+    config.server.protocol match {
       case HTTP =>
         Server.Config.default
-          .port(arguments.getPort())
+          .port(8080)
 
       case HTTPS =>
         Server.Config.default
-          .port(arguments.getPort())
-          .ssl(SSLConfig.fromFile("dev-data/server.crt", "dev-data/server.key"))
+          .port(8443)
+          .ssl(SSLConfig.fromFile(config.server.certificatePath, config.server.privateKeyPath))
     }
   }
 
-  override def run: ZIO[ZIOAppArgs, Throwable, Unit] = {
-    for {
-      arguments <- CliArgumentParser().parse()
-      _ <- ZIO.logInfo(s"Starting server on port ${arguments.getPort()}")
-      _ <- ZIO.logInfo(s"   isUseInMemoryDatabase=${arguments.isUseInMemoryDatabase}")
-      _ <- ZIO.logInfo(s"   isPopulateTestData=${arguments.isPopulateTestData}")
-      _ <- ZIO.logInfo(s"   protocol=${arguments.protocol}")
+  override def run: ZIO[ZIOAppArgs, Throwable, Unit] = defer {
+    val config = ApplicationConfigLoader().loadConfig().run
+    val port = config.server.protocol match {
+      case HTTP => 8080
+      case HTTPS => 8443
+    }
 
-      serverConfig <- createServerConfig(arguments)
+    ZIO.logInfo(s"Starting server on port $port").run
+    ZIO.logInfo(s"   database.url=${config.database.url}").run
+    ZIO.logInfo(s"   database.maximumPoolSize=${config.database.maximumPoolSize}").run
+    ZIO.logInfo(s"   database.minimumIdle=${config.database.minimumIdle}").run
+    ZIO.logInfo(s"   populateTestData=${config.populateTestData}").run
+    ZIO.logInfo(s"   protocol=${config.server.protocol}").run
 
-      _ <- application().provide(
-        // Application arguments
-        ZLayer.succeed(arguments),
+    val serverConfig = createServerConfig(config).run
+
+    application()
+      .provide(
+        // Application config
+        ZLayer.succeed(config),
 
         // Use-Cases
         Layers.addUserUseCase,
@@ -120,10 +145,10 @@ object Main extends ZIOAppDefault {
 
         // Others
         Layers.currencyParser,
-        Layers.jsonSerialized,
         Server.live,
         ZLayer.succeed(serverConfig)
       )
-    } yield ()
+      .run
+    ()
   }
 }

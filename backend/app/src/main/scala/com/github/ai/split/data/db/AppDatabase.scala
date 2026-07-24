@@ -1,6 +1,5 @@
 package com.github.ai.split.data.db
 
-import com.github.ai.split.data.db.model.DatabaseConnection
 import com.github.ai.split.entity.db.{
   CurrencyEntity,
   ExpenseEntity,
@@ -16,16 +15,16 @@ import com.github.ai.split.entity.db.{
   UserUid
 }
 import com.github.ai.split.entity.exception.DomainError
-import com.github.ai.split.utils.{toDomainError, toProperties}
-import slick.jdbc.PostgresProfile.api.*
+import com.github.ai.split.utils.toDomainError
+import slick.jdbc.SQLiteProfile.api.*
 import slick.lifted.ProvenShape
 import zio.{IO, ZIO}
 import zio.direct.*
 
-import java.util.{Properties, UUID}
+import java.util.UUID
 
 class AppDatabase(
-  private val connection: DatabaseConnection
+  val context: Database
 ) {
 
   val CurrencyTable = TableQuery[CurrencyEntityTable]
@@ -35,15 +34,6 @@ class AppDatabase(
   val SplitBetweenTable = TableQuery[SplitBetweenEntityTable]
   val ExpenseTable = TableQuery[ExpenseEntityTable]
   val GroupTable = TableQuery[GroupEntityTable]
-
-  val context = Database.forURL(
-    url = connection.url,
-    user = connection.user,
-    password = connection.password,
-    driver = "org.postgresql.Driver",
-    keepAliveConnection = true,
-    prop = Map(("connectionPool", "HikariCP")).toProperties()
-  )
 
   def initialize(): IO[DomainError, Unit] =
     defer {
@@ -134,24 +124,24 @@ class GroupEntityTable(tag: Tag) extends Table[GroupEntity](tag, None, "GroupEnt
     (uid, title, description, passwordHash, currencyIsoCode, created, modified).mapTo[GroupEntity]
 }
 
-given userUidColumnType: BaseColumnType[UserUid] = MappedColumnType.base[UserUid, UUID](
-  uid => uid.value, // UserUid to UUID
-  uuid => UserUid(uuid) // UUID to UserUid
+given userUidColumnType: BaseColumnType[UserUid] = MappedColumnType.base[UserUid, String](
+  uid => uid.value.toString,
+  value => UserUid(UUID.fromString(value))
 )
 
-given groupUidColumnType: BaseColumnType[GroupUid] = MappedColumnType.base[GroupUid, UUID](
-  uid => uid.value, // GroupUid to UUID
-  uuid => GroupUid(uuid) // UUID to GroupUid
+given groupUidColumnType: BaseColumnType[GroupUid] = MappedColumnType.base[GroupUid, String](
+  uid => uid.value.toString,
+  value => GroupUid(UUID.fromString(value))
 )
 
-given memberUidColumnType: BaseColumnType[MemberUid] = MappedColumnType.base[MemberUid, UUID](
-  uid => uid.value, // MemberUid to UUID
-  uuid => MemberUid(uuid) // UUID to MemberUid
+given memberUidColumnType: BaseColumnType[MemberUid] = MappedColumnType.base[MemberUid, String](
+  uid => uid.value.toString,
+  value => MemberUid(UUID.fromString(value))
 )
 
-given expenseUidColumnType: BaseColumnType[ExpenseUid] = MappedColumnType.base[ExpenseUid, UUID](
-  uid => uid.value, // ExpenseUid to UUID
-  uuid => ExpenseUid(uuid) // UUID to ExpenseUid
+given expenseUidColumnType: BaseColumnType[ExpenseUid] = MappedColumnType.base[ExpenseUid, String](
+  uid => uid.value.toString,
+  value => ExpenseUid(UUID.fromString(value))
 )
 
 given timestampColumnType: BaseColumnType[Timestamp] = MappedColumnType.base[Timestamp, Long](

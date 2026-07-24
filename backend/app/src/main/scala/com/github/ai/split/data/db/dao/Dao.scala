@@ -3,7 +3,7 @@ package com.github.ai.split.data.db.dao
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.{toDomainError, some}
 import zio.{IO, ZIO}
-import slick.jdbc.PostgresProfile.api.*
+import slick.jdbc.SQLiteProfile.api.*
 
 abstract class Dao[E, TableType <: Table[E]](
   protected val db: Database,

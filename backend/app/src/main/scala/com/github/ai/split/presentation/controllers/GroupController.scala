@@ -24,20 +24,11 @@ import com.github.ai.split.entity.{
 }
 import com.github.ai.split.api.request.{PostGroupRequest, PutGroupRequest}
 import com.github.ai.split.api.response.{GetGroupsResponse, PostGroupResponse, PutGroupResponse}
-import com.github.ai.split.data.JsonSerializer
 import com.github.ai.split.entity.Access.{DENIED, GRANTED}
 import com.github.ai.split.entity.FileExtension.{CSV, HTML}
 import com.github.ai.split.entity.db.{GroupUid, UserUid}
 import com.github.ai.split.entity.exception.DomainError
-import com.github.ai.split.utils.{
-  toJavaList,
-  toScalaList,
-  getLastUrlParameter,
-  parsePasswordParam,
-  parseUid,
-  parseUidFromUrl,
-  some
-}
+import com.github.ai.split.utils.{getLastUrlParameter, parsePasswordParam, parseUid, parseUidFromUrl, some}
 import zio.{IO, ZIO}
 import zio.http.{Body, Charsets, Header, Headers, MediaType, Request, Response, Status}
 import zio.direct.*
@@ -54,16 +45,16 @@ class GroupController(
   private val assembleGroupUseCase: AssembleGroupResponseUseCase,
   private val assembleGroupsUseCase: AssembleGroupsResponseUseCase,
   private val updateGroupUseCase: UpdateGroupUseCase,
-  private val exportDataUseCase: ExportGroupDataUseCase,
-  private val jsonSerializer: JsonSerializer
+  private val exportDataUseCase: ExportGroupDataUseCase
 ) {
 
   def getGroups(
-    request: Request
-  ): IO[DomainError, Response] = {
+    ids: String,
+    passwordValues: String
+  ): IO[DomainError, GetGroupsResponse] = {
     for {
-      groupUids <- parseUids(request).map(uids => uids.map(GroupUid(_)))
-      passwords <- parsePasswords(request)
+      groupUids <- parseUids(ids).map(uids => uids.map(GroupUid(_)))
+      passwords = passwordValues.split(",").toList
       uidsAndAccesses <- accessResolver.canAccessToGroups(groupUids = groupUids, passwords = passwords)
 
       grantedGroupsUids = uidsAndAccesses
@@ -84,20 +75,20 @@ class GroupController(
             )
           }
         )
-    } yield Response.json(jsonSerializer.serialize(GetGroupsResponse(groups.toJavaList(), errors.toJavaList())))
+    } yield GetGroupsResponse(groups, errors)
   }
 
   def updateGroup(
-    request: Request
-  ): IO[DomainError, Response] = {
+    groupId: String,
+    password: String,
+    data: PutGroupRequest
+  ): IO[DomainError, PutGroupResponse] = {
     for {
-      groupUid <- parseUidFromUrl(request).map(uid => GroupUid(uid))
-      password <- parsePasswordParam(request)
+      groupUid <- groupId.parseUid().map(uid => GroupUid(uid))
       _ <- accessResolver.canAccessToGroup(groupUid = groupUid, password = password)
 
-      data <- jsonSerializer.deserializer(request.body.asString, classOf[PutGroupRequest])
       newMembers <- {
-        val newMembers = data.members.toScalaList()
+        val newMembers = data.members
         if (newMembers.nonEmpty) {
           ZIO
             .collectAll(
@@ -111,31 +102,27 @@ class GroupController(
 
       _ <- updateGroupUseCase.updateGroup(
         groupUid = groupUid,
-        newPassword = Option(data.password).map(_.trim).filter(_.nonEmpty),
-        newTitle = Option(data.title).map(_.trim).filter(_.nonEmpty),
-        newDescription = Option(data.description).map(_.trim).filter(_.nonEmpty),
-        newCurrencyIsoCode = Option(data.currencyIsoCode).map(_.trim).filter(_.nonEmpty),
+        newPassword = data.password.map(_.trim).filter(_.nonEmpty),
+        newTitle = data.title.map(_.trim).filter(_.nonEmpty),
+        newDescription = data.description.map(_.trim).filter(_.nonEmpty),
+        newCurrencyIsoCode = data.currencyIsoCode.map(_.trim).filter(_.nonEmpty),
         newMemberUids = newMembers
       )
 
       groupDto <- assembleGroupUseCase.assembleGroupDto(groupUid = groupUid)
-    } yield Response.json(jsonSerializer.serialize(PutGroupResponse(groupDto)))
+    } yield PutGroupResponse(groupDto)
   }
 
   def createGroup(
-    request: Request
-  ): IO[DomainError, Response] = {
+    data: PostGroupRequest
+  ): IO[DomainError, PostGroupResponse] = {
     for {
-      data <- jsonSerializer.deserializer(request.body.asString, classOf[PostGroupRequest])
-
       newExpenses <- parseNewExpenses(
-        expenses = data.expenses.toScalaList()
+        expenses = data.expenses
       )
 
       newGroup <- {
-        val newUsers = data.members
-          .toScalaList()
-          .map(member => NewUser(name = member.name))
+        val newUsers = data.members.map(member => NewUser(name = member.name))
 
         addGroupUseCase.addGroup(
           NewGroup(
@@ -150,7 +137,7 @@ class GroupController(
       }
 
       groupDto <- assembleGroupUseCase.assembleGroupDto(groupUid = newGroup.uid)
-    } yield Response.json(jsonSerializer.serialize(PostGroupResponse(groupDto)))
+    } yield PostGroupResponse(groupDto)
   }
 
   def exportGroup(
@@ -189,16 +176,15 @@ class GroupController(
     expenses: List[NewExpenseDto]
   ): IO[DomainError, List[NewExpense]] = {
     val newExpenses = expenses.map { expense =>
-      val isSplitBetweenAll = Some(expense.isSplitBetweenAll).map(_.booleanValue()).getOrElse(true)
+      val isSplitBetweenAll = expense.isSplitBetweenAll.getOrElse(true)
       val splitMembers = expense.splitBetween
-        .toScalaList()
         .map(splitMember => NameReference(name = splitMember.name))
 
       NewExpense(
         title = expense.title,
         description = expense.description,
         amount = expense.amount,
-        paidBy = expense.paidBy.toScalaList().map(payer => NameReference(name = payer.name)),
+        paidBy = expense.paidBy.map(payer => NameReference(name = payer.name)),
         split = if (isSplitBetweenAll) SplitBetweenAll else SplitBetweenMembers(splitMembers)
       )
     }
@@ -206,11 +192,10 @@ class GroupController(
     ZIO.succeed(newExpenses)
   }
 
-  private def parseUids(request: Request): IO[DomainError, List[UUID]] = {
+  private def parseUids(ids: String): IO[DomainError, List[UUID]] = {
     for {
       uids <- {
-        val uids = request.url
-          .queryParamOrElse("ids", "")
+        val uids = ids
           .split(",")
           .toList
           .map(id => id.parseUid())
@@ -222,15 +207,6 @@ class GroupController(
         }
       }
     } yield uids
-  }
-
-  private def parsePasswords(request: Request): IO[DomainError, List[String]] = {
-    val passwords = request.url
-      .queryParamOrElse("passwords", "")
-      .split(",")
-      .toList
-
-    ZIO.succeed(passwords)
   }
 
   private def parseGroupUidAndExtension(

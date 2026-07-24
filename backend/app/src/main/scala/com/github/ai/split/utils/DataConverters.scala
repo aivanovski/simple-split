@@ -74,8 +74,8 @@ def toExpenseDto(
     expense.description,
     expense.amount,
     toCurrencyDto(currency),
-    paidByUsers.toJavaList(),
-    splitBetweenUsers.toJavaList(),
+    paidByUsers,
+    splitBetweenUsers,
     toTimestampDto(expense.created),
     toTimestampDto(expense.modified)
   )
@@ -163,9 +163,9 @@ def toGroupDto(
     group.title,
     group.description,
     toCurrencyDto(currency),
-    memberDtos.toJavaList(),
-    transformedExpenses.toJavaList(),
-    paybackTransactions.map(transaction => toTransactionDto(transaction)).toJavaList(),
+    memberDtos,
+    transformedExpenses,
+    paybackTransactions.map(transaction => toTransactionDto(transaction)),
     toTimestampDto(group.created),
     toTimestampDto(group.modified)
   )

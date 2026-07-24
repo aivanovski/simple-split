@@ -5,7 +5,7 @@ import com.github.ai.split.data.db.{given}
 import com.github.ai.split.entity.db.{ExpenseEntity, ExpenseUid, GroupUid}
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.some
-import slick.jdbc.PostgresProfile.api.*
+import slick.jdbc.SQLiteProfile.api.*
 import zio.{IO, ZIO}
 
 class ExpenseEntityDao(

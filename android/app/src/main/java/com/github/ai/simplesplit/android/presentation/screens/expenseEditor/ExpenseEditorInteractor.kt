@@ -7,9 +7,9 @@ import com.github.ai.simplesplit.android.data.repository.ExpenseRepository
 import com.github.ai.simplesplit.android.data.repository.GroupCredentialsRepository
 import com.github.ai.simplesplit.android.model.exception.AppException
 import com.github.ai.split.api.ExpenseDto
+import com.github.ai.split.api.PostExpenseRequest
+import com.github.ai.split.api.PutExpenseRequest
 import com.github.ai.split.api.UserUidDto
-import com.github.ai.split.api.request.PostExpenseRequest
-import com.github.ai.split.api.request.PutExpenseRequest
 
 class ExpenseEditorInteractor(
     private val expenseRepository: ExpenseRepository,
@@ -25,12 +25,12 @@ class ExpenseEditorInteractor(
     ): Either<AppException, ExpenseDto> =
         either {
             val request = PutExpenseRequest(
-                title,
-                null,
-                amount,
-                if (payerUid != null) listOf(UserUidDto(payerUid)) else emptyList(),
-                true,
-                null
+                title = title,
+                description = null,
+                amount = amount,
+                paidBy = if (payerUid != null) listOf(UserUidDto(payerUid)) else emptyList(),
+                isSplitBetweenAll = true,
+                splitBetween = null
             )
 
             expenseRepository.updateExpense(
@@ -51,13 +51,13 @@ class ExpenseEditorInteractor(
                 ?: raise(AppException(message = "Failed to load credentials for group"))
 
             val request = PostExpenseRequest(
-                groupUid,
-                title,
-                "",
-                amount,
-                listOf(UserUidDto(payerUid)),
-                true,
-                null
+                groupUid = groupUid,
+                title = title,
+                description = "",
+                amount = amount,
+                paidBy = listOf(UserUidDto(payerUid)),
+                isSplitBetweenAll = true,
+                splitBetween = emptyList()
             )
 
             expenseRepository.createExpense(

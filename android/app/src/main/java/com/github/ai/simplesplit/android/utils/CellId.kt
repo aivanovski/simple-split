@@ -9,8 +9,12 @@ data class CellId(
 )
 
 sealed interface CellIdPayload {
-    data class IntPayload(val intValue: Int) : CellIdPayload
-    data class StringPayload(val text: String) : CellIdPayload
+    data class IntPayload(
+        val intValue: Int
+    ) : CellIdPayload
+    data class StringPayload(
+        val text: String
+    ) : CellIdPayload
 }
 
 fun CellIdPayload.getStringOrNull(): String? = (this as? StringPayload)?.text

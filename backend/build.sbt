@@ -4,10 +4,11 @@ val zioJsonVersion = "0.6.2"
 val circeVersion = "0.14.10"
 val zioDirect = "1.0.0-RC7"
 val zioHttp = "3.0.1"
-val gsonVersion = "2.11.0"
 
 ThisBuild / scalaVersion := scala3Version
 ThisBuild / version := "0.1.0"
+
+lazy val generateOpenApi = taskKey[File]("Generate the OpenAPI YAML schema")
 
 lazy val api = project
   .in(file("api"))
@@ -17,13 +18,40 @@ lazy val api = project
       artifact.name + "." + artifact.extension
     },
     libraryDependencies ++= Seq(
-      "com.google.code.gson" % "gson" % gsonVersion
+      "dev.zio" %% "zio-schema" % "1.4.1"
     )
+  )
+
+lazy val openapiSchema = project
+  .in(file("openapi-schema"))
+  .dependsOn(api)
+  .settings(
+    name := "simple-split-openapi-schema",
+    libraryDependencies ++= Seq(
+      "dev.zio" %% "zio-http" % zioHttp,
+      "org.yaml" % "snakeyaml" % "2.0",
+      "org.scalameta" %% "munit" % "1.0.0" % Test
+    ),
+    generateOpenApi := {
+      val output = baseDirectory.value / "openapi.yaml"
+      val classpath = (Compile / fullClasspath).value.files
+      val appRunner = (Compile / runner).value
+      appRunner
+        .run(
+          "com.github.ai.split.openapi.GenerateOpenApi",
+          classpath,
+          Array(output.getAbsolutePath),
+          streams.value.log
+        )
+        .get
+      streams.value.log.info(s"Generated $output")
+      output
+    }
   )
 
 lazy val app = project
   .in(file("app"))
-  .dependsOn(api)
+  .dependsOn(api, openapiSchema)
   .settings(
     name := "simple-split-app",
     assembly / assemblyMergeStrategy := {
@@ -46,20 +74,20 @@ lazy val app = project
       "dev.zio" %% "zio-http" % zioHttp,
       "dev.zio" %% "zio-json" % zioJsonVersion,
       "dev.zio" %% "zio-direct" % zioDirect,
+      "io.github.cdimascio" % "dotenv-java" % "3.2.0",
 
       // Logging
       "dev.zio" %% "zio-logging" % "2.3.2",
       "dev.zio" %% "zio-logging-slf4j" % "2.3.1",
-      "ch.qos.logback" % "logback-classic" % "1.5.11",
+      "ch.qos.logback" % "logback-classic" % "1.5.13",
 
       // JWT
       "com.auth0" % "java-jwt" % "4.5.0",
 
       // Database
-      "com.h2database" % "h2" % "2.3.232",
-      "org.postgresql" % "postgresql" % "42.7.3",
       "com.typesafe.slick" %% "slick" % "3.6.1",
       "com.typesafe.slick" %% "slick-hikaricp" % "3.6.1",
+      "org.xerial" % "sqlite-jdbc" % "3.51.1.0",
 
       // Password Hashing
       "org.mindrot" % "jbcrypt" % "0.4",
@@ -68,7 +96,7 @@ lazy val app = project
 
 lazy val apiClient = project
   .in(file("api-client"))
-  .dependsOn(api)
+  .dependsOn(api, openapiSchema)
   .settings(
     name := "simple-split-api-client",
     assembly / assemblyMergeStrategy := {

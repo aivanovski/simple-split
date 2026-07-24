@@ -1,30 +1,28 @@
 package com.github.ai.split.presentation.routes
 
-import com.github.ai.split.utils.toDomainResponse
+import com.github.ai.split.openapi.ApiEndpoints
+import com.github.ai.split.utils.toErrorMessageDto
 import com.github.ai.split.presentation.controllers.MemberController
 import zio.*
-import zio.http.{string, *}
+import zio.http.Routes
 
 object MemberRoutes {
 
   def routes() = Routes(
-    Method.POST / "member" -> handler { (request: Request) =>
-      for {
-        controller <- ZIO.service[MemberController]
-        response <- controller.createMember(request).mapError(_.toDomainResponse)
-      } yield response
+    ApiEndpoints.postMember.implement { case (password, body) =>
+      ZIO
+        .serviceWithZIO[MemberController](_.createMember(password.getOrElse(""), body))
+        .mapError(_.toErrorMessageDto)
     },
-    Method.PUT / "member" / string("memberId") -> handler { (request: Request) =>
-      for {
-        controller <- ZIO.service[MemberController]
-        response <- controller.updateMember(request).mapError(_.toDomainResponse)
-      } yield response
+    ApiEndpoints.putMember.implement { case (memberId, password, body) =>
+      ZIO
+        .serviceWithZIO[MemberController](_.updateMember(memberId, password.getOrElse(""), body))
+        .mapError(_.toErrorMessageDto)
     },
-    Method.DELETE / "member" / string("memberId") -> handler { (request: Request) =>
-      for {
-        controller <- ZIO.service[MemberController]
-        response <- controller.removeMember(request).mapError(_.toDomainResponse)
-      } yield response
+    ApiEndpoints.deleteMember.implement { case (memberId, password) =>
+      ZIO
+        .serviceWithZIO[MemberController](_.removeMember(memberId, password.getOrElse("")))
+        .mapError(_.toErrorMessageDto)
     }
   )
 }

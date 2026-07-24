@@ -15,15 +15,31 @@ sealed class GroupEditorIntent(
     data object OnCancelMemberEditClick : GroupEditorIntent()
     data object OnApplyMemberEditClick : GroupEditorIntent()
     data object OnCurrencyClick : GroupEditorIntent()
-    data class OnTitleChanged(val title: String) : GroupEditorIntent(isImmediate = true)
-    data class OnPasswordChanged(val password: String) : GroupEditorIntent(isImmediate = true)
+    data class OnTitleChanged(
+        val title: String
+    ) : GroupEditorIntent(isImmediate = true)
+    data class OnPasswordChanged(
+        val password: String
+    ) : GroupEditorIntent(isImmediate = true)
     data class OnConfirmPasswordChanged(
         val confirmPassword: String
     ) : GroupEditorIntent(isImmediate = true)
-    data class OnMemberChanged(val member: String) : GroupEditorIntent(isImmediate = true)
-    data class OnRemoveMemberClick(val memberIndex: Int) : GroupEditorIntent()
-    data class OnEditMemberClick(val memberIndex: Int) : GroupEditorIntent()
-    data class OnPasswordToggleClick(val isVisible: Boolean) : GroupEditorIntent()
-    data class OnConfirmPasswordToggleClick(val isVisible: Boolean) : GroupEditorIntent()
-    data class OnCurrencySelected(val currency: CurrencyEntity) : GroupEditorIntent()
+    data class OnMemberChanged(
+        val member: String
+    ) : GroupEditorIntent(isImmediate = true)
+    data class OnRemoveMemberClick(
+        val memberIndex: Int
+    ) : GroupEditorIntent()
+    data class OnEditMemberClick(
+        val memberIndex: Int
+    ) : GroupEditorIntent()
+    data class OnPasswordToggleClick(
+        val isVisible: Boolean
+    ) : GroupEditorIntent()
+    data class OnConfirmPasswordToggleClick(
+        val isVisible: Boolean
+    ) : GroupEditorIntent()
+    data class OnCurrencySelected(
+        val currency: CurrencyEntity
+    ) : GroupEditorIntent()
 }

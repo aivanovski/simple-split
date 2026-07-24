@@ -1,6 +1,5 @@
 package com.github.ai.split
 
-import com.github.ai.split.data.JsonSerializer
 import com.github.ai.split.data.currency.CurrencyParser
 import com.github.ai.split.data.db.{AppDatabase, DatabaseConnectionFactory}
 import com.github.ai.split.data.db.dao.{
@@ -40,6 +39,7 @@ import com.github.ai.split.domain.usecases.{
   ValidateExpenseUseCase,
   ValidateMemberNameUseCase
 }
+import com.github.ai.split.entity.ApplicationConfig
 import com.github.ai.split.presentation.controllers.{
   CurrencyController,
   ExpenseController,
@@ -47,14 +47,17 @@ import com.github.ai.split.presentation.controllers.{
   MemberController
 }
 import zio.{ZIO, ZLayer}
+import zio.direct.*
 
 object Layers {
 
   // Database
-  val appDatabase = ZLayer.fromZIO {
-    for {
-      db <- DatabaseConnectionFactory().create()
-    } yield AppDatabase(db)
+  val appDatabase = ZLayer.scoped {
+    defer {
+      val config = ZIO.service[ApplicationConfig].run
+      val db = DatabaseConnectionFactory(config.database).create().run
+      AppDatabase(db)
+    }
   }
 
   // Dao's
@@ -104,12 +107,11 @@ object Layers {
   val assembleExpenseUseCase = ZLayer.fromFunction(AssembleExpenseUseCase(_, _, _, _))
 
   // Controllers
-  val groupController = ZLayer.fromFunction(GroupController(_, _, _, _, _, _, _, _, _, _, _))
-  val memberController = ZLayer.fromFunction(MemberController(_, _, _, _, _, _, _, _, _))
-  val expenseController = ZLayer.fromFunction(ExpenseController(_, _, _, _, _, _, _, _))
-  val currencyController = ZLayer.fromFunction(CurrencyController(_, _))
+  val groupController = ZLayer.fromFunction(GroupController(_, _, _, _, _, _, _, _, _, _))
+  val memberController = ZLayer.fromFunction(MemberController(_, _, _, _, _, _, _, _))
+  val expenseController = ZLayer.fromFunction(ExpenseController(_, _, _, _, _, _, _))
+  val currencyController = ZLayer.fromFunction(CurrencyController(_))
 
   // Other
   val currencyParser = ZLayer.succeed(CurrencyParser())
-  val jsonSerialized = ZLayer.succeed(JsonSerializer())
 }

@@ -15,11 +15,25 @@ sealed class GroupDetailsIntent(
     data object OnRemoveGroupClick : GroupDetailsIntent()
     data object OnRemoveGroupConfirmed : GroupDetailsIntent()
     data object OnCloseErrorClick : GroupDetailsIntent()
-    data class OnExpenseClick(val expenseUid: String) : GroupDetailsIntent()
-    data class OnExpenseLongClick(val expenseUid: String) : GroupDetailsIntent()
-    data class OnEditExpenseClick(val expenseUid: String) : GroupDetailsIntent()
-    data class OnRemoveExpenseClick(val expenseUid: String) : GroupDetailsIntent()
-    data class OnRemoveExpenseConfirmed(val expenseUid: String) : GroupDetailsIntent()
-    data class OpenUrl(val url: String) : GroupDetailsIntent()
-    data class ShareGroupUrl(val url: String) : GroupDetailsIntent()
+    data class OnExpenseClick(
+        val expenseUid: String
+    ) : GroupDetailsIntent()
+    data class OnExpenseLongClick(
+        val expenseUid: String
+    ) : GroupDetailsIntent()
+    data class OnEditExpenseClick(
+        val expenseUid: String
+    ) : GroupDetailsIntent()
+    data class OnRemoveExpenseClick(
+        val expenseUid: String
+    ) : GroupDetailsIntent()
+    data class OnRemoveExpenseConfirmed(
+        val expenseUid: String
+    ) : GroupDetailsIntent()
+    data class OpenUrl(
+        val url: String
+    ) : GroupDetailsIntent()
+    data class ShareGroupUrl(
+        val url: String
+    ) : GroupDetailsIntent()
 }

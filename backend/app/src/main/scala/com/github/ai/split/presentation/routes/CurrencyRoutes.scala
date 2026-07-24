@@ -1,18 +1,16 @@
 package com.github.ai.split.presentation.routes
 
-import com.github.ai.split.utils.toDomainResponse
+import com.github.ai.split.openapi.ApiEndpoints
+import com.github.ai.split.utils.toErrorMessageDto
 import com.github.ai.split.presentation.controllers.{CurrencyController}
 import zio.ZIO
-import zio.http.{Method, Request, Routes, handler}
+import zio.http.Routes
 
 object CurrencyRoutes {
 
   def routes() = Routes(
-    Method.GET / "currency" -> handler { (request: Request) =>
-      for {
-        controller <- ZIO.service[CurrencyController]
-        response <- controller.getCurrencies().mapError(_.toDomainResponse)
-      } yield response
+    ApiEndpoints.getCurrencies.implement { _ =>
+      ZIO.serviceWithZIO[CurrencyController](_.getCurrencies()).mapError(_.toErrorMessageDto)
     }
   )
 }

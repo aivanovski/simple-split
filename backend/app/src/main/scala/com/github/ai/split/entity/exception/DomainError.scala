@@ -13,6 +13,16 @@ class ParsingError(
   cause: Option[Throwable] = None
 ) extends DomainError(message = Some(message), cause = cause)
 
+class EnvironmentError(
+  message: String,
+  cause: Option[Throwable] = None
+) extends DomainError(message = Some(message), cause = cause)
+
+object EnvironmentError {
+  def apply(message: String): EnvironmentError =
+    new EnvironmentError(message)
+}
+
 class JsonDeserializationError(
   typeOf: Class[?],
   cause: Option[Throwable] = None

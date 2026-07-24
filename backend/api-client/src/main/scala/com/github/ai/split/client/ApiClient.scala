@@ -2,11 +2,11 @@ package com.github.ai.split.client
 
 import com.github.ai.split.api.{NewExpenseDto, UserNameDto, UserUidDto}
 import com.github.ai.split.api.request.{PostExpenseRequest, PostGroupRequest, PostMemberRequest, PutMemberRequest}
-import com.google.gson.GsonBuilder
+import com.github.ai.split.openapi.Schemas.given
 import zio.*
 import zio.http.*
-
-import scala.jdk.CollectionConverters.*
+import zio.schema.Schema
+import zio.schema.codec.JsonCodec
 
 class ApiClient(
   private val client: Client
@@ -14,7 +14,6 @@ class ApiClient(
 
   type ApiResponse = ZIO[Scope, Throwable, Response]
 
-  private val gson = GsonBuilder().setPrettyPrinting().create()
   private val DefaultPassword = "abc123"
   private val baseUrl = "https://127.0.0.1:8443"
 
@@ -43,24 +42,24 @@ class ApiClient(
       "Oktoberfest",
       "Amazing party",
       "USD",
-      List("Bob", "Alan").map(UserNameDto(_)).asJava,
+      List("Bob", "Alan").map(UserNameDto(_)),
       List(
         NewExpenseDto(
           "Traditional Beer & Pretzels",
           "Authentic Bavarian beer and pretzels at Oktoberfest",
           45.50,
-          List(UserNameDto("Bob")).asJava,
-          true,
-          List.empty.asJava
+          List(UserNameDto("Bob")),
+          Some(true),
+          List.empty
         ),
         // Option 2: Entry tickets
         NewExpenseDto(
           "Oktoberfest Entry Tickets",
           "Entry tickets for the beer festival",
           24.00,
-          List(UserNameDto("Alan")).asJava,
-          true,
-          List.empty.asJava
+          List(UserNameDto("Alan")),
+          Some(true),
+          List.empty
         ),
 
         // Option 3: Traditional food
@@ -68,17 +67,17 @@ class ApiClient(
           "Bratwurst and Sauerkraut",
           "Traditional Bavarian sausages and sauerkraut",
           32.75,
-          List(UserNameDto("Bob")).asJava,
-          true,
-          List.empty.asJava
+          List(UserNameDto("Bob")),
+          Some(true),
+          List.empty
         )
-      ).asJava
+      )
     )
 
     client.request(
       Request.post(
         path = s"$baseUrl/group",
-        body = Body.fromString(gson.toJson(body))
+        body = Body.fromString(encode(body))
       )
     )
   }
@@ -92,15 +91,15 @@ class ApiClient(
       title,
       "",
       18.0,
-      List(UserUidDto(Users.Mickey)).asJava,
-      true,
-      List.empty.asJava
+      List(UserUidDto(Users.Mickey)),
+      Some(true),
+      List.empty
     )
 
     client.request(
       Request.post(
         path = s"$baseUrl/expense?password=$password",
-        body = Body.fromString(gson.toJson(body))
+        body = Body.fromString(encode(body))
       )
     )
   }
@@ -118,7 +117,7 @@ class ApiClient(
     client.request(
       Request.post(
         path = s"$baseUrl/member?password=$password",
-        body = Body.fromString(gson.toJson(body))
+        body = Body.fromString(encode(body))
       )
     )
   }
@@ -143,13 +142,16 @@ class ApiClient(
       Request.put(
         path = s"$baseUrl/member/$memberUid?password=$password",
         body = Body.fromString(
-          gson.toJson(
+          encode(
             PutMemberRequest(newName)
           )
         )
       )
     )
   }
+
+  private def encode[A](value: A)(using schema: Schema[A]): String =
+    JsonCodec.jsonEncoder(schema).encodeJson(value, None).toString
 
   def deleteExpense(
     expenseUid: String,
