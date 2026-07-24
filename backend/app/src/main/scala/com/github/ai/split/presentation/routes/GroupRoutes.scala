@@ -1,32 +1,28 @@
 package com.github.ai.split.presentation.routes
 
-import com.github.ai.split.utils.toDomainResponse
-import com.github.ai.split.domain.AuthService
-import com.github.ai.split.entity.AuthenticationContext
+import com.github.ai.split.openapi.ApiEndpoints
+import com.github.ai.split.utils.toErrorMessageDto
 import com.github.ai.split.presentation.controllers.GroupController
 import zio.ZIO
-import zio.http.{Handler, Method, Request, Response, Routes, handler, string}
+import zio.http.Routes
 
 object GroupRoutes {
 
   def routes() = Routes(
-    Method.GET / "group" -> handler { (request: Request) =>
-      for {
-        controller <- ZIO.service[GroupController]
-        response <- controller.getGroups(request).mapError(_.toDomainResponse)
-      } yield response
+    ApiEndpoints.getGroups.implement { case (ids, passwords) =>
+      ZIO
+        .serviceWithZIO[GroupController](_.getGroups(ids, passwords))
+        .mapError(_.toErrorMessageDto)
     },
-    Method.POST / "group" -> handler { (request: Request) =>
-      for {
-        controller <- ZIO.service[GroupController]
-        response <- controller.createGroup(request).mapError(_.toDomainResponse)
-      } yield response
+    ApiEndpoints.postGroup.implement { body =>
+      ZIO
+        .serviceWithZIO[GroupController](_.createGroup(body))
+        .mapError(_.toErrorMessageDto)
     },
-    Method.PUT / "group" / string("groupId") -> handler { (request: Request) =>
-      for {
-        controller <- ZIO.service[GroupController]
-        response <- controller.updateGroup(request).mapError(_.toDomainResponse)
-      } yield response
+    ApiEndpoints.putGroup.implement { case (groupId, password, body) =>
+      ZIO
+        .serviceWithZIO[GroupController](_.updateGroup(groupId, password.getOrElse(""), body))
+        .mapError(_.toErrorMessageDto)
     }
   )
 }

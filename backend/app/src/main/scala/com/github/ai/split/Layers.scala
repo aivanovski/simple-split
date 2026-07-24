@@ -1,6 +1,5 @@
 package com.github.ai.split
 
-import com.github.ai.split.data.JsonSerializer
 import com.github.ai.split.data.currency.CurrencyParser
 import com.github.ai.split.data.db.{AppDatabase, DatabaseConnectionFactory}
 import com.github.ai.split.data.db.dao.{
@@ -108,12 +107,11 @@ object Layers {
   val assembleExpenseUseCase = ZLayer.fromFunction(AssembleExpenseUseCase(_, _, _, _))
 
   // Controllers
-  val groupController = ZLayer.fromFunction(GroupController(_, _, _, _, _, _, _, _, _, _, _))
-  val memberController = ZLayer.fromFunction(MemberController(_, _, _, _, _, _, _, _, _))
-  val expenseController = ZLayer.fromFunction(ExpenseController(_, _, _, _, _, _, _, _))
-  val currencyController = ZLayer.fromFunction(CurrencyController(_, _))
+  val groupController = ZLayer.fromFunction(GroupController(_, _, _, _, _, _, _, _, _, _))
+  val memberController = ZLayer.fromFunction(MemberController(_, _, _, _, _, _, _, _))
+  val expenseController = ZLayer.fromFunction(ExpenseController(_, _, _, _, _, _, _))
+  val currencyController = ZLayer.fromFunction(CurrencyController(_))
 
   // Other
   val currencyParser = ZLayer.succeed(CurrencyParser())
-  val jsonSerialized = ZLayer.succeed(JsonSerializer())
 }

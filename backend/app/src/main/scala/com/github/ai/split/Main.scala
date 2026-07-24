@@ -7,12 +7,15 @@ import com.github.ai.split.domain.usecases.{FillTestDataUseCase, StartUpServerUs
 import com.github.ai.split.entity.CliArguments
 import com.github.ai.split.entity.HttpProtocol.{HTTP, HTTPS}
 import com.github.ai.split.presentation.routes.{CurrencyRoutes, ExpenseRoutes, ExportRoutes, GroupRoutes, MemberRoutes}
+import com.github.ai.split.openapi.ApiEndpoints
 import com.github.ai.split.utils.RequestLogger
 import zio.*
 import zio.http.*
 import zio.logging.{LogColor, LogFormat, LoggerNameExtractor}
 import zio.logging.backend.SLF4J
 import zio.direct.*
+import zio.http.endpoint.openapi.SwaggerUI
+import zio.http.codec.PathCodec.path
 
 import java.time.format.DateTimeFormatter
 
@@ -23,7 +26,8 @@ object Main extends ZIOAppDefault {
       ++ ExportRoutes.routes()
       ++ MemberRoutes.routes()
       ++ ExpenseRoutes.routes()
-      ++ CurrencyRoutes.routes())
+      ++ CurrencyRoutes.routes()
+      ++ SwaggerUI.routes("docs" / "openapi", ApiEndpoints.openApi))
       @@ RequestLogger.requestLogger
 
   override val bootstrap: ZLayer[Any, Nothing, Unit] = {
@@ -134,7 +138,6 @@ object Main extends ZIOAppDefault {
 
         // Others
         Layers.currencyParser,
-        Layers.jsonSerialized,
         Server.live,
         ZLayer.succeed(serverConfig)
       )

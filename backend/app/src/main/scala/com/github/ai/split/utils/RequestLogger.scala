@@ -16,9 +16,7 @@ object RequestLogger {
 
             val response = requestHandler
               .apply(request)
-              .tapError(err =>
-                ZIO.logError(s"<- ${request.method} ${request.url.encode} error=$err")
-              )
+              .tapError(err => ZIO.logError(s"<- ${request.method} ${request.url.encode} error=$err"))
               .run
 
             val endTime = Clock.nanoTime.run
