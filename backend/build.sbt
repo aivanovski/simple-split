@@ -51,7 +51,7 @@ lazy val app = project
       // Logging
       "dev.zio" %% "zio-logging" % "2.3.2",
       "dev.zio" %% "zio-logging-slf4j" % "2.3.1",
-      "ch.qos.logback" % "logback-classic" % "1.5.11",
+      "ch.qos.logback" % "logback-classic" % "1.5.13",
 
       // JWT
       "com.auth0" % "java-jwt" % "4.5.0",
