@@ -8,22 +8,10 @@ import com.github.ai.split.data.db.dao.{
   SplitBetweenEntityDao,
   MemberEntityDao
 }
+import com.github.ai.split.data.db.model.{ExpenseEntity, ExpenseUid, GroupEntity, GroupMembershipEntity, GroupUid, MemberEntity, MemberUid, MembershipUid, PaidByEntity, SplitBetweenEntity, Timestamp}
 import com.github.ai.split.domain.PasswordService
 import com.github.ai.split.data.db.repository.GroupRepository
 import com.github.ai.split.entity.{MemberReference, NameReference, Split, SplitBetweenAll, SplitBetweenMembers}
-import com.github.ai.split.entity.db.{
-  ExpenseEntity,
-  ExpenseUid,
-  GroupEntity,
-  GroupMembershipEntity,
-  GroupUid,
-  MembershipUid,
-  PaidByEntity,
-  SplitBetweenEntity,
-  Timestamp,
-  MemberEntity,
-  MemberUid
-}
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.some
 import zio.{IO, ZIO}

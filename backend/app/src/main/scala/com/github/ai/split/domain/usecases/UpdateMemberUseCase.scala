@@ -1,12 +1,11 @@
 package com.github.ai.split.domain.usecases
 
 import com.github.ai.split.data.db.dao.GroupMembershipEntityDao
-import com.github.ai.split.entity.db.MembershipUid
 import zio.*
 import zio.direct.*
 import com.github.ai.split.entity.exception.DomainError
-import com.github.ai.split.entity.db.GroupMembershipEntity
 import com.github.ai.split.data.db.dao.MemberEntityDao
+import com.github.ai.split.data.db.model.{GroupMembershipEntity, MembershipUid}
 import com.github.ai.split.data.db.repository.GroupRepository
 
 class UpdateMemberUseCase(

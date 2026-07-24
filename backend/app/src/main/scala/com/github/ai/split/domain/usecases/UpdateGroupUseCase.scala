@@ -7,9 +7,9 @@ import com.github.ai.split.data.db.dao.{
   SplitBetweenEntityDao,
   MemberEntityDao
 }
+import com.github.ai.split.data.db.model.{GroupEntity, GroupMembershipEntity, GroupUid, MemberUid, MembershipUid, Timestamp}
 import com.github.ai.split.domain.usecases.AddMembersUseCase
 import com.github.ai.split.domain.PasswordService
-import com.github.ai.split.entity.db.{GroupEntity, GroupMembershipEntity, GroupUid, MembershipUid, Timestamp, MemberUid}
 import com.github.ai.split.entity.exception.DomainError
 import zio.*
 import zio.direct.*

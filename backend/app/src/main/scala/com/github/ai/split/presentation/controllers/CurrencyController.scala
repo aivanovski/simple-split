@@ -2,7 +2,7 @@ package com.github.ai.split.presentation.controllers
 
 import com.github.ai.split.api.CurrencyDto
 import com.github.ai.split.api.response.GetCurrenciesResponse
-import com.github.ai.split.entity.db.CurrencyEntity
+import com.github.ai.split.data.db.model.CurrencyEntity
 import com.github.ai.split.data.db.repository.CurrencyRepository
 import com.github.ai.split.entity.exception.DomainError
 import zio.*

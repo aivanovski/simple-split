@@ -1,6 +1,7 @@
 package com.github.ai.split.domain.usecases
 
 import com.github.ai.split.data.db.dao.{GroupEntityDao, GroupMembershipEntityDao, MemberEntityDao}
+import com.github.ai.split.data.db.model.{ExpenseEntity, ExpenseUid, GroupMembershipEntity, GroupUid, MemberEntity, MembershipUid, PaidByEntity, SplitBetweenEntity, Timestamp}
 import com.github.ai.split.data.db.repository.{ExpenseRepository, GroupRepository}
 import com.github.ai.split.entity.{
   ExpenseWithRelations,
@@ -11,17 +12,6 @@ import com.github.ai.split.entity.{
   SplitBetweenAll,
   SplitBetweenMembers,
   UserReference
-}
-import com.github.ai.split.entity.db.{
-  ExpenseEntity,
-  ExpenseUid,
-  GroupMembershipEntity,
-  GroupUid,
-  MembershipUid,
-  PaidByEntity,
-  SplitBetweenEntity,
-  Timestamp,
-  MemberEntity
 }
 import com.github.ai.split.utils.*
 import com.github.ai.split.entity.exception.DomainError

@@ -1,8 +1,8 @@
 package com.github.ai.split.data.db.dao
 
 import com.github.ai.split.data.db.AppDatabase
-import com.github.ai.split.data.db.{given}
-import com.github.ai.split.entity.db.{ExpenseUid, GroupUid, SplitBetweenEntity}
+import com.github.ai.split.data.db.model.{ExpenseUid, GroupUid, SplitBetweenEntity}
+import com.github.ai.split.data.db.given
 import com.github.ai.split.entity.exception.DomainError
 import slick.jdbc.SQLiteProfile.api.*
 import zio.IO

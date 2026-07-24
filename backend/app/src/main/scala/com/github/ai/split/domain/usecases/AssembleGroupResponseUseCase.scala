@@ -1,7 +1,7 @@
 package com.github.ai.split.domain.usecases
 
 import com.github.ai.split.api.GroupDto
-import com.github.ai.split.entity.db.GroupUid
+import com.github.ai.split.data.db.model.GroupUid
 import com.github.ai.split.data.db.repository.{CurrencyRepository, ExpenseRepository, GroupRepository}
 import com.github.ai.split.entity.exception.DomainError
 import zio.*

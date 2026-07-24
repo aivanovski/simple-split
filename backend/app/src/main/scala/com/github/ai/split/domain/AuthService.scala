@@ -5,7 +5,7 @@ import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.interfaces.DecodedJWT
 import com.github.ai.split.data.db.dao.MemberEntityDao
-import com.github.ai.split.entity.db.{MemberEntity, MemberUid}
+import com.github.ai.split.data.db.model.{MemberEntity, MemberUid}
 import com.github.ai.split.entity.{AuthenticationContext, JwtData}
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.*

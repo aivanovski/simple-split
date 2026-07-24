@@ -1,8 +1,8 @@
 package com.github.ai.split.domain.usecases
 
+import com.github.ai.split.data.db.model.{GroupUid, MembershipUid}
 import com.github.ai.split.data.db.repository.GroupRepository
 import com.github.ai.split.entity.exception.DomainError
-import com.github.ai.split.entity.db.{GroupUid, MembershipUid}
 import com.github.ai.split.entity.{Member, UserReference, MemberReference, NameReference}
 import com.github.ai.split.utils.some
 import zio.*

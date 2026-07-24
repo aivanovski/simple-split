@@ -1,7 +1,7 @@
 package com.github.ai.split.domain.usecases
 
+import com.github.ai.split.data.db.model.MembershipUid
 import com.github.ai.split.entity.Transaction
-import com.github.ai.split.entity.db.MembershipUid
 
 import java.util.UUID
 import scala.collection.mutable

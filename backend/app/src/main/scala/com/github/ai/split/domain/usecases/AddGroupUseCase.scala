@@ -1,7 +1,7 @@
 package com.github.ai.split.domain.usecases
 
-import com.github.ai.split.entity.db.{GroupEntity, GroupUid, Timestamp}
 import com.github.ai.split.data.db.dao.{GroupEntityDao, GroupMembershipEntityDao}
+import com.github.ai.split.data.db.model.{GroupEntity, GroupUid, Timestamp}
 import com.github.ai.split.domain.PasswordService
 import com.github.ai.split.entity.NewGroup
 import com.github.ai.split.entity.exception.DomainError

@@ -1,6 +1,6 @@
 package com.github.ai.split.entity
 
-import com.github.ai.split.entity.db.{ExpenseEntity, PaidByEntity, SplitBetweenEntity}
+import com.github.ai.split.data.db.model.{ExpenseEntity, PaidByEntity, SplitBetweenEntity}
 
 case class ExpenseWithRelations(
   entity: ExpenseEntity,

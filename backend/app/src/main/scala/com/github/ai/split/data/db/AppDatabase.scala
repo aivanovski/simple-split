@@ -1,19 +1,6 @@
 package com.github.ai.split.data.db
 
-import com.github.ai.split.entity.db.{
-  CurrencyEntity,
-  ExpenseEntity,
-  ExpenseUid,
-  GroupEntity,
-  GroupMembershipEntity,
-  GroupUid,
-  MembershipUid,
-  PaidByEntity,
-  SplitBetweenEntity,
-  Timestamp,
-  MemberEntity,
-  MemberUid
-}
+import com.github.ai.split.data.db.model.{CurrencyEntity, ExpenseEntity, ExpenseUid, GroupEntity, GroupMembershipEntity, GroupUid, MemberEntity, MemberUid, MembershipUid, PaidByEntity, SplitBetweenEntity, Timestamp}
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.toDomainError
 import slick.jdbc.SQLiteProfile.api.*

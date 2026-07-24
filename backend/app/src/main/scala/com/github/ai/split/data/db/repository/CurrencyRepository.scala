@@ -1,9 +1,9 @@
 package com.github.ai.split.data.db.repository
 
 import com.github.ai.split.data.db.dao.{CurrencyEntityDao, GroupEntityDao}
-import com.github.ai.split.entity.db.{CurrencyEntity, GroupUid}
+import com.github.ai.split.data.db.model.{CurrencyEntity, GroupUid}
 import com.github.ai.split.entity.exception.DomainError
-import zio.{IO, *}
+import zio.*
 import zio.direct.*
 
 class CurrencyRepository(

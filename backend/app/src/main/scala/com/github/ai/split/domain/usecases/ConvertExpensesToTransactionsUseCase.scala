@@ -1,7 +1,7 @@
 package com.github.ai.split.domain.usecases
 
+import com.github.ai.split.data.db.model.{ExpenseEntity, MembershipUid, PaidByEntity, SplitBetweenEntity}
 import com.github.ai.split.entity.{ExpenseWithRelations, Transaction}
-import com.github.ai.split.entity.db.{ExpenseEntity, MembershipUid, PaidByEntity, SplitBetweenEntity}
 
 import java.util.UUID
 import scala.collection.mutable.ListBuffer

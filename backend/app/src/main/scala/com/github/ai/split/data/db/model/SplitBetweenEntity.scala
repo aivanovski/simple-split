@@ -1,4 +1,4 @@
-package com.github.ai.split.entity.db
+package com.github.ai.split.data.db.model
 
 import java.util.UUID
 

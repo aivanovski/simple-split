@@ -1,7 +1,7 @@
 package com.github.ai.split.data.db.repository
 
 import com.github.ai.split.data.db.dao.{CurrencyEntityDao, GroupEntityDao, GroupMembershipEntityDao, MemberEntityDao}
-import com.github.ai.split.entity.db.GroupUid
+import com.github.ai.split.data.db.model.GroupUid
 import com.github.ai.split.entity.{GroupWithMembers, Member}
 import com.github.ai.split.entity.exception.DomainError
 import zio.*

@@ -24,9 +24,9 @@ import com.github.ai.split.entity.{
 }
 import com.github.ai.split.api.request.{PostGroupRequest, PutGroupRequest}
 import com.github.ai.split.api.response.{GetGroupsResponse, PostGroupResponse, PutGroupResponse}
+import com.github.ai.split.data.db.model.{GroupUid, MemberUid}
 import com.github.ai.split.entity.Access.{DENIED, GRANTED}
 import com.github.ai.split.entity.FileExtension.{CSV, HTML}
-import com.github.ai.split.entity.db.{GroupUid, MemberUid}
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.{getLastUrlParameter, parsePasswordParam, parseUid, parseUidFromUrl, some}
 import zio.{IO, ZIO}

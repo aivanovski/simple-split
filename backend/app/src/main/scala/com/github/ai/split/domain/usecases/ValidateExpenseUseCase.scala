@@ -1,7 +1,7 @@
 package com.github.ai.split.domain.usecases
 
+import com.github.ai.split.data.db.model.ExpenseEntity
 import com.github.ai.split.data.db.repository.{ExpenseRepository, GroupRepository}
-import com.github.ai.split.entity.db.ExpenseEntity
 import com.github.ai.split.entity.{
   Member,
   Split,

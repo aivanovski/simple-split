@@ -1,7 +1,7 @@
 package com.github.ai.split.data.db.dao
 
 import com.github.ai.split.data.db.AppDatabase
-import com.github.ai.split.entity.db.CurrencyEntity
+import com.github.ai.split.data.db.model.CurrencyEntity
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.some
 import zio.{IO, ZIO}

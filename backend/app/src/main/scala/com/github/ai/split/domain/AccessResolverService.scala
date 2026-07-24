@@ -1,13 +1,13 @@
 package com.github.ai.split.domain
 
 import com.github.ai.split.data.db.dao.{GroupEntityDao, GroupMembershipEntityDao}
+import com.github.ai.split.data.db.model.{ExpenseUid, GroupUid, MemberUid, MembershipUid}
 import com.github.ai.split.data.db.repository.ExpenseRepository
 import com.github.ai.split.entity.{Access, AccessResolutionResult}
 import com.github.ai.split.entity.Access.{DENIED, GRANTED}
 import com.github.ai.split.entity.Reason.NOT_FOUND
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.some
-import com.github.ai.split.entity.db.{ExpenseUid, GroupUid, MembershipUid, MemberUid}
 import zio.*
 import zio.direct.*
 

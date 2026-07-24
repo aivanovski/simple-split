@@ -1,6 +1,6 @@
 package com.github.ai.split.data.currency
 
-import com.github.ai.split.entity.db.CurrencyEntity
+import com.github.ai.split.data.db.model.CurrencyEntity
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.{Resources, parseJson, some}
 import zio.*

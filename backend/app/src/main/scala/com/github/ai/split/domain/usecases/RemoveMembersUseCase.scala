@@ -1,7 +1,7 @@
 package com.github.ai.split.domain.usecases
 
 import com.github.ai.split.data.db.dao.{GroupEntityDao, GroupMembershipEntityDao, PaidByEntityDao, SplitBetweenEntityDao}
-import com.github.ai.split.entity.db.{GroupUid, MembershipUid}
+import com.github.ai.split.data.db.model.{GroupUid, MembershipUid}
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.some
 import zio.*

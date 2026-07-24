@@ -10,8 +10,8 @@ import com.github.ai.split.domain.usecases.{
 }
 import com.github.ai.split.api.request.{PostMemberRequest, PutMemberRequest}
 import com.github.ai.split.api.response.{DeleteMemberResponse, PostMemberResponse, PutMemberResponse}
+import com.github.ai.split.data.db.model.{GroupUid, MembershipUid}
 import com.github.ai.split.domain.AccessResolverService
-import com.github.ai.split.entity.db.{GroupUid, MembershipUid}
 import com.github.ai.split.utils.{parsePasswordParam, parseUid, parseUidFromUrl}
 import com.github.ai.split.entity.exception.DomainError
 import zio.*
