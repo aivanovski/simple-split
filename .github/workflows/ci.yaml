@@ -2,25 +2,28 @@ name: Build
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   check-kotlin-code-format:
     name: Check Kotlin code format
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout sources
+        uses: actions/checkout@v4
 
-      - name: Download ktlint binary
-        run: |
-          curl -sSLO https://github.com/pinterest/ktlint/releases/download/1.2.1/ktlint
-          chmod +x ktlint
-          cp ktlint android/ktlint
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
 
       - name: Run ktlint
-        run: cd android && ./ktlint --editorconfig=".editorconfig"
+        working-directory: android
+        run: ./gradlew ktlintCheck
 
   check-scala-code-format:
     name: Check Scala code format
@@ -42,41 +45,12 @@ jobs:
         uses: coursier/cache-action@v6
 
       - name: Run scalafmt check
-        run: cd backend && sbt scalafmtCheck
+        working-directory: backend
+        run: sbt scalafmtCheckAll
 
-  build-android-app:
-    name: Build Android app
-    needs: [ check-kotlin-code-format ]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - uses: actions/setup-java@v3
-        with:
-          distribution: 'zulu'
-          java-version: 17
-
-      - name: Setup SBT
-        uses: sbt/setup-sbt@v1
-
-      - name: Cache Dependencies
-        uses: coursier/cache-action@v6
-
-      - name: Build API jar
-        run: cd android && ./setup-api.sh
-
-      - name: Build debug apk
-        run: cd android && ./gradlew app:assembleDebug
-
-      - name: Store APK file
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-debug.apk
-          path: ./android/app/build/outputs/apk/debug/app-debug.apk
-
-  build-backend-app:
-    name: Build Backend app
-    needs: [ check-scala-code-format ]
+  verify-openapi-schema:
+    name: Verify OpenAPI schema
+    needs: [check-scala-code-format]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
@@ -91,20 +65,79 @@ jobs:
       - name: Setup SBT
         uses: sbt/setup-sbt@v1
 
-      - name: Cache Dependencies
+      - name: Cache dependencies
+        uses: coursier/cache-action@v6
+
+      - name: Generate OpenAPI schema
+        working-directory: backend
+        run: sbt generateOpenApi
+
+      - name: Check OpenAPI schema is up to date
+        run: git diff --exit-code -- backend/openapi-schema/openapi.yaml
+
+      - name: Test OpenAPI schema
+        working-directory: backend
+        run: sbt openapiSchema/test
+
+  build-android-app:
+    name: Build Android app
+    needs: [check-kotlin-code-format, verify-openapi-schema]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - name: Build debug apk
+        working-directory: android
+        run: ./gradlew :app:assembleDebug
+
+      - name: Store APK file
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug.apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+
+  build-backend-app:
+    name: Build Backend app
+    needs: [check-scala-code-format, verify-openapi-schema]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup SBT
+        uses: sbt/setup-sbt@v1
+
+      - name: Cache dependencies
         uses: coursier/cache-action@v6
 
       - name: Run sbt compile
-        run: cd backend && sbt app/compile
+        working-directory: backend
+        run: sbt app/compile
 
       - name: Run tests
-        run: cd backend && sbt app/test
+        working-directory: backend
+        run: sbt test
 
       - name: Build jar file
-        run: cd backend && sbt app/assembly
+        working-directory: backend
+        run: sbt app/assembly
 
       - name: Store jar file
         uses: actions/upload-artifact@v4
         with:
           name: simple-split-backend.jar
-          path: ./backend/app/target/scala-3.7.1/simple-split-backend.jar
+          path: backend/app/target/scala-3.7.1/simple-split-backend.jar

@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.parcelize)
     alias(libs.plugins.kapt)
     alias(libs.plugins.kotlinSerialization)
+    alias(libs.plugins.ktlint)
 }
 
 fun getVersionName(): String = libs.versions.appVersion.get()
@@ -145,7 +146,7 @@ dependencies {
     implementation(libs.decompose.extensions)
 
     // Api
-    implementation(files("libs/simple-split-api.jar"))
+    implementation(project(":backend-api"))
 
     // Preferences
     implementation(libs.ksprefs)

@@ -14,6 +14,10 @@ data class GroupCellModel(
 ) : CellModel
 
 sealed interface GroupCellEvent : CellEvent {
-    data class OnClick(val cellId: String) : GroupCellEvent
-    data class OnLongClick(val cellId: String) : GroupCellEvent
+    data class OnClick(
+        val cellId: String
+    ) : GroupCellEvent
+    data class OnLongClick(
+        val cellId: String
+    ) : GroupCellEvent
 }

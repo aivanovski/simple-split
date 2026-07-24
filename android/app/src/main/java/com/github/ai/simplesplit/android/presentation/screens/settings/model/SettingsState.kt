@@ -4,6 +4,10 @@ import com.github.ai.simplesplit.android.presentation.core.compose.cells.CellVie
 
 sealed class SettingsState {
     data object Loading : SettingsState()
-    data class Error(val message: String) : SettingsState()
-    data class Data(val cellViewModels: List<CellViewModel>) : SettingsState()
+    data class Error(
+        val message: String
+    ) : SettingsState()
+    data class Data(
+        val cellViewModels: List<CellViewModel>
+    ) : SettingsState()
 }

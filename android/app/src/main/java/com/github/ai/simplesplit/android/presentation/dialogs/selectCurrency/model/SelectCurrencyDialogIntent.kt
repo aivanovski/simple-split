@@ -8,7 +8,13 @@ sealed class SelectCurrencyDialogIntent(
     data object Initialize : SelectCurrencyDialogIntent()
     data object Dismiss : SelectCurrencyDialogIntent()
     data object OnResetQueryClick : SelectCurrencyDialogIntent()
-    data class OnQueryTextChange(val query: String) : SelectCurrencyDialogIntent(isImmediate = true)
-    data class OnCurrencySelected(val currencyIsoCode: String) : SelectCurrencyDialogIntent()
-    data class FilterCurrencies(val query: String) : SelectCurrencyDialogIntent()
+    data class OnQueryTextChange(
+        val query: String
+    ) : SelectCurrencyDialogIntent(isImmediate = true)
+    data class OnCurrencySelected(
+        val currencyIsoCode: String
+    ) : SelectCurrencyDialogIntent()
+    data class FilterCurrencies(
+        val query: String
+    ) : SelectCurrencyDialogIntent()
 }

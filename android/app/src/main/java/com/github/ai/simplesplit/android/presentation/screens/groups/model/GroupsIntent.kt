@@ -13,12 +13,28 @@ sealed class GroupsIntent(
     data object OnAddGroupByUrlClick : GroupsIntent()
     data object OnSettingsClick : GroupsIntent()
     data object OnCloseErrorClick : GroupsIntent()
-    data class OnErrorActionClick(val actionId: Int) : GroupsIntent()
-    data class OnGroupClick(val groupUid: String) : GroupsIntent()
-    data class OnGroupLongClick(val groupUid: String) : GroupsIntent()
-    data class OnEditGroupClick(val groupUid: String) : GroupsIntent()
-    data class OnRemoveGroupClick(val groupUid: String) : GroupsIntent()
-    data class OnRemoveGroupConfirmed(val groupUid: String) : GroupsIntent()
-    data class OpenUrl(val url: String) : GroupsIntent()
-    data class ShareUrl(val url: String) : GroupsIntent()
+    data class OnErrorActionClick(
+        val actionId: Int
+    ) : GroupsIntent()
+    data class OnGroupClick(
+        val groupUid: String
+    ) : GroupsIntent()
+    data class OnGroupLongClick(
+        val groupUid: String
+    ) : GroupsIntent()
+    data class OnEditGroupClick(
+        val groupUid: String
+    ) : GroupsIntent()
+    data class OnRemoveGroupClick(
+        val groupUid: String
+    ) : GroupsIntent()
+    data class OnRemoveGroupConfirmed(
+        val groupUid: String
+    ) : GroupsIntent()
+    data class OpenUrl(
+        val url: String
+    ) : GroupsIntent()
+    data class ShareUrl(
+        val url: String
+    ) : GroupsIntent()
 }

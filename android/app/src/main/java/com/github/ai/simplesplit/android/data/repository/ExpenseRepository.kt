@@ -3,11 +3,11 @@ package com.github.ai.simplesplit.android.data.repository
 import arrow.core.Either
 import com.github.ai.simplesplit.android.data.api.ApiClient
 import com.github.ai.simplesplit.android.model.exception.AppException
-import com.github.ai.split.api.request.PostExpenseRequest
-import com.github.ai.split.api.request.PutExpenseRequest
-import com.github.ai.split.api.response.DeleteExpenseResponse
-import com.github.ai.split.api.response.PostExpenseResponse
-import com.github.ai.split.api.response.PutExpenseResponse
+import com.github.ai.split.api.DeleteExpenseResponse
+import com.github.ai.split.api.PostExpenseRequest
+import com.github.ai.split.api.PostExpenseResponse
+import com.github.ai.split.api.PutExpenseRequest
+import com.github.ai.split.api.PutExpenseResponse
 
 class ExpenseRepository(
     private val api: ApiClient

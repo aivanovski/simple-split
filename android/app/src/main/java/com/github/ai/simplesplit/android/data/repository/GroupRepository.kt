@@ -6,10 +6,10 @@ import com.github.ai.simplesplit.android.data.api.ApiClient
 import com.github.ai.simplesplit.android.model.exception.ApiException
 import com.github.ai.simplesplit.android.model.exception.AppException
 import com.github.ai.split.api.GroupDto
-import com.github.ai.split.api.request.PostGroupRequest
-import com.github.ai.split.api.request.PutGroupRequest
-import com.github.ai.split.api.response.PostGroupResponse
-import com.github.ai.split.api.response.PutGroupResponse
+import com.github.ai.split.api.PostGroupRequest
+import com.github.ai.split.api.PostGroupResponse
+import com.github.ai.split.api.PutGroupRequest
+import com.github.ai.split.api.PutGroupResponse
 
 class GroupRepository(
     private val api: ApiClient

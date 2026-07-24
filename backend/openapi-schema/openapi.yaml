@@ -29,11 +29,17 @@ paths:
         required: true
       responses:
         '200':
+          description: |+
+            Created expense
+
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PostExpenseResponse'
         '400':
+          description: |+
+            Bad request
+
           content:
             application/json:
               schema:
@@ -48,11 +54,17 @@ paths:
         - currencies
       responses:
         '200':
+          description: |+
+            Supported currencies
+
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetCurrenciesResponse'
         '400':
+          description: |+
+            Bad request
+
           content:
             application/json:
               schema:
@@ -89,11 +101,17 @@ paths:
         required: true
       responses:
         '200':
+          description: |+
+            Group containing the updated member
+
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PutMemberResponse'
         '400':
+          description: |+
+            Bad request
+
           content:
             application/json:
               schema:
@@ -121,11 +139,17 @@ paths:
         style: simple
       responses:
         '200':
+          description: |+
+            Group after removing the member
+
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/DeleteMemberResponse'
         '400':
+          description: |+
+            Bad request
+
           content:
             application/json:
               schema:
@@ -156,11 +180,17 @@ paths:
         style: simple
       responses:
         '200':
+          description: |+
+            Exported group data
+
           content:
             text/csv:
               schema:
                 type: string
         '400':
+          description: |+
+            Bad request
+
           content:
             application/json:
               schema:
@@ -197,11 +227,17 @@ paths:
         required: true
       responses:
         '200':
+          description: |+
+            Updated expense
+
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PutExpenseResponse'
         '400':
+          description: |+
+            Bad request
+
           content:
             application/json:
               schema:
@@ -229,11 +265,17 @@ paths:
         style: simple
       responses:
         '200':
+          description: |+
+            Group after removing the expense
+
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/DeleteExpenseResponse'
         '400':
+          description: |+
+            Bad request
+
           content:
             application/json:
               schema:
@@ -264,11 +306,17 @@ paths:
         required: true
       responses:
         '200':
+          description: |+
+            Group containing the created member
+
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PostMemberResponse'
         '400':
+          description: |+
+            Bad request
+
           content:
             application/json:
               schema:
@@ -298,11 +346,17 @@ paths:
         style: form
       responses:
         '200':
+          description: |+
+            Groups matching the supplied credentials
+
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetGroupsResponse'
         '400':
+          description: |+
+            Bad request
+
           content:
             application/json:
               schema:
@@ -320,11 +374,17 @@ paths:
         required: true
       responses:
         '200':
+          description: |+
+            Created group
+
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PostGroupResponse'
         '400':
+          description: |+
+            Bad request
+
           content:
             application/json:
               schema:
@@ -361,11 +421,17 @@ paths:
         required: true
       responses:
         '200':
+          description: |+
+            Updated group
+
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PutGroupResponse'
         '400':
+          description: |+
+            Bad request
+
           content:
             application/json:
               schema:
@@ -377,67 +443,48 @@ components:
       properties:
         description:
           type: string
-          description: If not set, this field defaults to the value of the default annotation.
-          default: ''
         paybackTransactions:
           type: array
           items:
             $ref: '#/components/schemas/TransactionDto'
-          description: If not set, this field defaults to the value of the default annotation.
-          default: [
-            ]
         modified:
           $ref: '#/components/schemas/TimestampDto'
-          description: If not set, this field defaults to the value of the default annotation.
-          default:
-            timestampSeconds: 0
-            formatted: ''
         members:
           type: array
           items:
             $ref: '#/components/schemas/MemberDto'
-          description: If not set, this field defaults to the value of the default annotation.
-          default: [
-            ]
         title:
           type: string
-          description: If not set, this field defaults to the value of the default annotation.
-          default: ''
         expenses:
           type: array
           items:
             $ref: '#/components/schemas/ExpenseDto'
-          description: If not set, this field defaults to the value of the default annotation.
-          default: [
-            ]
         created:
           $ref: '#/components/schemas/TimestampDto'
-          description: If not set, this field defaults to the value of the default annotation.
-          default:
-            timestampSeconds: 0
-            formatted: ''
         currency:
           $ref: '#/components/schemas/CurrencyDto'
-          description: If not set, this field defaults to the value of the default annotation.
-          default:
-            isoCode: ''
-            name: ''
-            symbol: ''
         uid:
           type: string
-          description: If not set, this field defaults to the value of the default annotation.
-          default: ''
+      required:
+      - uid
+      - title
+      - description
+      - currency
+      - members
+      - expenses
+      - paybackTransactions
+      - created
+      - modified
     PostMemberRequest:
       type: object
       properties:
         groupUid:
           type: string
-          description: If not set, this field defaults to the value of the default annotation.
-          default: ''
         name:
           type: string
-          description: If not set, this field defaults to the value of the default annotation.
-          default: ''
+      required:
+      - groupUid
+      - name
     GetCurrenciesResponse:
       type: object
       properties:
@@ -445,36 +492,22 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CurrencyDto'
-          description: If not set, this field defaults to the value of the default annotation.
-          default: [
-            ]
+      required:
+      - currencies
     UserUidDto:
       type: object
       properties:
         uid:
           type: string
-          description: If not set, this field defaults to the value of the default annotation.
-          default: ''
+      required:
+      - uid
     PostGroupResponse:
       type: object
       properties:
         group:
           $ref: '#/components/schemas/GroupDto'
-          description: If not set, this field defaults to the value of the default annotation.
-          default:
-            uid: ''
-            title: ''
-            description: ''
-            currency:
-              isoCode: ''
-              name: ''
-              symbol: ''
-            created:
-              timestampSeconds: 0
-              formatted: ''
-            modified:
-              timestampSeconds: 0
-              formatted: ''
+      required:
+      - group
     PutExpenseRequest:
       type: object
       properties:
@@ -522,42 +555,15 @@ components:
       properties:
         expense:
           $ref: '#/components/schemas/ExpenseDto'
-          description: If not set, this field defaults to the value of the default annotation.
-          default:
-            uid: ''
-            title: ''
-            description: ''
-            amount: 0.0
-            currency:
-              isoCode: ''
-              name: ''
-              symbol: ''
-            created:
-              timestampSeconds: 0
-              formatted: ''
-            modified:
-              timestampSeconds: 0
-              formatted: ''
+      required:
+      - expense
     PutMemberResponse:
       type: object
       properties:
         group:
           $ref: '#/components/schemas/GroupDto'
-          description: If not set, this field defaults to the value of the default annotation.
-          default:
-            uid: ''
-            title: ''
-            description: ''
-            currency:
-              isoCode: ''
-              name: ''
-              symbol: ''
-            created:
-              timestampSeconds: 0
-              formatted: ''
-            modified:
-              timestampSeconds: 0
-              formatted: ''
+      required:
+      - group
     PostExpenseRequest:
       type: object
       properties:
@@ -565,39 +571,30 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/UserUidDto'
-          description: If not set, this field defaults to the value of the default annotation.
-          default: [
-            ]
         description:
           type: string
-          description: If not set, this field defaults to the value of the default annotation.
-          default: ''
         isSplitBetweenAll:
           type:
           - boolean
           - 'null'
-          description: If not set, this field defaults to the value of the default annotation.
-          default: null
         paidBy:
           type: array
           items:
             $ref: '#/components/schemas/UserUidDto'
-          description: If not set, this field defaults to the value of the default annotation.
-          default: [
-            ]
         title:
           type: string
-          description: If not set, this field defaults to the value of the default annotation.
-          default: ''
         groupUid:
           type: string
-          description: If not set, this field defaults to the value of the default annotation.
-          default: ''
         amount:
           type: number
           format: double
-          description: If not set, this field defaults to the value of the default annotation.
-          default: 0.0
+      required:
+      - groupUid
+      - title
+      - description
+      - amount
+      - paidBy
+      - splitBetween
     NewExpenseDto:
       type: object
       properties:
@@ -605,42 +602,34 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/UserNameDto'
-          description: If not set, this field defaults to the value of the default annotation.
-          default: [
-            ]
         description:
           type: string
-          description: If not set, this field defaults to the value of the default annotation.
-          default: ''
         amount:
           type: number
           format: double
-          description: If not set, this field defaults to the value of the default annotation.
-          default: 0.0
         isSplitBetweenAll:
           type:
           - boolean
           - 'null'
-          description: If not set, this field defaults to the value of the default annotation.
-          default: null
         paidBy:
           type: array
           items:
             $ref: '#/components/schemas/UserNameDto'
-          description: If not set, this field defaults to the value of the default annotation.
-          default: [
-            ]
         title:
           type: string
-          description: If not set, this field defaults to the value of the default annotation.
-          default: ''
+      required:
+      - title
+      - description
+      - amount
+      - paidBy
+      - splitBetween
     UserNameDto:
       type: object
       properties:
         name:
           type: string
-          description: If not set, this field defaults to the value of the default annotation.
-          default: ''
+      required:
+      - name
     GetGroupsResponse:
       type: object
       properties:
@@ -648,51 +637,33 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/GroupDto'
-          description: If not set, this field defaults to the value of the default annotation.
-          default: [
-            ]
         errors:
           type: array
           items:
             $ref: '#/components/schemas/GetGroupErrorDto'
-          description: If not set, this field defaults to the value of the default annotation.
-          default: [
-            ]
+      required:
+      - groups
+      - errors
     DeleteExpenseResponse:
       type: object
       properties:
         group:
           $ref: '#/components/schemas/GroupDto'
-          description: If not set, this field defaults to the value of the default annotation.
-          default:
-            uid: ''
-            title: ''
-            description: ''
-            currency:
-              isoCode: ''
-              name: ''
-              symbol: ''
-            created:
-              timestampSeconds: 0
-              formatted: ''
-            modified:
-              timestampSeconds: 0
-              formatted: ''
+      required:
+      - group
     CurrencyDto:
       type: object
       properties:
         isoCode:
           type: string
-          description: If not set, this field defaults to the value of the default annotation.
-          default: ''
         name:
           type: string
-          description: If not set, this field defaults to the value of the default annotation.
-          default: ''
         symbol:
           type: string
-          description: If not set, this field defaults to the value of the default annotation.
-          default: ''
+      required:
+      - isoCode
+      - name
+      - symbol
     ExpenseDto:
       type: object
       properties:
@@ -700,52 +671,35 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/MemberDto'
-          description: If not set, this field defaults to the value of the default annotation.
-          default: [
-            ]
         description:
           type: string
-          description: If not set, this field defaults to the value of the default annotation.
-          default: ''
         amount:
           type: number
           format: double
-          description: If not set, this field defaults to the value of the default annotation.
-          default: 0.0
         modified:
           $ref: '#/components/schemas/TimestampDto'
-          description: If not set, this field defaults to the value of the default annotation.
-          default:
-            timestampSeconds: 0
-            formatted: ''
         paidBy:
           type: array
           items:
             $ref: '#/components/schemas/MemberDto'
-          description: If not set, this field defaults to the value of the default annotation.
-          default: [
-            ]
         title:
           type: string
-          description: If not set, this field defaults to the value of the default annotation.
-          default: ''
         created:
           $ref: '#/components/schemas/TimestampDto'
-          description: If not set, this field defaults to the value of the default annotation.
-          default:
-            timestampSeconds: 0
-            formatted: ''
         currency:
           $ref: '#/components/schemas/CurrencyDto'
-          description: If not set, this field defaults to the value of the default annotation.
-          default:
-            isoCode: ''
-            name: ''
-            symbol: ''
         uid:
           type: string
-          description: If not set, this field defaults to the value of the default annotation.
-          default: ''
+      required:
+      - uid
+      - title
+      - description
+      - amount
+      - currency
+      - paidBy
+      - splitBetween
+      - created
+      - modified
     PutGroupRequest:
       type: object
       properties:
@@ -785,145 +739,93 @@ components:
       properties:
         group:
           $ref: '#/components/schemas/GroupDto'
-          description: If not set, this field defaults to the value of the default annotation.
-          default:
-            uid: ''
-            title: ''
-            description: ''
-            currency:
-              isoCode: ''
-              name: ''
-              symbol: ''
-            created:
-              timestampSeconds: 0
-              formatted: ''
-            modified:
-              timestampSeconds: 0
-              formatted: ''
+      required:
+      - group
     PutExpenseResponse:
       type: object
       properties:
         expense:
           $ref: '#/components/schemas/ExpenseDto'
-          description: If not set, this field defaults to the value of the default annotation.
-          default:
-            uid: ''
-            title: ''
-            description: ''
-            amount: 0.0
-            currency:
-              isoCode: ''
-              name: ''
-              symbol: ''
-            created:
-              timestampSeconds: 0
-              formatted: ''
-            modified:
-              timestampSeconds: 0
-              formatted: ''
+      required:
+      - expense
     TransactionDto:
       type: object
       properties:
         creditorUid:
           type: string
-          description: If not set, this field defaults to the value of the default annotation.
-          default: ''
         debtorUid:
           type: string
-          description: If not set, this field defaults to the value of the default annotation.
-          default: ''
         amount:
           type: number
           format: double
-          description: If not set, this field defaults to the value of the default annotation.
-          default: 0.0
+      required:
+      - creditorUid
+      - debtorUid
+      - amount
     PostGroupRequest:
       type: object
       properties:
         currencyIsoCode:
           type: string
-          description: If not set, this field defaults to the value of the default annotation.
-          default: ''
         description:
           type: string
-          description: If not set, this field defaults to the value of the default annotation.
-          default: ''
         members:
           type: array
           items:
             $ref: '#/components/schemas/UserNameDto'
-          description: If not set, this field defaults to the value of the default annotation.
-          default: [
-            ]
         title:
           type: string
-          description: If not set, this field defaults to the value of the default annotation.
-          default: ''
         expenses:
           type: array
           items:
             $ref: '#/components/schemas/NewExpenseDto'
-          description: If not set, this field defaults to the value of the default annotation.
-          default: [
-            ]
         password:
           type: string
-          description: If not set, this field defaults to the value of the default annotation.
-          default: ''
+      required:
+      - password
+      - title
+      - description
+      - currencyIsoCode
+      - members
+      - expenses
     PutGroupResponse:
       type: object
       properties:
         group:
           $ref: '#/components/schemas/GroupDto'
-          description: If not set, this field defaults to the value of the default annotation.
-          default:
-            uid: ''
-            title: ''
-            description: ''
-            currency:
-              isoCode: ''
-              name: ''
-              symbol: ''
-            created:
-              timestampSeconds: 0
-              formatted: ''
-            modified:
-              timestampSeconds: 0
-              formatted: ''
+      required:
+      - group
     MemberDto:
       type: object
       properties:
         uid:
           type: string
-          description: If not set, this field defaults to the value of the default annotation.
-          default: ''
         name:
           type: string
-          description: If not set, this field defaults to the value of the default annotation.
-          default: ''
+      required:
+      - uid
+      - name
     TimestampDto:
       type: object
       properties:
         timestampSeconds:
           type: integer
           format: int64
-          description: If not set, this field defaults to the value of the default annotation.
-          default: 0
         formatted:
           type: string
-          description: If not set, this field defaults to the value of the default annotation.
-          default: ''
+      required:
+      - timestampSeconds
+      - formatted
     GetGroupErrorDto:
       type: object
       properties:
         uid:
           type: string
-          description: If not set, this field defaults to the value of the default annotation.
-          default: ''
         message:
           type: string
-          description: If not set, this field defaults to the value of the default annotation.
-          default: ''
+      required:
+      - uid
+      - message
     ErrorMessageDto:
       type: object
       properties:
@@ -931,47 +833,29 @@ components:
           type:
           - string
           - 'null'
-          description: If not set, this field defaults to the value of the default annotation.
-          default: null
         exception:
           type: string
-          description: If not set, this field defaults to the value of the default annotation.
-          default: ''
         stacktraceBase64:
           type: string
-          description: If not set, this field defaults to the value of the default annotation.
-          default: ''
         stacktraceLines:
           type: array
           items:
             type: string
-          description: If not set, this field defaults to the value of the default annotation.
-          default: [
-            ]
+      required:
+      - exception
+      - stacktraceBase64
+      - stacktraceLines
     DeleteMemberResponse:
       type: object
       properties:
         group:
           $ref: '#/components/schemas/GroupDto'
-          description: If not set, this field defaults to the value of the default annotation.
-          default:
-            uid: ''
-            title: ''
-            description: ''
-            currency:
-              isoCode: ''
-              name: ''
-              symbol: ''
-            created:
-              timestampSeconds: 0
-              formatted: ''
-            modified:
-              timestampSeconds: 0
-              formatted: ''
+      required:
+      - group
     PutMemberRequest:
       type: object
       properties:
         name:
           type: string
-          description: If not set, this field defaults to the value of the default annotation.
-          default: ''
+      required:
+      - name

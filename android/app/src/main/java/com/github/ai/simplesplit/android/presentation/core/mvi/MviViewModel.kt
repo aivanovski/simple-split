@@ -20,7 +20,8 @@ import kotlinx.coroutines.runBlocking
 abstract class MviViewModel<State, Intent : MviIntent>(
     initialState: State,
     private val initialIntent: Intent
-) : ViewModel(), ScreenViewModel {
+) : ViewModel(),
+    ScreenViewModel {
 
     val state = MutableStateFlow(initialState)
     private val intents = Channel<Intent>(capacity = Channel.BUFFERED)

@@ -3,11 +3,11 @@ package com.github.ai.simplesplit.android.data.repository
 import arrow.core.Either
 import com.github.ai.simplesplit.android.data.api.ApiClient
 import com.github.ai.simplesplit.android.model.exception.AppException
-import com.github.ai.split.api.request.PostMemberRequest
-import com.github.ai.split.api.request.PutMemberRequest
-import com.github.ai.split.api.response.DeleteMemberResponse
-import com.github.ai.split.api.response.PostMemberResponse
-import com.github.ai.split.api.response.PutMemberResponse
+import com.github.ai.split.api.DeleteMemberResponse
+import com.github.ai.split.api.PostMemberRequest
+import com.github.ai.split.api.PostMemberResponse
+import com.github.ai.split.api.PutMemberRequest
+import com.github.ai.split.api.PutMemberResponse
 
 class MemberRepository(
     private val api: ApiClient
