@@ -1,6 +1,6 @@
 package com.github.ai.split.data.db.repository
 
-import com.github.ai.split.data.db.dao.{CurrencyEntityDao, GroupEntityDao, GroupMemberEntityDao, UserEntityDao}
+import com.github.ai.split.data.db.dao.{CurrencyEntityDao, GroupEntityDao, GroupMembershipEntityDao, MemberEntityDao}
 import com.github.ai.split.entity.db.GroupUid
 import com.github.ai.split.entity.{GroupWithMembers, Member}
 import com.github.ai.split.entity.exception.DomainError
@@ -10,9 +10,9 @@ import zio.direct.*
 import scala.collection.mutable.ListBuffer
 
 class GroupRepository(
-  private val userDao: UserEntityDao,
+  private val memberDao: MemberEntityDao,
   private val groupDao: GroupEntityDao,
-  private val groupMemberDao: GroupMemberEntityDao,
+  private val groupMembershipDao: GroupMembershipEntityDao,
   private val currencyDao: CurrencyEntityDao
 ) {
 
@@ -46,19 +46,19 @@ class GroupRepository(
         .collectAll(
           groupUids
             .map { groupUid =>
-              groupMemberDao
+              groupMembershipDao
                 .getByGroupUid(groupUid = groupUid)
                 .map(members => (groupUid, members))
             }
         )
         .run
 
-      val userUids = uidsAndMembers
-        .flatMap((_, members) => members.map(_.userUid))
+      val memberUids = uidsAndMembers
+        .flatMap((_, members) => members.map(_.memberUid))
         .distinct
 
-      val userUidToUserMap = userDao
-        .getByUids(userUids)
+      val userUidToUserMap = memberDao
+        .getByUids(memberUids)
         .run
         .map(user => (user.uid, user))
         .toMap
@@ -66,7 +66,7 @@ class GroupRepository(
       uidsAndMembers.map { (groupUid, members) =>
         val membersWithUsers = members.map { member =>
           Member(
-            user = userUidToUserMap(member.userUid),
+            user = userUidToUserMap(member.memberUid),
             entity = member
           )
         }
@@ -91,18 +91,18 @@ class GroupRepository(
 
   def getMembers(groupUid: GroupUid): IO[DomainError, List[Member]] = {
     defer {
-      val userUidToUserMap = userDao
+      val userUidToUserMap = memberDao
         .getByGroupUid(groupUid)
         .run
         .map(user => (user.uid, user))
         .toMap
 
-      val members = groupMemberDao.getByGroupUid(groupUid).run
+      val members = groupMembershipDao.getByGroupUid(groupUid).run
 
       members
         .map { member =>
           userUidToUserMap
-            .get(member.userUid)
+            .get(member.memberUid)
             .map(user => Member(user = user, entity = member))
         }
         .filter(member => member.isDefined)

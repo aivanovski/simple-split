@@ -4,8 +4,8 @@ import com.github.ai.split.utils.toDomainResponse
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.interfaces.DecodedJWT
-import com.github.ai.split.data.db.dao.UserEntityDao
-import com.github.ai.split.entity.db.{UserEntity, UserUid}
+import com.github.ai.split.data.db.dao.MemberEntityDao
+import com.github.ai.split.entity.db.{MemberEntity, MemberUid}
 import com.github.ai.split.entity.{AuthenticationContext, JwtData}
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.*
@@ -18,12 +18,12 @@ import scala.util.{Failure, Success, Try}
 import java.util.Date
 
 class AuthService(
-  private val userDao: UserEntityDao
+  private val memberDao: MemberEntityDao
 ) {
 
   implicit val clock: Clock = Clock.systemUTC
 
-  def createJwtToken(user: UserEntity): String = {
+  def createJwtToken(user: MemberEntity): String = {
     val jwtData = JwtData.DEFAULT
     val expires = clock.millis() + TimeUnit.DAYS.toMillis(30)
 
@@ -36,7 +36,7 @@ class AuthService(
       .sign(Algorithm.HMAC256(jwtData.secret))
   }
 
-  def validateAuthHeader(header: String): IO[DomainError, UserEntity] = {
+  def validateAuthHeader(header: String): IO[DomainError, MemberEntity] = {
     for
       token <- extractTokenFromHeader(header)
       decodedToken <- decodeJwtToken(token)
@@ -77,11 +77,11 @@ class AuthService(
       .mapError(error => new DomainError(cause = error.some))
   }
 
-  private def getUserByToken(token: DecodedJWT): IO[DomainError, UserEntity] = {
+  private def getUserByToken(token: DecodedJWT): IO[DomainError, MemberEntity] = {
     for {
-      userUid <- token.getClaim(AuthService.USER_UID).asString().parseUid()
-      user <- userDao.getByUid(UserUid(userUid))
-    } yield user
+      memberUid <- token.getClaim(AuthService.USER_UID).asString().parseUid()
+      member <- memberDao.getByUid(MemberUid(memberUid))
+    } yield member
   }
 }
 

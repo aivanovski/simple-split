@@ -1,39 +1,39 @@
 package com.github.ai.split.data.db.dao
 
 import com.github.ai.split.data.db.AppDatabase
-import com.github.ai.split.data.db.{given}
-import com.github.ai.split.entity.db.{GroupUid, UserEntity, UserUid}
+import com.github.ai.split.data.db.given
+import com.github.ai.split.entity.db.{GroupUid, MemberEntity, MemberUid}
 import com.github.ai.split.entity.exception.DomainError
-import com.github.ai.split.utils.{some}
+import com.github.ai.split.utils.some
 import zio.{IO, ZIO}
 import zio.direct.*
 import slick.jdbc.SQLiteProfile.api.*
 
-class UserEntityDao(
+class MemberEntityDao(
   db: AppDatabase,
-  private val groupMemberDao: GroupMemberEntityDao
-) extends Dao(db = db.context, table = db.UserTable) {
+  private val groupMemberDao: GroupMembershipEntityDao
+) extends Dao(db = db.context, table = db.MemberTable) {
 
-  private val table = db.UserTable
+  private val table = db.MemberTable
 
   // TODO: refactor
-  def getAll(): IO[DomainError, List[UserEntity]] = {
+  def getAll(): IO[DomainError, List[MemberEntity]] = {
     queryAll()
   }
 
-  def getByGroupUid(groupUid: GroupUid): IO[DomainError, List[UserEntity]] = {
+  def getByGroupUid(groupUid: GroupUid): IO[DomainError, List[MemberEntity]] = {
     defer {
       val users = groupMemberDao.getByGroupUid(groupUid).run
-      val userUids = users.map(_.userUid).toSet
-      query(table => table.uid inSet userUids).run
+      val memberUids = users.map(_.memberUid).toSet
+      query(table => table.uid inSet memberUids).run
     }
   }
 
-  def findByUid(uid: UserUid): IO[DomainError, Option[UserEntity]] = {
+  def findByUid(uid: MemberUid): IO[DomainError, Option[MemberEntity]] = {
     queryOne(table => table.uid === uid)
   }
 
-  def getByUids(uids: List[UserUid]): IO[DomainError, List[UserEntity]] = {
+  def getByUids(uids: List[MemberUid]): IO[DomainError, List[MemberEntity]] = {
     val uidSet = uids.toSet
 
     query(t => t.uid inSet uidSet)
@@ -48,7 +48,7 @@ class UserEntityDao(
       }
   }
 
-  def getByUid(uid: UserUid): IO[DomainError, UserEntity] = {
+  def getByUid(uid: MemberUid): IO[DomainError, MemberEntity] = {
     queryOne(table => table.uid === uid)
       .flatMap { option =>
         ZIO
@@ -57,11 +57,11 @@ class UserEntityDao(
       }
   }
 
-  def add(user: UserEntity): IO[DomainError, UserEntity] = {
+  def add(user: MemberEntity): IO[DomainError, MemberEntity] = {
     insert(user)
   }
 
-  def update(user: UserEntity): IO[DomainError, UserEntity] = {
+  def update(user: MemberEntity): IO[DomainError, MemberEntity] = {
     updateOne(
       predicate = { entity => entity.uid === user.uid },
       entity = user
@@ -69,7 +69,7 @@ class UserEntityDao(
   }
 
   // TODO: remove function and refactor
-  def getUserUidToUserMap(): IO[DomainError, Map[UserUid, UserEntity]] = {
+  def getMemberUidToMemberMap(): IO[DomainError, Map[MemberUid, MemberEntity]] = {
     for {
       users <- getAll()
     } yield {

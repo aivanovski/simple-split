@@ -2,7 +2,7 @@ package com.github.ai.split.domain.usecases
 
 import com.github.ai.split.data.db.repository.GroupRepository
 import com.github.ai.split.entity.exception.DomainError
-import com.github.ai.split.entity.db.{GroupUid, MemberUid}
+import com.github.ai.split.entity.db.{GroupUid, MembershipUid}
 import com.github.ai.split.entity.{Member, UserReference, MemberReference, NameReference}
 import com.github.ai.split.utils.some
 import zio.*
@@ -39,7 +39,7 @@ class ResolveUserReferencesUseCase(
 
   private def resolveReferences(
     references: List[UserReference],
-    memberUidToMemberMap: Map[MemberUid, Member],
+    memberUidToMemberMap: Map[MembershipUid, Member],
     memberNameToMemberMap: Map[String, Member]
   ): IO[DomainError, List[Member]] = {
     ZIO.collectAll(
@@ -51,7 +51,7 @@ class ResolveUserReferencesUseCase(
 
   private def resolveUserReference(
     reference: UserReference,
-    memberUidToMemberMap: Map[MemberUid, Member],
+    memberUidToMemberMap: Map[MembershipUid, Member],
     memberNameToMemberMap: Map[String, Member]
   ): IO[DomainError, Member] = {
     reference match {

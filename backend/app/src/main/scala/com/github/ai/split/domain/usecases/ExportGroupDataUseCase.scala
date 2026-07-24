@@ -31,7 +31,7 @@ class ExportGroupDataUseCase(
 
         // Resolve paid by member names
         val paidByNames = expenseWithRelations.paidBy
-          .map(_.memberUid)
+          .map(_.membershipUid)
           .map(memberUidToNameMap.getOrElse(_, "Unknown"))
           .mkString("; ")
 
@@ -40,7 +40,7 @@ class ExportGroupDataUseCase(
           group.members.map(_.user.name).mkString("; ")
         } else {
           expenseWithRelations.splitBetween
-            .map(_.memberUid)
+            .map(_.membershipUid)
             .map(memberUidToNameMap.getOrElse(_, "Unknown"))
             .mkString("; ")
         }

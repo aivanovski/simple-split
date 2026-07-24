@@ -1,7 +1,7 @@
 package com.github.ai.split.domain.usecases
 
 import com.github.ai.split.entity.db.{GroupEntity, GroupUid, Timestamp}
-import com.github.ai.split.data.db.dao.{GroupEntityDao, GroupMemberEntityDao}
+import com.github.ai.split.data.db.dao.{GroupEntityDao, GroupMembershipEntityDao}
 import com.github.ai.split.domain.PasswordService
 import com.github.ai.split.entity.NewGroup
 import com.github.ai.split.entity.exception.DomainError
@@ -15,7 +15,7 @@ import java.util.UUID
 class AddGroupUseCase(
   private val passwordService: PasswordService,
   private val groupDao: GroupEntityDao,
-  private val groupMemberDao: GroupMemberEntityDao,
+  private val groupMemberDao: GroupMembershipEntityDao,
   private val addMemberUserCase: AddMembersUseCase,
   private val addExpenseUseCase: AddExpenseUseCase,
   private val validateMemberUseCase: ValidateMemberNameUseCase,

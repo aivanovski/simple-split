@@ -9,7 +9,3 @@ case class GroupEntity(
   created: Timestamp,
   modified: Timestamp
 )
-
-object GroupEntity {
-  inline val TableName = "groups"
-}

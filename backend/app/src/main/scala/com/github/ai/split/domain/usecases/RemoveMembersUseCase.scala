@@ -1,7 +1,7 @@
 package com.github.ai.split.domain.usecases
 
-import com.github.ai.split.data.db.dao.{GroupEntityDao, GroupMemberEntityDao, PaidByEntityDao, SplitBetweenEntityDao}
-import com.github.ai.split.entity.db.{GroupUid, MemberUid}
+import com.github.ai.split.data.db.dao.{GroupEntityDao, GroupMembershipEntityDao, PaidByEntityDao, SplitBetweenEntityDao}
+import com.github.ai.split.entity.db.{GroupUid, MembershipUid}
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.some
 import zio.*
@@ -11,13 +11,13 @@ import java.util.UUID
 
 class RemoveMembersUseCase(
   private val groupDao: GroupEntityDao,
-  private val groupMemberDao: GroupMemberEntityDao,
+  private val groupMemberDao: GroupMembershipEntityDao,
   private val paidByDao: PaidByEntityDao,
   private val splitBetweenDao: SplitBetweenEntityDao
 ) {
 
   def removeMemberByUids(
-    memberUids: List[MemberUid]
+    memberUids: List[MembershipUid]
   ): IO[DomainError, Unit] = {
     defer {
       val groupUid = getGroupUid(memberUids).run
@@ -32,7 +32,7 @@ class RemoveMembersUseCase(
     }
   }
 
-  private def getGroupUid(memberUids: List[MemberUid]): IO[DomainError, GroupUid] = {
+  private def getGroupUid(memberUids: List[MembershipUid]): IO[DomainError, GroupUid] = {
     defer {
       if (memberUids.isEmpty) {
         ZIO.fail(DomainError(message = "At least one member is required".some)).run
@@ -46,7 +46,7 @@ class RemoveMembersUseCase(
 
   private def validateAllInTheSameGroup(
     groupUid: GroupUid,
-    memberUids: List[MemberUid]
+    memberUids: List[MembershipUid]
   ): IO[DomainError, Unit] = {
     defer {
       val members = groupMemberDao.getByGroupUid(groupUid = groupUid).run
@@ -66,7 +66,7 @@ class RemoveMembersUseCase(
 
   def canRemoveMembers(
     groupUid: GroupUid,
-    memberUids: List[MemberUid]
+    memberUids: List[MembershipUid]
   ): IO[DomainError, Unit] = {
     val userUidSet = memberUids.toSet
 
@@ -83,8 +83,8 @@ class RemoveMembersUseCase(
       allPaidBy <- paidByDao.getByGroupUid(groupUid)
       _ <- {
         val paidByMembers = allPaidBy
-          .filter(payer => userUidSet.contains(payer.memberUid))
-          .map(payer => payer.memberUid)
+          .filter(payer => userUidSet.contains(payer.membershipUid))
+          .map(payer => payer.membershipUid)
 
         if (paidByMembers.nonEmpty) {
           val uids = paidByMembers.mkString(", ")
@@ -97,8 +97,8 @@ class RemoveMembersUseCase(
       allSplits <- splitBetweenDao.getByGroupUid(groupUid)
       _ <- {
         val splits = allSplits
-          .filter(split => userUidSet.contains(split.memberUid))
-          .map(split => split.memberUid)
+          .filter(split => userUidSet.contains(split.membershipUid))
+          .map(split => split.membershipUid)
 
         if (splits.nonEmpty) {
           val uids = splits.mkString(", ")

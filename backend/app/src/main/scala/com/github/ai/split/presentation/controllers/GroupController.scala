@@ -26,7 +26,7 @@ import com.github.ai.split.api.request.{PostGroupRequest, PutGroupRequest}
 import com.github.ai.split.api.response.{GetGroupsResponse, PostGroupResponse, PutGroupResponse}
 import com.github.ai.split.entity.Access.{DENIED, GRANTED}
 import com.github.ai.split.entity.FileExtension.{CSV, HTML}
-import com.github.ai.split.entity.db.{GroupUid, UserUid}
+import com.github.ai.split.entity.db.{GroupUid, MemberUid}
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.{getLastUrlParameter, parsePasswordParam, parseUid, parseUidFromUrl, some}
 import zio.{IO, ZIO}
@@ -92,7 +92,7 @@ class GroupController(
         if (newMembers.nonEmpty) {
           ZIO
             .collectAll(
-              newMembers.map(member => member.uid.parseUid().map(uid => UserUid(uid)))
+              newMembers.map(member => member.uid.parseUid().map(uid => MemberUid(uid)))
             )
             .map(uids => Some(uids))
         } else {

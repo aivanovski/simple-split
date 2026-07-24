@@ -137,8 +137,8 @@ object Main extends ZIOAppDefault {
         // Dao
         Layers.expenseDao,
         Layers.groupDao,
-        Layers.groupMemberDao,
-        Layers.userDao,
+        Layers.groupMembershipDao,
+        Layers.memberDao,
         Layers.paidByDao,
         Layers.splitBetweenDao,
         Layers.currencyDao,

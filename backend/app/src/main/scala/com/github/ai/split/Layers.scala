@@ -6,10 +6,10 @@ import com.github.ai.split.data.db.dao.{
   CurrencyEntityDao,
   ExpenseEntityDao,
   GroupEntityDao,
-  GroupMemberEntityDao,
+  GroupMembershipEntityDao,
   PaidByEntityDao,
   SplitBetweenEntityDao,
-  UserEntityDao
+  MemberEntityDao
 }
 import com.github.ai.split.data.db.repository.{CurrencyRepository, ExpenseRepository, GroupRepository}
 import com.github.ai.split.domain.{AccessResolverService, AuthService, PasswordService}
@@ -61,9 +61,9 @@ object Layers {
   }
 
   // Dao's
-  val userDao = ZLayer.fromFunction(UserEntityDao(_, _))
+  val memberDao = ZLayer.fromFunction(MemberEntityDao(_, _))
   val groupDao = ZLayer.fromFunction(GroupEntityDao(_))
-  val groupMemberDao = ZLayer.fromFunction(GroupMemberEntityDao(_))
+  val groupMembershipDao = ZLayer.fromFunction(GroupMembershipEntityDao(_))
   val expenseDao = ZLayer.fromFunction(ExpenseEntityDao(_))
   val paidByDao = ZLayer.fromFunction(PaidByEntityDao(_))
   val splitBetweenDao = ZLayer.fromFunction(SplitBetweenEntityDao(_))

@@ -3,10 +3,10 @@ package com.github.ai.split.domain.usecases
 import com.github.ai.split.data.db.dao.{
   ExpenseEntityDao,
   GroupEntityDao,
-  GroupMemberEntityDao,
+  GroupMembershipEntityDao,
   PaidByEntityDao,
   SplitBetweenEntityDao,
-  UserEntityDao
+  MemberEntityDao
 }
 import com.github.ai.split.domain.PasswordService
 import com.github.ai.split.data.db.repository.GroupRepository
@@ -15,14 +15,14 @@ import com.github.ai.split.entity.db.{
   ExpenseEntity,
   ExpenseUid,
   GroupEntity,
-  GroupMemberEntity,
+  GroupMembershipEntity,
   GroupUid,
-  MemberUid,
+  MembershipUid,
   PaidByEntity,
   SplitBetweenEntity,
   Timestamp,
-  UserEntity,
-  UserUid
+  MemberEntity,
+  MemberUid
 }
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.some
@@ -34,9 +34,9 @@ import java.util.concurrent.atomic.{AtomicInteger, AtomicLong, AtomicReference}
 
 class FillTestDataUseCase(
   private val groupRepository: GroupRepository,
-  private val userDao: UserEntityDao,
+  private val userDao: MemberEntityDao,
   private val groupDao: GroupEntityDao,
-  private val groupMemberDao: GroupMemberEntityDao,
+  private val groupMemberDao: GroupMembershipEntityDao,
   private val expenseDao: ExpenseEntityDao,
   private val paidByDao: PaidByEntityDao,
   private val splitBetweenDao: SplitBetweenEntityDao,
@@ -90,7 +90,7 @@ class FillTestDataUseCase(
       Huey
     )
 
-    ZIO.collectAll(users.map(user => userDao.add(user.toUserEntity()))).map(_ => ())
+    ZIO.collectAll(users.map(user => userDao.add(user.toMemberEntity()))).map(_ => ())
   }
 
   private def insertGroups(groups: List[Group]): IO[DomainError, Unit] = {
@@ -116,10 +116,10 @@ class FillTestDataUseCase(
 
       _ <- {
         val members = group.members.map { member =>
-          GroupMemberEntity(
-            uid = MemberUid(UUID(0L, memberCounter.getAndIncrement() + 1024L)),
+          GroupMembershipEntity(
+            uid = MembershipUid(UUID(0L, memberCounter.getAndIncrement() + 1024L)),
             groupUid = group.uid,
-            userUid = member.userUid
+            memberUid = member.userUid
           )
         }
 
@@ -173,7 +173,7 @@ class FillTestDataUseCase(
               PaidByEntity(
                 groupUid = groupUid,
                 expenseUid = expense.uid,
-                memberUid = memberUid.get
+                membershipUid = memberUid.get
               )
             )
           } else {
@@ -206,7 +206,7 @@ class FillTestDataUseCase(
                   SplitBetweenEntity(
                     groupUid = groupUid,
                     expenseUid = expense.uid,
-                    memberUid = memberUid
+                    membershipUid = memberUid
                   )
                 }
               }
@@ -372,24 +372,24 @@ class FillTestDataUseCase(
   }
 
   private object Users {
-    val Mickey = User(UserUid(UUID.fromString("00000000-0000-0000-0000-a00000000001")), "Mickey Mouse")
-    val Donald = User(UserUid(UUID.fromString("00000000-0000-0000-0000-a00000000002")), "Donald Duck")
-    val Goofy = User(UserUid(UUID.fromString("00000000-0000-0000-0000-a00000000003")), "Goofy")
-    val Chip = User(UserUid(UUID.fromString("00000000-0000-0000-0000-a00000000004")), "Chip")
-    val Dale = User(UserUid(UUID.fromString("00000000-0000-0000-0000-a00000000005")), "Dale")
-    val Minnie = User(UserUid(UUID.fromString("00000000-0000-0000-0000-a00000000006")), "Minnie Mouse")
-    val Pluto = User(UserUid(UUID.fromString("00000000-0000-0000-0000-a00000000007")), "Pluto")
-    val Daisy = User(UserUid(UUID.fromString("00000000-0000-0000-0000-a00000000008")), "Daisy Duck")
-    val Scrooge = User(UserUid(UUID.fromString("00000000-0000-0000-0000-a00000000009")), "Scrooge McDuck")
-    val Huey = User(UserUid(UUID.fromString("00000000-0000-0000-0000-a00000000010")), "Huey Duck")
+    val Mickey = User(MemberUid(UUID.fromString("00000000-0000-0000-0000-a00000000001")), "Mickey Mouse")
+    val Donald = User(MemberUid(UUID.fromString("00000000-0000-0000-0000-a00000000002")), "Donald Duck")
+    val Goofy = User(MemberUid(UUID.fromString("00000000-0000-0000-0000-a00000000003")), "Goofy")
+    val Chip = User(MemberUid(UUID.fromString("00000000-0000-0000-0000-a00000000004")), "Chip")
+    val Dale = User(MemberUid(UUID.fromString("00000000-0000-0000-0000-a00000000005")), "Dale")
+    val Minnie = User(MemberUid(UUID.fromString("00000000-0000-0000-0000-a00000000006")), "Minnie Mouse")
+    val Pluto = User(MemberUid(UUID.fromString("00000000-0000-0000-0000-a00000000007")), "Pluto")
+    val Daisy = User(MemberUid(UUID.fromString("00000000-0000-0000-0000-a00000000008")), "Daisy Duck")
+    val Scrooge = User(MemberUid(UUID.fromString("00000000-0000-0000-0000-a00000000009")), "Scrooge McDuck")
+    val Huey = User(MemberUid(UUID.fromString("00000000-0000-0000-0000-a00000000010")), "Huey Duck")
   }
 
   extension (user: User) {
-    private def toUserEntity(): UserEntity = UserEntity(user.userUid, user.name)
+    private def toMemberEntity(): MemberEntity = MemberEntity(user.userUid, user.name)
   }
 
   private case class User(
-    userUid: UserUid,
+    userUid: MemberUid,
     name: String
   )
 
@@ -407,7 +407,7 @@ class FillTestDataUseCase(
     title: String,
     description: String,
     amount: Double,
-    paidBy: List[UserUid],
+    paidBy: List[MemberUid],
     split: Split
   )
 }

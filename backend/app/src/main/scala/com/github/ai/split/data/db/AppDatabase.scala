@@ -5,14 +5,14 @@ import com.github.ai.split.entity.db.{
   ExpenseEntity,
   ExpenseUid,
   GroupEntity,
-  GroupMemberEntity,
+  GroupMembershipEntity,
   GroupUid,
-  MemberUid,
+  MembershipUid,
   PaidByEntity,
   SplitBetweenEntity,
   Timestamp,
-  UserEntity,
-  UserUid
+  MemberEntity,
+  MemberUid
 }
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.toDomainError
@@ -28,8 +28,8 @@ class AppDatabase(
 ) {
 
   val CurrencyTable = TableQuery[CurrencyEntityTable]
-  val UserTable = TableQuery[UserEntityTable]
-  val GroupMemberTable = TableQuery[GroupMemberEntityTable]
+  val MemberTable = TableQuery[MemberEntityTable]
+  val GroupMembershipTable = TableQuery[GroupMembershipEntityTable]
   val PaidByTable = TableQuery[PaidByEntityTable]
   val SplitBetweenTable = TableQuery[SplitBetweenEntityTable]
   val ExpenseTable = TableQuery[ExpenseEntityTable]
@@ -42,8 +42,8 @@ class AppDatabase(
           context.run(
             DBIO.seq(
               CurrencyTable.schema.createIfNotExists,
-              UserTable.schema.createIfNotExists,
-              GroupMemberTable.schema.createIfNotExists,
+              MemberTable.schema.createIfNotExists,
+              GroupMembershipTable.schema.createIfNotExists,
               PaidByTable.schema.createIfNotExists,
               SplitBetweenTable.schema.createIfNotExists,
               ExpenseTable.schema.createIfNotExists,
@@ -66,35 +66,35 @@ class CurrencyEntityTable(tag: Tag) extends Table[CurrencyEntity](tag, None, "Cu
   override def * = (isoCode, name, symbol).mapTo[CurrencyEntity]
 }
 
-class UserEntityTable(tag: Tag) extends Table[UserEntity](tag, None, "UserEntity") {
-  val uid = column[UserUid]("uid", O.PrimaryKey)
+class MemberEntityTable(tag: Tag) extends Table[MemberEntity](tag, None, "MemberEntity") {
+  val uid = column[MemberUid]("uid", O.PrimaryKey)
   val name = column[String]("name")
 
-  override def * = (uid, name).mapTo[UserEntity]
+  override def * = (uid, name).mapTo[MemberEntity]
 }
 
-class GroupMemberEntityTable(tag: Tag) extends Table[GroupMemberEntity](tag, None, "GroupMemberEntity") {
-  val uid = column[MemberUid]("uid", O.PrimaryKey)
+class GroupMembershipEntityTable(tag: Tag) extends Table[GroupMembershipEntity](tag, None, "GroupMembershipEntity") {
+  val uid = column[MembershipUid]("uid", O.PrimaryKey)
   val groupUid = column[GroupUid]("group_uid")
-  val userUid = column[UserUid]("user_uid")
+  val memberUid = column[MemberUid]("member_uid")
 
-  override def * = (uid, groupUid, userUid).mapTo[GroupMemberEntity]
+  override def * = (uid, groupUid, memberUid).mapTo[GroupMembershipEntity]
 }
 
 class PaidByEntityTable(tag: Tag) extends Table[PaidByEntity](tag, None, "PaidByEntity") {
   val groupUid = column[GroupUid]("group_uid")
   val expenseUid = column[ExpenseUid]("expense_uid")
-  val memberUid = column[MemberUid]("member_uid")
+  val membershipUid = column[MembershipUid]("membership_uid")
 
-  override def * = (groupUid, expenseUid, memberUid).mapTo[PaidByEntity]
+  override def * = (groupUid, expenseUid, membershipUid).mapTo[PaidByEntity]
 }
 
 class SplitBetweenEntityTable(tag: Tag) extends Table[SplitBetweenEntity](tag, None, "SplitBetweenEntity") {
   val groupUid = column[GroupUid]("group_uid")
   val expenseUid = column[ExpenseUid]("expense_uid")
-  val memberUid = column[MemberUid]("member_uid")
+  val membershipUid = column[MembershipUid]("membership_uid")
 
-  override def * = (groupUid, expenseUid, memberUid).mapTo[SplitBetweenEntity]
+  override def * = (groupUid, expenseUid, membershipUid).mapTo[SplitBetweenEntity]
 }
 
 class ExpenseEntityTable(tag: Tag) extends Table[ExpenseEntity](tag, None, "ExpenseEntity") {
@@ -124,9 +124,9 @@ class GroupEntityTable(tag: Tag) extends Table[GroupEntity](tag, None, "GroupEnt
     (uid, title, description, passwordHash, currencyIsoCode, created, modified).mapTo[GroupEntity]
 }
 
-given userUidColumnType: BaseColumnType[UserUid] = MappedColumnType.base[UserUid, String](
+given memberUidColumnType: BaseColumnType[MemberUid] = MappedColumnType.base[MemberUid, String](
   uid => uid.value.toString,
-  value => UserUid(UUID.fromString(value))
+  value => MemberUid(UUID.fromString(value))
 )
 
 given groupUidColumnType: BaseColumnType[GroupUid] = MappedColumnType.base[GroupUid, String](
@@ -134,9 +134,9 @@ given groupUidColumnType: BaseColumnType[GroupUid] = MappedColumnType.base[Group
   value => GroupUid(UUID.fromString(value))
 )
 
-given memberUidColumnType: BaseColumnType[MemberUid] = MappedColumnType.base[MemberUid, String](
+given membershipUidColumnType: BaseColumnType[MembershipUid] = MappedColumnType.base[MembershipUid, String](
   uid => uid.value.toString,
-  value => MemberUid(UUID.fromString(value))
+  value => MembershipUid(UUID.fromString(value))
 )
 
 given expenseUidColumnType: BaseColumnType[ExpenseUid] = MappedColumnType.base[ExpenseUid, String](

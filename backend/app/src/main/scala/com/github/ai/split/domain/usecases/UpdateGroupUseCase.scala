@@ -2,14 +2,14 @@ package com.github.ai.split.domain.usecases
 
 import com.github.ai.split.data.db.dao.{
   GroupEntityDao,
-  GroupMemberEntityDao,
+  GroupMembershipEntityDao,
   PaidByEntityDao,
   SplitBetweenEntityDao,
-  UserEntityDao
+  MemberEntityDao
 }
 import com.github.ai.split.domain.usecases.AddMembersUseCase
 import com.github.ai.split.domain.PasswordService
-import com.github.ai.split.entity.db.{GroupEntity, GroupMemberEntity, GroupUid, MemberUid, Timestamp, UserUid}
+import com.github.ai.split.entity.db.{GroupEntity, GroupMembershipEntity, GroupUid, MembershipUid, Timestamp, MemberUid}
 import com.github.ai.split.entity.exception.DomainError
 import zio.*
 import zio.direct.*
@@ -20,8 +20,8 @@ import java.util.UUID
 class UpdateGroupUseCase(
   private val passwordService: PasswordService,
   private val groupDao: GroupEntityDao,
-  private val groupMemberDao: GroupMemberEntityDao,
-  private val userDao: UserEntityDao,
+  private val groupMemberDao: GroupMembershipEntityDao,
+  private val userDao: MemberEntityDao,
   private val paidByDao: PaidByEntityDao,
   private val splitBetweenDao: SplitBetweenEntityDao,
   private val addMemberUseCase: AddMembersUseCase,
@@ -35,7 +35,7 @@ class UpdateGroupUseCase(
     newTitle: Option[String],
     newDescription: Option[String],
     newCurrencyIsoCode: Option[String],
-    newMemberUids: Option[List[UserUid]]
+    newMemberUids: Option[List[MemberUid]]
   ): IO[DomainError, GroupUid] = {
     for {
       _ <- isCurrencyIsoCodeValid(newCurrencyIsoCode)
@@ -88,23 +88,23 @@ class UpdateGroupUseCase(
   }
 
   private def getMembersToAdd(
-    currentMembers: List[GroupMemberEntity],
-    newMemberUids: Option[List[UserUid]]
-  ): IO[DomainError, List[UserUid]] = {
+    currentMembers: List[GroupMembershipEntity],
+    newMemberUids: Option[List[MemberUid]]
+  ): IO[DomainError, List[MemberUid]] = {
     if (newMemberUids.isEmpty) {
       return ZIO.succeed(List.empty)
     }
 
     val newUids = newMemberUids.getOrElse(List.empty)
-    val userUidSet = currentMembers.map(_.userUid).toSet
+    val userUidSet = currentMembers.map(_.memberUid).toSet
 
     ZIO.succeed(newUids.filter(uid => !userUidSet.contains(uid)).distinct)
   }
 
   private def getMembersToRemove(
-    currentMembers: List[GroupMemberEntity],
-    newMemberUids: Option[List[UserUid]]
-  ): IO[DomainError, List[MemberUid]] = {
+    currentMembers: List[GroupMembershipEntity],
+    newMemberUids: Option[List[MemberUid]]
+  ): IO[DomainError, List[MembershipUid]] = {
     if (newMemberUids.isEmpty) {
       return ZIO.succeed(List.empty)
     }
@@ -113,7 +113,7 @@ class UpdateGroupUseCase(
 
     ZIO.succeed(
       currentMembers
-        .filter(member => !newUids.contains(member.userUid))
+        .filter(member => !newUids.contains(member.memberUid))
         .map(_.uid)
         .distinct
     )
@@ -121,8 +121,8 @@ class UpdateGroupUseCase(
 
   private def updateMembers(
     groupUid: GroupUid,
-    newMembersOption: Option[List[UserUid]]
-  ): IO[DomainError, List[GroupMemberEntity]] = {
+    newMembersOption: Option[List[MemberUid]]
+  ): IO[DomainError, List[GroupMembershipEntity]] = {
     if (newMembersOption.isEmpty) {
       return ZIO.succeed(List.empty)
     }
@@ -133,10 +133,10 @@ class UpdateGroupUseCase(
       _ <- groupMemberDao.removeByGroupUid(groupUid)
       result <- groupMemberDao.add(
         newMembers.map { userUid =>
-          GroupMemberEntity(
-            uid = MemberUid(UUID.randomUUID()),
+          GroupMembershipEntity(
+            uid = MembershipUid(UUID.randomUUID()),
             groupUid = groupUid,
-            userUid = userUid
+            memberUid = userUid
           )
         }
       )

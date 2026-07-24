@@ -1,7 +1,7 @@
 package com.github.ai.split.domain.usecases
 
 import com.github.ai.split.api.ExpenseDto
-import com.github.ai.split.data.db.dao.GroupMemberEntityDao
+import com.github.ai.split.data.db.dao.GroupMembershipEntityDao
 import com.github.ai.split.data.db.repository.{CurrencyRepository, ExpenseRepository}
 import com.github.ai.split.entity.db.ExpenseUid
 import com.github.ai.split.utils.toExpenseDto
@@ -11,7 +11,7 @@ import zio.*
 class AssembleExpenseUseCase(
   private val expenseRepository: ExpenseRepository,
   private val currencyRepository: CurrencyRepository,
-  private val groupMemberDao: GroupMemberEntityDao,
+  private val groupMemberDao: GroupMembershipEntityDao,
   private val getAllUsersUseCase: GetAllUsersUseCase
 ) {
 

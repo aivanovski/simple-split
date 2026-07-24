@@ -1,27 +1,27 @@
 package com.github.ai.split.data.db.dao
 
 import com.github.ai.split.data.db.AppDatabase
-import com.github.ai.split.data.db.{given}
-import com.github.ai.split.entity.db.{GroupMemberEntity, GroupUid, MemberUid, UserUid}
+import com.github.ai.split.data.db.given
+import com.github.ai.split.entity.db.{GroupMembershipEntity, GroupUid, MembershipUid, MemberUid}
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.some
 import zio.{IO, ZIO}
 import slick.jdbc.SQLiteProfile.api.*
 
-class GroupMemberEntityDao(
+class GroupMembershipEntityDao(
   db: AppDatabase
-) extends Dao(db = db.context, table = db.GroupMemberTable) {
+) extends Dao(db = db.context, table = db.GroupMembershipTable) {
 
   // TODO: refactor
-  def getAll(): IO[DomainError, List[GroupMemberEntity]] = {
+  def getAll(): IO[DomainError, List[GroupMembershipEntity]] = {
     queryAll()
   }
 
-  def getByGroupUid(groupUid: GroupUid): IO[DomainError, List[GroupMemberEntity]] = {
+  def getByGroupUid(groupUid: GroupUid): IO[DomainError, List[GroupMembershipEntity]] = {
     query(table => table.groupUid === groupUid)
   }
 
-  def getByUid(uid: MemberUid): IO[DomainError, GroupMemberEntity] = {
+  def getByUid(uid: MembershipUid): IO[DomainError, GroupMembershipEntity] = {
     queryOne(table => table.uid === uid)
       .flatMap { option =>
         ZIO
@@ -30,8 +30,8 @@ class GroupMemberEntityDao(
       }
   }
 
-  def getByUserUid(userUid: UserUid): IO[DomainError, GroupMemberEntity] = {
-    queryOne(table => table.userUid === userUid)
+  def getByMemberUid(userUid: MemberUid): IO[DomainError, GroupMembershipEntity] = {
+    queryOne(table => table.memberUid === userUid)
       .flatMap { option =>
         ZIO
           .fromOption(option)
@@ -39,11 +39,11 @@ class GroupMemberEntityDao(
       }
   }
 
-  def add(member: GroupMemberEntity): IO[DomainError, GroupMemberEntity] = {
+  def add(member: GroupMembershipEntity): IO[DomainError, GroupMembershipEntity] = {
     insert(member)
   }
 
-  def add(members: List[GroupMemberEntity]): IO[DomainError, List[GroupMemberEntity]] = {
+  def add(members: List[GroupMembershipEntity]): IO[DomainError, List[GroupMembershipEntity]] = {
     insertAll(members)
   }
 
@@ -52,7 +52,7 @@ class GroupMemberEntityDao(
   }
 
   def removeByUid(
-    uid: MemberUid
+    uid: MembershipUid
   ): IO[DomainError, Unit] = {
     deleteOne(table => table.uid === uid)
   }

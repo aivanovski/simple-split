@@ -1,8 +1,8 @@
 package com.github.ai.split.domain.usecases
 
-import com.github.ai.split.data.db.dao.{GroupEntityDao, GroupMemberEntityDao, UserEntityDao}
+import com.github.ai.split.data.db.dao.{GroupEntityDao, GroupMembershipEntityDao, MemberEntityDao}
 import com.github.ai.split.data.db.repository.GroupRepository
-import com.github.ai.split.entity.db.{GroupMemberEntity, GroupUid, MemberUid, UserEntity, UserUid}
+import com.github.ai.split.entity.db.{GroupMembershipEntity, GroupUid, MembershipUid, MemberEntity, MemberUid}
 import com.github.ai.split.utils.some
 import com.github.ai.split.entity.exception.DomainError
 import zio.*
@@ -13,15 +13,15 @@ import java.util.UUID
 class AddMembersUseCase(
   private val groupRepository: GroupRepository,
   private val groupDao: GroupEntityDao,
-  private val groupMemberDao: GroupMemberEntityDao,
-  private val userDao: UserEntityDao,
+  private val groupMemberDao: GroupMembershipEntityDao,
+  private val userDao: MemberEntityDao,
   private val validateMemberUseCase: ValidateMemberNameUseCase
 ) {
 
   def addMember(
     groupUid: GroupUid,
     name: String
-  ): IO[DomainError, GroupMemberEntity] = {
+  ): IO[DomainError, GroupMembershipEntity] = {
     defer {
       val members = groupRepository.getMembers(groupUid).run
 
@@ -34,8 +34,8 @@ class AddMembersUseCase(
 
       val user = userDao
         .add(
-          UserEntity(
-            uid = UserUid(UUID.randomUUID()),
+          MemberEntity(
+            uid = MemberUid(UUID.randomUUID()),
             name = name
           )
         )
@@ -43,10 +43,10 @@ class AddMembersUseCase(
 
       groupMemberDao
         .add(
-          GroupMemberEntity(
-            uid = MemberUid(UUID.randomUUID()),
+          GroupMembershipEntity(
+            uid = MembershipUid(UUID.randomUUID()),
             groupUid = groupUid,
-            userUid = user.uid
+            memberUid = user.uid
           )
         )
         .run
@@ -55,18 +55,18 @@ class AddMembersUseCase(
 
   def addMembers(
     groupUid: GroupUid,
-    userUids: List[UserUid]
-  ): IO[DomainError, List[GroupMemberEntity]] = {
+    userUids: List[MemberUid]
+  ): IO[DomainError, List[GroupMembershipEntity]] = {
     defer {
       validateUsers(userUids = userUids).run
 
       canAddMembers(groupUid = groupUid, userUids = userUids).run
 
       val newMembers = userUids.map { userUid =>
-        GroupMemberEntity(
-          uid = MemberUid(UUID.randomUUID()),
+        GroupMembershipEntity(
+          uid = MembershipUid(UUID.randomUUID()),
           groupUid = groupUid,
-          userUid = userUid
+          memberUid = userUid
         )
       }
 
@@ -75,7 +75,7 @@ class AddMembersUseCase(
   }
 
   private def validateUsers(
-    userUids: List[UserUid]
+    userUids: List[MemberUid]
   ): IO[DomainError, Unit] = {
     defer {
       userDao.getByUids(userUids).run
@@ -86,13 +86,13 @@ class AddMembersUseCase(
 
   def canAddMembers(
     groupUid: GroupUid,
-    userUids: List[UserUid]
+    userUids: List[MemberUid]
   ): IO[DomainError, Unit] = {
     defer {
       val users = userDao.getByUids(uids = userUids).run
       val members = groupMemberDao.getByGroupUid(groupUid = groupUid).run
 
-      val memberUids = members.map(_.userUid).toSet
+      val memberUids = members.map(_.memberUid).toSet
       val addedUsers = users.filter(user => memberUids.contains(user.uid))
       if (addedUsers.nonEmpty) {
         val addedUids = addedUsers.map(_.uid).mkString(", ")

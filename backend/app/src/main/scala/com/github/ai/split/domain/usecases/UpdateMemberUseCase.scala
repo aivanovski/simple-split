@@ -1,29 +1,29 @@
 package com.github.ai.split.domain.usecases
 
-import com.github.ai.split.data.db.dao.GroupMemberEntityDao
-import com.github.ai.split.entity.db.MemberUid
+import com.github.ai.split.data.db.dao.GroupMembershipEntityDao
+import com.github.ai.split.entity.db.MembershipUid
 import zio.*
 import zio.direct.*
 import com.github.ai.split.entity.exception.DomainError
-import com.github.ai.split.entity.db.GroupMemberEntity
-import com.github.ai.split.data.db.dao.UserEntityDao
+import com.github.ai.split.entity.db.GroupMembershipEntity
+import com.github.ai.split.data.db.dao.MemberEntityDao
 import com.github.ai.split.data.db.repository.GroupRepository
 
 class UpdateMemberUseCase(
   private val groupRepository: GroupRepository,
-  private val memberDao: GroupMemberEntityDao,
-  private val userDao: UserEntityDao,
+  private val memberDao: GroupMembershipEntityDao,
+  private val userDao: MemberEntityDao,
   private val validateMemberUseCase: ValidateMemberNameUseCase
 ) {
 
   def updateMember(
-    memberUid: MemberUid,
+    memberUid: MembershipUid,
     newName: String
-  ): IO[DomainError, GroupMemberEntity] = {
+  ): IO[DomainError, GroupMembershipEntity] = {
     defer {
       val member = memberDao.getByUid(memberUid).run
       val members = groupRepository.getMembers(member.groupUid).run
-      val user = userDao.getByUid(member.userUid).run
+      val user = userDao.getByUid(member.memberUid).run
 
       val currentNames = members
         .filter(member => member.entity.uid != memberUid)

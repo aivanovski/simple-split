@@ -7,13 +7,13 @@ import com.github.ai.split.entity.db.{
   ExpenseEntity,
   ExpenseUid,
   GroupEntity,
-  GroupMemberEntity,
-  MemberUid,
+  GroupMembershipEntity,
+  MembershipUid,
   PaidByEntity,
   SplitBetweenEntity,
   Timestamp,
-  UserEntity,
-  UserUid
+  MemberEntity,
+  MemberUid
 }
 import com.github.ai.split.entity.exception.DomainError
 import zio.*
@@ -24,8 +24,8 @@ import java.time.{LocalDateTime, ZoneOffset}
 def toExpenseDto(
   expense: ExpenseWithRelations,
   currency: CurrencyEntity,
-  members: List[GroupMemberEntity],
-  userUidToUserMap: Map[UserUid, UserEntity]
+  members: List[GroupMembershipEntity],
+  userUidToUserMap: Map[MemberUid, MemberEntity]
 ): IO[DomainError, ExpenseDto] =
   toExpenseDto(
     expense = expense.entity,
@@ -39,16 +39,16 @@ def toExpenseDto(
 def toExpenseDto(
   expense: ExpenseEntity,
   currency: CurrencyEntity,
-  members: List[GroupMemberEntity],
+  members: List[GroupMembershipEntity],
   paidBy: List[PaidByEntity],
   splitBetween: List[SplitBetweenEntity],
-  userUidToUserMap: Map[UserUid, UserEntity]
+  userUidToUserMap: Map[MemberUid, MemberEntity]
 ): IO[DomainError, ExpenseDto] = {
-  val memberUidToUserUidMap = members.map(member => (member.uid, member.userUid)).toMap
+  val memberUidToUserUidMap = members.map(member => (member.uid, member.memberUid)).toMap
 
   for {
     paidByUsers <- toMemberDtos(
-      memberUids = paidBy.map(_.memberUid),
+      memberUids = paidBy.map(_.membershipUid),
       memberUidToUserUidMap = memberUidToUserUidMap,
       userUidToUserMap = userUidToUserMap
     )
@@ -62,7 +62,7 @@ def toExpenseDto(
         )
       } else {
         toMemberDtos(
-          memberUids = splitBetween.map(_.memberUid),
+          memberUids = splitBetween.map(_.membershipUid),
           memberUidToUserUidMap = memberUidToUserUidMap,
           userUidToUserMap = userUidToUserMap
         )
@@ -82,9 +82,9 @@ def toExpenseDto(
 }
 
 def toMemberDtos(
-  memberUids: List[MemberUid],
-  memberUidToUserUidMap: Map[MemberUid, UserUid],
-  userUidToUserMap: Map[UserUid, UserEntity]
+  memberUids: List[MembershipUid],
+  memberUidToUserUidMap: Map[MembershipUid, MemberUid],
+  userUidToUserMap: Map[MemberUid, MemberEntity]
 ): IO[DomainError, List[MemberDto]] = {
   ZIO.collectAll(
     memberUids.map { memberUid =>
@@ -108,9 +108,9 @@ def toMemberDtos(
 def toGroupDto(
   group: GroupEntity,
   currency: CurrencyEntity,
-  members: List[GroupMemberEntity],
+  members: List[GroupMembershipEntity],
   expenses: List[ExpenseWithRelations],
-  userUidToUserMap: Map[UserUid, UserEntity],
+  userUidToUserMap: Map[MemberUid, MemberEntity],
   paybackTransactions: List[Transaction]
 ): IO[DomainError, GroupDto] =
   toGroupDto(
@@ -127,14 +127,14 @@ def toGroupDto(
 def toGroupDto(
   group: GroupEntity,
   currency: CurrencyEntity,
-  members: List[GroupMemberEntity],
+  members: List[GroupMembershipEntity],
   expenses: List[ExpenseEntity],
   expenseUidToPaidByMap: Map[ExpenseUid, List[PaidByEntity]],
   expenseUidToSplitBetweenMap: Map[ExpenseUid, List[SplitBetweenEntity]],
-  userUidToUserMap: Map[UserUid, UserEntity],
+  userUidToUserMap: Map[MemberUid, MemberEntity],
   paybackTransactions: List[Transaction]
 ): IO[DomainError, GroupDto] = {
-  val memberUidToUserUidMap = members.map(member => (member.uid, member.userUid)).toMap
+  val memberUidToUserUidMap = members.map(member => (member.uid, member.memberUid)).toMap
 
   for {
     memberDtos <- toMemberDtos(

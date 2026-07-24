@@ -1,11 +1,11 @@
 package com.github.ai.split.entity
 
-import com.github.ai.split.entity.db.MemberUid
+import com.github.ai.split.entity.db.MembershipUid
 
 import java.util.UUID
 
 case class Transaction(
-  creditor: MemberUid,
-  debtor: MemberUid,
+  creditor: MembershipUid,
+  debtor: MembershipUid,
   amount: Double
 )

@@ -11,7 +11,7 @@ import com.github.ai.split.domain.usecases.{
 import com.github.ai.split.api.request.{PostMemberRequest, PutMemberRequest}
 import com.github.ai.split.api.response.{DeleteMemberResponse, PostMemberResponse, PutMemberResponse}
 import com.github.ai.split.domain.AccessResolverService
-import com.github.ai.split.entity.db.{GroupUid, MemberUid}
+import com.github.ai.split.entity.db.{GroupUid, MembershipUid}
 import com.github.ai.split.utils.{parsePasswordParam, parseUid, parseUidFromUrl}
 import com.github.ai.split.entity.exception.DomainError
 import zio.*
@@ -51,7 +51,7 @@ class MemberController(
     body: PutMemberRequest
   ): IO[DomainError, PutMemberResponse] = {
     defer {
-      val memberUid = memberId.parseUid().map(uid => MemberUid(uid)).run
+      val memberUid = memberId.parseUid().map(uid => MembershipUid(uid)).run
 
       accessResolver.canAccessToMember(memberUid = memberUid, password = password).run
 
@@ -67,7 +67,7 @@ class MemberController(
     password: String
   ): IO[DomainError, DeleteMemberResponse] = {
     for {
-      memberUid <- memberId.parseUid().map(uid => MemberUid(uid))
+      memberUid <- memberId.parseUid().map(uid => MembershipUid(uid))
       _ <- accessResolverService.canAccessToMember(memberUid = memberUid, password = password)
 
       group <- getGroupUseCase.getGroupByMemberUid(memberUid)
