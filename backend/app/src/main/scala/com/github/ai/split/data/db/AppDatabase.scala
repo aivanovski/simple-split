@@ -1,6 +1,6 @@
 package com.github.ai.split.data.db
 
-import com.github.ai.split.data.db.model.{CurrencyEntity, ExpenseEntity, ExpenseUid, GroupEntity, GroupMembershipEntity, GroupUid, MemberEntity, MemberUid, MembershipUid, PaidByEntity, SplitBetweenEntity, Timestamp}
+import com.github.ai.split.data.db.model.{CurrencyEntity, ExpenseEntity, ExpenseUid, GroupEntity, GroupMembershipEntity, GroupUid, MemberEntity, MemberUid, MembershipUid, PaidByEntity, SplitBetweenEntity, Timestamp, UserEntity, UserUid}
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.toDomainError
 import slick.jdbc.SQLiteProfile.api.*
@@ -15,6 +15,7 @@ class AppDatabase(
 ) {
 
   val CurrencyTable = TableQuery[CurrencyEntityTable]
+  val UserTable = TableQuery[UserEntityTable]
   val MemberTable = TableQuery[MemberEntityTable]
   val GroupMembershipTable = TableQuery[GroupMembershipEntityTable]
   val PaidByTable = TableQuery[PaidByEntityTable]
@@ -29,6 +30,7 @@ class AppDatabase(
           context.run(
             DBIO.seq(
               CurrencyTable.schema.createIfNotExists,
+              UserTable.schema.createIfNotExists,
               MemberTable.schema.createIfNotExists,
               GroupMembershipTable.schema.createIfNotExists,
               PaidByTable.schema.createIfNotExists,
@@ -58,6 +60,15 @@ class MemberEntityTable(tag: Tag) extends Table[MemberEntity](tag, None, "Member
   val name = column[String]("name")
 
   override def * = (uid, name).mapTo[MemberEntity]
+}
+
+class UserEntityTable(tag: Tag) extends Table[UserEntity](tag, None, "UserEntity") {
+  val uid = column[UserUid]("uid", O.PrimaryKey)
+  val name = column[String]("name")
+  val email = column[String]("email")
+  val passwordHash = column[String]("password_hash")
+
+  override def * = (uid, name, email, passwordHash).mapTo[UserEntity]
 }
 
 class GroupMembershipEntityTable(tag: Tag) extends Table[GroupMembershipEntity](tag, None, "GroupMembershipEntity") {
@@ -114,6 +125,11 @@ class GroupEntityTable(tag: Tag) extends Table[GroupEntity](tag, None, "GroupEnt
 given memberUidColumnType: BaseColumnType[MemberUid] = MappedColumnType.base[MemberUid, String](
   uid => uid.value.toString,
   value => MemberUid(UUID.fromString(value))
+)
+
+given userUidColumnType: BaseColumnType[UserUid] = MappedColumnType.base[UserUid, String](
+  uid => uid.value.toString,
+  value => UserUid(UUID.fromString(value))
 )
 
 given groupUidColumnType: BaseColumnType[GroupUid] = MappedColumnType.base[GroupUid, String](

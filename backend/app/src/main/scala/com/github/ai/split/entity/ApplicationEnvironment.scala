@@ -2,9 +2,10 @@ package com.github.ai.split.entity
 
 import com.github.ai.split.data.db.DatabaseConfig
 
-case class ApplicationConfig(
+case class ApplicationEnvironment(
   server: ServerConfig,
   database: DatabaseConfig,
+  jwt: JwtData,
   populateTestData: Boolean
 )
 

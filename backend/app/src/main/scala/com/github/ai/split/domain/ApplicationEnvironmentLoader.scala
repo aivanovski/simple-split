@@ -2,14 +2,14 @@ package com.github.ai.split.domain
 
 import com.github.ai.split.data.db.DatabaseConfig
 import com.github.ai.split.entity.exception.{DomainError, EnvironmentError}
-import com.github.ai.split.entity.{ApplicationConfig, HttpProtocol, ServerConfig}
+import com.github.ai.split.entity.{ApplicationEnvironment, HttpProtocol, JwtData, ServerConfig}
 import io.github.cdimascio.dotenv.Dotenv
 import zio.*
 import zio.direct.*
 
-class ApplicationConfigLoader {
+class ApplicationEnvironmentLoader {
 
-  def loadConfig(): IO[DomainError, ApplicationConfig] = defer {
+  def loadConfig(): IO[DomainError, ApplicationEnvironment] = defer {
     val dotenv = Dotenv.configure().ignoreIfMissing().systemProperties().load()
 
     val protocol = readRequired(dotenv, "PROTOCOL")
@@ -20,9 +20,13 @@ class ApplicationConfigLoader {
     val databaseUrl = readRequired(dotenv, "DATABASE_URL").run
     val databaseMaximumPoolSize = readIntRequired(dotenv, "DATABASE_MAX_POOL_SIZE").run
     val databaseMinimumIdle = readIntRequired(dotenv, "DATABASE_MIN_IDLE").run
+    val jwtSecret = readRequired(dotenv, "JWT_SECRET").run
+    val jwtIssuer = readRequired(dotenv, "JWT_ISSUER").run
+    val jwtAudience = readRequired(dotenv, "JWT_AUDIENCE").run
+    val jwtRealm = readRequired(dotenv, "JWT_REALM").run
     val populateTestData = readBooleanRequired(dotenv, "POPULATE_TEST_DATA").run
 
-    ApplicationConfig(
+    ApplicationEnvironment(
       server = ServerConfig(
         protocol = protocol,
         certificatePath = serverCertificatePath,
@@ -32,6 +36,12 @@ class ApplicationConfigLoader {
         url = databaseUrl,
         maximumPoolSize = databaseMaximumPoolSize,
         minimumIdle = databaseMinimumIdle
+      ),
+      jwt = JwtData(
+        secret = jwtSecret,
+        issuer = jwtIssuer,
+        audience = jwtAudience,
+        realm = jwtRealm
       ),
       populateTestData = populateTestData
     )

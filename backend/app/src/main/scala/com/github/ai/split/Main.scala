@@ -2,9 +2,9 @@ package com.github.ai.split
 
 import com.github.ai.split.data.currency.CurrencyParser
 import com.github.ai.split.data.db.AppDatabase
-import com.github.ai.split.domain.ApplicationConfigLoader
+import com.github.ai.split.domain.ApplicationEnvironmentLoader
 import com.github.ai.split.domain.usecases.{FillTestDataUseCase, StartUpServerUseCase}
-import com.github.ai.split.entity.ApplicationConfig
+import com.github.ai.split.entity.ApplicationEnvironment
 import com.github.ai.split.entity.HttpProtocol.{HTTP, HTTPS}
 import com.github.ai.split.presentation.routes.{CurrencyRoutes, ExpenseRoutes, ExportRoutes, GroupRoutes, MemberRoutes}
 import com.github.ai.split.openapi.ApiEndpoints
@@ -53,7 +53,7 @@ object Main extends ZIOAppDefault {
   }
 
   private def createServerConfig(
-    config: ApplicationConfig
+    config: ApplicationEnvironment
   ) = defer {
     config.server.protocol match {
       case HTTP =>
@@ -68,7 +68,7 @@ object Main extends ZIOAppDefault {
   }
 
   override def run: ZIO[ZIOAppArgs, Throwable, Unit] = defer {
-    val config = ApplicationConfigLoader().loadConfig().run
+    val config = ApplicationEnvironmentLoader().loadConfig().run
     val port = config.server.protocol match {
       case HTTP => 8080
       case HTTPS => 8443

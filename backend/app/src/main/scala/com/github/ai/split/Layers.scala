@@ -9,10 +9,12 @@ import com.github.ai.split.data.db.dao.{
   GroupMembershipEntityDao,
   PaidByEntityDao,
   SplitBetweenEntityDao,
-  MemberEntityDao
+  MemberEntityDao,
+  UserEntityDao
 }
 import com.github.ai.split.data.db.repository.{CurrencyRepository, ExpenseRepository, GroupRepository}
-import com.github.ai.split.domain.{AccessResolverService, AuthService, PasswordService}
+import com.github.ai.split.domain.authentication.AuthService
+import com.github.ai.split.domain.{AccessResolverService, PasswordService}
 import com.github.ai.split.domain.usecases.{
   AddExpenseUseCase,
   AddGroupUseCase,
@@ -39,7 +41,7 @@ import com.github.ai.split.domain.usecases.{
   ValidateExpenseUseCase,
   ValidateMemberNameUseCase
 }
-import com.github.ai.split.entity.ApplicationConfig
+import com.github.ai.split.entity.ApplicationEnvironment
 import com.github.ai.split.presentation.controllers.{
   CurrencyController,
   ExpenseController,
@@ -54,7 +56,7 @@ object Layers {
   // Database
   val appDatabase = ZLayer.scoped {
     defer {
-      val config = ZIO.service[ApplicationConfig].run
+      val config = ZIO.service[ApplicationEnvironment].run
       val db = DatabaseConnectionFactory(config.database).create().run
       AppDatabase(db)
     }
@@ -62,6 +64,7 @@ object Layers {
 
   // Dao's
   val memberDao = ZLayer.fromFunction(MemberEntityDao(_, _))
+  val userDao = ZLayer.fromFunction(UserEntityDao(_))
   val groupDao = ZLayer.fromFunction(GroupEntityDao(_))
   val groupMembershipDao = ZLayer.fromFunction(GroupMembershipEntityDao(_))
   val expenseDao = ZLayer.fromFunction(ExpenseEntityDao(_))
@@ -76,6 +79,7 @@ object Layers {
 
   // Services
   val passwordService = ZLayer.succeed(PasswordService())
+  val authService = ZLayer.fromFunction(AuthService(_, _))
   val accessResolverService = ZLayer.fromFunction(AccessResolverService(_, _, _, _))
 
   // Use cases
