@@ -1,7 +1,7 @@
 package com.github.ai.split.domain.usecases
 
 import com.github.ai.split.api.GroupDto
-import com.github.ai.split.data.db.dao.{GroupEntityDao, GroupMembershipEntityDao, PaidByEntityDao, SplitBetweenEntityDao}
+import com.github.ai.split.data.db.dao.{PaidByEntityDao, SplitBetweenEntityDao}
 import com.github.ai.split.data.db.model.GroupUid
 import com.github.ai.split.data.db.repository.{ExpenseRepository, GroupRepository}
 import com.github.ai.split.entity.exception.DomainError
@@ -11,11 +11,8 @@ import zio.*
 class AssembleGroupsResponseUseCase(
   private val groupRepository: GroupRepository,
   private val expenseRepository: ExpenseRepository,
-  private val groupDao: GroupEntityDao,
-  private val groupMemberDao: GroupMembershipEntityDao,
   private val paidByDao: PaidByEntityDao,
   private val splitBetweenDao: SplitBetweenEntityDao,
-  private val getAllUsersUseCase: GetAllUsersUseCase,
   private val convertExpensesUseCase: ConvertExpensesToTransactionsUseCase,
   private val settlementCalculator: CalculateSettlementUseCase
 ) {
@@ -25,7 +22,6 @@ class AssembleGroupsResponseUseCase(
   ): IO[DomainError, List[GroupDto]] = {
     for {
       // TODO: Optimize DB querying
-      userUidToUserMap <- getAllUsersUseCase.getUserUidToUserMap()
       groups <- groupRepository.getByUids(uids)
       allExpenses <- expenseRepository.getEntitiesByGroupUids(uids)
       allPaidBy <- paidByDao.getAll()
@@ -45,7 +41,7 @@ class AssembleGroupsResponseUseCase(
 
               val groupTransactions = convertExpensesUseCase.convertToTransactions(
                 expenses = groupExpenses,
-                members = group.members.map(_.entity.uid),
+                members = group.members.map(_.member.uid),
                 paidBy = groupPaidBy,
                 splitBetween = groupSplitBetween
               )
@@ -55,11 +51,10 @@ class AssembleGroupsResponseUseCase(
               toGroupDto(
                 group = group.entity,
                 currency = group.currency,
-                members = group.members.map(_.entity),
+                members = group.members,
                 expenses = groupUidToExpenseMap.getOrElse(group.entity.uid, List.empty),
                 expenseUidToPaidByMap = expenseUidToPaidByMap,
                 expenseUidToSplitBetweenMap = expenseUidToSplitBetweenMap,
-                userUidToUserMap = userUidToUserMap,
                 paybackTransactions = paybackTransactions
               )
             }

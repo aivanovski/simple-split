@@ -3,28 +3,41 @@ package com.github.ai.split.domain.usecases
 import com.github.ai.split.data.db.dao.{
   ExpenseEntityDao,
   GroupEntityDao,
-  GroupMembershipEntityDao,
+  MemberEntityDao,
   PaidByEntityDao,
   SplitBetweenEntityDao,
-  MemberEntityDao
+  UserEntityDao
 }
-import com.github.ai.split.data.db.model.{ExpenseEntity, ExpenseUid, GroupEntity, GroupMembershipEntity, GroupUid, MemberEntity, MemberUid, MembershipUid, PaidByEntity, SplitBetweenEntity, Timestamp}
+import com.github.ai.split.data.db.model.{
+  Acknowledgement,
+  ExpenseEntity,
+  ExpenseUid,
+  GroupEntity,
+  GroupUid,
+  MemberEntity,
+  MemberUid,
+  PaidByEntity,
+  SplitBetweenEntity,
+  Timestamp,
+  UserEntity,
+  UserUid
+}
 import com.github.ai.split.domain.PasswordService
 import com.github.ai.split.data.db.repository.GroupRepository
-import com.github.ai.split.entity.{MemberReference, NameReference, Split, SplitBetweenAll, SplitBetweenMembers}
+import com.github.ai.split.entity.{NameReference, Split, SplitBetweenAll, SplitBetweenMembers}
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.some
-import zio.{IO, ZIO}
+import zio.*
+import zio.direct.*
 
-import java.time.{LocalDateTime, ZoneOffset}
 import java.util.UUID
-import java.util.concurrent.atomic.{AtomicInteger, AtomicLong, AtomicReference}
+import java.util.concurrent.atomic.AtomicLong
 
 class FillTestDataUseCase(
   private val groupRepository: GroupRepository,
-  private val userDao: MemberEntityDao,
+  private val userDao: UserEntityDao,
+  private val memberDao: MemberEntityDao,
   private val groupDao: GroupEntityDao,
-  private val groupMemberDao: GroupMembershipEntityDao,
   private val expenseDao: ExpenseEntityDao,
   private val paidByDao: PaidByEntityDao,
   private val splitBetweenDao: SplitBetweenEntityDao,
@@ -35,62 +48,62 @@ class FillTestDataUseCase(
 
   private val memberCounter = AtomicLong(1)
 
-  def createTestData(): IO[DomainError, Unit] = {
-    for {
-      _ <- ZIO.logInfo("Creating test data in database...")
+  def createTestData(): IO[DomainError, Unit] = defer {
+    ZIO.logInfo("Creating test data in database...").run
 
-      // Check if data already exists
-      // TODO: rewrite check
-      existingUsers <- userDao.getAll().catchAll(_ => ZIO.succeed(List.empty))
+    val testDataExists = groupDao
+      .findByUid(createTripToDisneyLandGroup().uid)
+      .map(_.isDefined)
+      .run
 
-      _ <-
-        if (existingUsers.nonEmpty) {
-          ZIO.logInfo("Database already contains test data")
-        } else {
-          val groups = List(
-            createTripToDisneyLandGroup(),
-            createCoffeeShopRegularsGroup(),
-            createFamilyDinnerGroup(),
-            createBookClubGroup(),
-            createSportsTeamGroup()
+    // TODO: insert groups only if they doesn't present int the database
+
+    if (testDataExists) {
+      ZIO.logInfo("Database already contains test data").run
+    } else {
+      Users.All.foreach { user =>
+        ZIO
+          .logInfo("Inserting user: %s, uid=%s".format(user.name, user.userUid.value.toString))
+          .run
+
+        insertUser(user).run
+      }
+
+      createGroups().foreach { group =>
+        ZIO
+          .logInfo(
+            "Inserting group: %s uid=%s, %s members, %s expenses"
+              .format(group.title, group.uid.value, group.members.size, group.expenses.size)
           )
+          .run
 
-          for {
-            _ <- insertUsers()
-            _ <- insertGroups(groups)
-            _ <- ZIO.logInfo("Test data inserted successfully")
-          } yield ()
-        }
-    } yield ()
+        insertGroup(group).run
+      }
+
+      ZIO.logInfo("Test data inserted successfully").run
+    }
   }
 
-  private def insertUsers(): IO[DomainError, Unit] = {
-    val users = List(
-      Mickey,
-      Donald,
-      Goofy,
-      Chip,
-      Dale,
-      Minnie,
-      Pluto,
-      Daisy,
-      Scrooge,
-      Huey
-    )
+  private def insertUser(user: User): IO[DomainError, UserEntity] = defer {
+    val loweredName = user.name.replace(" ", ".").toLowerCase()
 
-    ZIO.collectAll(users.map(user => userDao.add(user.toMemberEntity()))).map(_ => ())
+    userDao
+      .add(
+        UserEntity(
+          uid = user.userUid,
+          name = user.name,
+          email = s"$loweredName@mail.com",
+          passwordHash = passwordService.hashPassword("abc123")
+        )
+      )
+      .run
   }
 
-  private def insertGroups(groups: List[Group]): IO[DomainError, Unit] = {
-    for {
-      _ <- ZIO.collectAll(groups.map(group => insertGroup(group)))
-    } yield ()
-  }
-
-  private def insertGroup(group: Group): IO[DomainError, Unit] = {
+  private def insertGroup(group: Group): IO[DomainError, Unit] = defer {
     val time = Timestamp.now()
-    for {
-      _ <- groupDao.add(
+
+    groupDao
+      .add(
         GroupEntity(
           uid = group.uid,
           title = group.title,
@@ -101,43 +114,39 @@ class FillTestDataUseCase(
           modified = time
         )
       )
+      .run
 
-      _ <- {
-        val members = group.members.map { member =>
-          GroupMembershipEntity(
-            uid = MembershipUid(UUID(0L, memberCounter.getAndIncrement() + 1024L)),
-            groupUid = group.uid,
-            memberUid = member.userUid
-          )
-        }
-
-        groupMemberDao.add(members)
-      }
-
-      _ <- ZIO.collectAll(
-        group.expenses.map { expense =>
-          insertExpense(
-            groupUid = group.uid,
-            expense = expense
-          )
-        }
+    val members = group.members.map { member =>
+      MemberEntity(
+        uid = MemberUid(UUID(0L, memberCounter.getAndIncrement() + 1024L)),
+        groupUid = group.uid,
+        userUid = Some(member.userUid),
+        name = None,
+        email = None,
+        acknowledgement = Acknowledgement.NOT_REQUESTED
       )
-    } yield ()
+    }
+
+    for (member <- members) {
+      memberDao.add(member).run
+    }
+
+    for (expense <- group.expenses) {
+      insertExpense(groupUid = group.uid, expense = expense).run
+    }
   }
 
   private def insertExpense(
     groupUid: GroupUid,
     expense: Expense
-  ): IO[DomainError, Unit] = {
+  ): IO[DomainError, Unit] = defer {
     val time = Timestamp.now()
 
-    for {
-      members <- groupRepository.getMembers(groupUid)
+    val members = groupRepository.getMembers(groupUid).run
+    val userNameToMemberUidMap = members.map(member => (member.getName(), member.member.uid)).toMap
 
-      userUidToMemberUidMap = members.map(member => (member.user.uid, member.entity.uid)).toMap
-      userNameToMemberUidMap = members.map(member => (member.user.name, member.entity.uid)).toMap
-
-      _ <- expenseDao.add(
+    expenseDao
+      .add(
         ExpenseEntity(
           uid = expense.uid,
           groupUid = groupUid,
@@ -152,64 +161,68 @@ class FillTestDataUseCase(
           modified = time
         )
       )
+      .run
 
-      paidBy <- ZIO.collectAll(
-        expense.paidBy.map { payerUserUid =>
-          val memberUid = userUidToMemberUidMap.get(payerUserUid)
-          if (memberUid.isDefined) {
-            ZIO.succeed(
-              PaidByEntity(
-                groupUid = groupUid,
-                expenseUid = expense.uid,
-                membershipUid = memberUid.get
-              )
+    val paidBy = ZIO
+      .foreach(expense.paidBy) { payerUserUid =>
+        val memberUid = Users.All
+          .find(_.userUid == payerUserUid)
+          .flatMap(user => userNameToMemberUidMap.get(user.name))
+        if (memberUid.isDefined) {
+          ZIO.succeed(
+            PaidByEntity(
+              groupUid = groupUid,
+              expenseUid = expense.uid,
+              memberUid = memberUid.get
             )
-          } else {
-            ZIO.fail(DomainError())
-          }
-        }
-      )
-
-      _ <- paidByDao.add(paidBy)
-
-      _ <- {
-        expense.split match {
-          case SplitBetweenMembers(references) => {
-            ZIO
-              .collectAll(
-                references
-                  .map { reference =>
-                    val name = reference.asInstanceOf[NameReference].name
-                    val memberUid = userNameToMemberUidMap.get(name)
-
-                    if (memberUid.isDefined) {
-                      ZIO.succeed(memberUid.get)
-                    } else {
-                      ZIO.fail(DomainError(message = s"Failed to resolve member by name: $name".some))
-                    }
-                  }
-              )
-              .map { memberUids =>
-                memberUids.map { memberUid =>
-                  SplitBetweenEntity(
-                    groupUid = groupUid,
-                    expenseUid = expense.uid,
-                    membershipUid = memberUid
-                  )
-                }
-              }
-              .flatMap { splits =>
-                splitBetweenDao.add(splits)
-              }
-          }
-
-          case SplitBetweenAll => {
-            ZIO.succeed(())
-          }
+          )
+        } else {
+          ZIO.fail(DomainError())
         }
       }
-    } yield ()
+      .run
+
+    paidByDao.add(paidBy).run
+
+    expense.split match {
+      case SplitBetweenMembers(references) =>
+        val memberUids = ZIO
+          .foreach(references) { reference =>
+            val name = reference.asInstanceOf[NameReference].name
+            val memberUid = userNameToMemberUidMap.get(name)
+
+            if (memberUid.isDefined) {
+              ZIO.succeed(memberUid.get)
+            } else {
+              ZIO.fail(DomainError(message = s"Failed to resolve member by name: $name".some))
+            }
+          }
+          .run
+
+        val splits = memberUids.map { memberUid =>
+          SplitBetweenEntity(
+            groupUid = groupUid,
+            expenseUid = expense.uid,
+            memberUid = memberUid
+          )
+        }
+
+        splitBetweenDao.add(splits).run
+
+      case SplitBetweenAll => ()
+    }
+
+    ()
   }
+
+  private def createGroups(): List[Group] =
+    List(
+      createTripToDisneyLandGroup(),
+      createCoffeeShopRegularsGroup(),
+      createFamilyDinnerGroup(),
+      createBookClubGroup(),
+      createSportsTeamGroup()
+    )
 
   private def createTripToDisneyLandGroup(): Group = {
     Group(
@@ -359,25 +372,25 @@ class FillTestDataUseCase(
     )
   }
 
-  private object Users {
-    val Mickey = User(MemberUid(UUID.fromString("00000000-0000-0000-0000-a00000000001")), "Mickey Mouse")
-    val Donald = User(MemberUid(UUID.fromString("00000000-0000-0000-0000-a00000000002")), "Donald Duck")
-    val Goofy = User(MemberUid(UUID.fromString("00000000-0000-0000-0000-a00000000003")), "Goofy")
-    val Chip = User(MemberUid(UUID.fromString("00000000-0000-0000-0000-a00000000004")), "Chip")
-    val Dale = User(MemberUid(UUID.fromString("00000000-0000-0000-0000-a00000000005")), "Dale")
-    val Minnie = User(MemberUid(UUID.fromString("00000000-0000-0000-0000-a00000000006")), "Minnie Mouse")
-    val Pluto = User(MemberUid(UUID.fromString("00000000-0000-0000-0000-a00000000007")), "Pluto")
-    val Daisy = User(MemberUid(UUID.fromString("00000000-0000-0000-0000-a00000000008")), "Daisy Duck")
-    val Scrooge = User(MemberUid(UUID.fromString("00000000-0000-0000-0000-a00000000009")), "Scrooge McDuck")
-    val Huey = User(MemberUid(UUID.fromString("00000000-0000-0000-0000-a00000000010")), "Huey Duck")
-  }
+  private def newUserUid(str: String): UserUid =
+    UserUid(UUID.fromString(str))
 
-  extension (user: User) {
-    private def toMemberEntity(): MemberEntity = MemberEntity(user.userUid, user.name)
+  private object Users {
+    val Mickey = User(newUserUid("00000000-0000-0000-0000-a00000000001"), "Mickey Mouse")
+    val Donald = User(newUserUid("00000000-0000-0000-0000-a00000000002"), "Donald Duck")
+    val Goofy = User(newUserUid("00000000-0000-0000-0000-a00000000003"), "Goofy")
+    val Chip = User(newUserUid("00000000-0000-0000-0000-a00000000004"), "Chip")
+    val Dale = User(newUserUid("00000000-0000-0000-0000-a00000000005"), "Dale")
+    val Minnie = User(newUserUid("00000000-0000-0000-0000-a00000000006"), "Minnie Mouse")
+    val Pluto = User(newUserUid("00000000-0000-0000-0000-a00000000007"), "Pluto")
+    val Daisy = User(newUserUid("00000000-0000-0000-0000-a00000000008"), "Daisy Duck")
+    val Scrooge = User(newUserUid("00000000-0000-0000-0000-a00000000009"), "Scrooge McDuck")
+    val Huey = User(newUserUid("00000000-0000-0000-0000-a00000000010"), "Huey Duck")
+    val All = List(Mickey, Donald, Goofy, Chip, Dale, Minnie, Pluto, Daisy, Scrooge, Huey)
   }
 
   private case class User(
-    userUid: MemberUid,
+    userUid: UserUid,
     name: String
   )
 
@@ -395,7 +408,7 @@ class FillTestDataUseCase(
     title: String,
     description: String,
     amount: Double,
-    paidBy: List[MemberUid],
+    paidBy: List[UserUid],
     split: Split
   )
 }

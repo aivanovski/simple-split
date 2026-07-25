@@ -5,9 +5,10 @@ import com.github.ai.split.api.request.{LoginRequest, RefreshTokenRequest, Signu
 import com.github.ai.split.api.response.{LoginResponse, RefreshTokenResponse, SignupResponse}
 import com.github.ai.split.data.db.dao.UserEntityDao
 import com.github.ai.split.data.db.model.{UserEntity, UserUid}
+import com.github.ai.split.data.db.repository.UserRepository
 import com.github.ai.split.domain.PasswordService
 import com.github.ai.split.domain.authentication.AuthService
-import com.github.ai.split.entity.RefreshToken
+import com.github.ai.split.entity.{NewUser, RefreshToken}
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.some
 import zio.*
@@ -16,26 +17,28 @@ import zio.direct.*
 import java.util.UUID
 
 class AuthController(
-  private val userDao: UserEntityDao,
-  private val passwordService: PasswordService,
+  private val userRepository: UserRepository,
   private val authService: AuthService
 ) {
 
   def signup(body: SignupRequest): IO[DomainError, SignupResponse] =
     defer {
-      val existingUser = userDao.findByEmail(body.email).run
+      val existingUser = userRepository.findByEmail(body.email).run
       if (existingUser.isDefined) {
         ZIO.fail(DomainError(message = "User already exists".some)).run
       }
 
-      val user = UserEntity(
-        uid = UserUid(UUID.randomUUID()),
-        name = body.name,
-        email = body.email,
-        passwordHash = passwordService.hashPassword(body.password)
-      )
+      // TODO: add email validation
 
-      userDao.add(user).run
+      val user = userRepository
+        .add(
+          NewUser(
+            name = body.name,
+            email = body.email,
+            password = body.password
+          )
+        )
+        .run
 
       val tokens = authService.createTokens(user.uid)
       SignupResponse(
@@ -47,17 +50,12 @@ class AuthController(
 
   def login(body: LoginRequest): IO[DomainError, LoginResponse] =
     defer {
-      val user = userDao
-        .findByEmail(body.email)
-        .flatMap {
-          case Some(user) => ZIO.succeed(user)
-          case None => invalidCredentials
-        }
+      val user = userRepository
+        .authenticate(
+          email = body.email,
+          password = body.password
+        )
         .run
-
-      if (!passwordService.isPasswordMatch(body.password, user.passwordHash)) {
-        invalidCredentials.run
-      }
 
       val tokens = authService.createTokens(user.uid)
       LoginResponse(
@@ -79,9 +77,6 @@ class AuthController(
         refreshToken = tokens.refreshToken.toString
       )
     }
-
-  private def invalidCredentials: IO[DomainError, UserEntity] =
-    ZIO.fail(DomainError(message = "Invalid email or password".some))
 
   private def toUserDto(user: UserEntity): UserDto =
     UserDto(

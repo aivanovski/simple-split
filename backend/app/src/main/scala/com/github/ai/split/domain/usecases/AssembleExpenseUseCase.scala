@@ -1,9 +1,8 @@
 package com.github.ai.split.domain.usecases
 
 import com.github.ai.split.api.ExpenseDto
-import com.github.ai.split.data.db.dao.GroupMembershipEntityDao
 import com.github.ai.split.data.db.model.ExpenseUid
-import com.github.ai.split.data.db.repository.{CurrencyRepository, ExpenseRepository}
+import com.github.ai.split.data.db.repository.{CurrencyRepository, ExpenseRepository, GroupRepository}
 import com.github.ai.split.utils.toExpenseDto
 import com.github.ai.split.entity.exception.DomainError
 import zio.*
@@ -11,8 +10,7 @@ import zio.*
 class AssembleExpenseUseCase(
   private val expenseRepository: ExpenseRepository,
   private val currencyRepository: CurrencyRepository,
-  private val groupMemberDao: GroupMembershipEntityDao,
-  private val getAllUsersUseCase: GetAllUsersUseCase
+  private val groupRepository: GroupRepository
 ) {
 
   def assembleExpenseDto(
@@ -20,14 +18,12 @@ class AssembleExpenseUseCase(
   ): IO[DomainError, ExpenseDto] = {
     for {
       expense <- expenseRepository.getByUid(expenseUid)
-      members <- groupMemberDao.getByGroupUid(groupUid = expense.entity.groupUid)
-      userUidToUserMap <- getAllUsersUseCase.getUserUidToUserMap()
+      group <- groupRepository.getByUid(expense.entity.groupUid)
       currency <- currencyRepository.getByGroupUid(groupUid = expense.entity.groupUid)
       dto <- toExpenseDto(
         expense = expense,
         currency = currency,
-        members = members,
-        userUidToUserMap = userUidToUserMap
+        members = group.members
       )
     } yield dto
   }

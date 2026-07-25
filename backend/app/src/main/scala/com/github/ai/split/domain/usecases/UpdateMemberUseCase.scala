@@ -1,32 +1,35 @@
 package com.github.ai.split.domain.usecases
 
-import com.github.ai.split.data.db.dao.GroupMembershipEntityDao
 import zio.*
 import zio.direct.*
 import com.github.ai.split.entity.exception.DomainError
+import com.github.ai.split.utils.some
 import com.github.ai.split.data.db.dao.MemberEntityDao
-import com.github.ai.split.data.db.model.{GroupMembershipEntity, MembershipUid}
+import com.github.ai.split.data.db.model.{MemberEntity, MemberUid}
 import com.github.ai.split.data.db.repository.GroupRepository
 
 class UpdateMemberUseCase(
   private val groupRepository: GroupRepository,
-  private val memberDao: GroupMembershipEntityDao,
-  private val userDao: MemberEntityDao,
+  private val memberDao: MemberEntityDao,
   private val validateMemberUseCase: ValidateMemberNameUseCase
 ) {
 
   def updateMember(
-    memberUid: MembershipUid,
+    memberUid: MemberUid,
     newName: String
-  ): IO[DomainError, GroupMembershipEntity] = {
+  ): IO[DomainError, MemberEntity] = {
     defer {
       val member = memberDao.getByUid(memberUid).run
+      if (member.userUid.nonEmpty) {
+        ZIO
+          .fail(DomainError(message = "A member linked to a user cannot have a separate name".some))
+          .run
+      }
       val members = groupRepository.getMembers(member.groupUid).run
-      val user = userDao.getByUid(member.memberUid).run
 
       val currentNames = members
-        .filter(member => member.entity.uid != memberUid)
-        .map(member => member.user.name)
+        .filter(member => member.member.uid != memberUid)
+        .map(_.getName())
 
       validateMemberUseCase
         .validateNewMembers(
@@ -35,9 +38,9 @@ class UpdateMemberUseCase(
         )
         .run
 
-      userDao
+      memberDao
         .update(
-          user.copy(name = newName)
+          member.copy(name = Some(newName))
         )
         .run
 

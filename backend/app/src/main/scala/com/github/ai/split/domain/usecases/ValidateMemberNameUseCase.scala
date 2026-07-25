@@ -19,7 +19,7 @@ class ValidateMemberNameUseCase(
       val members = groupRepository.getMembers(groupUid).run
 
       validateNewMembers(
-        currentMemberNames = members.map(_.user.name),
+        currentMemberNames = members.map(_.getName()),
         newMemberNames = newMemberNames
       ).run
     }

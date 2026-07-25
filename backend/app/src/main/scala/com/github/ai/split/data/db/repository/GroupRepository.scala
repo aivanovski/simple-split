@@ -1,8 +1,8 @@
 package com.github.ai.split.data.db.repository
 
-import com.github.ai.split.data.db.dao.{CurrencyEntityDao, GroupEntityDao, GroupMembershipEntityDao, MemberEntityDao}
+import com.github.ai.split.data.db.dao.{CurrencyEntityDao, GroupEntityDao, MemberEntityDao, UserEntityDao}
 import com.github.ai.split.data.db.model.GroupUid
-import com.github.ai.split.entity.{GroupWithMembers, Member}
+import com.github.ai.split.entity.{GroupWithMembers, MemberWithUser}
 import com.github.ai.split.entity.exception.DomainError
 import zio.*
 import zio.direct.*
@@ -11,8 +11,8 @@ import scala.collection.mutable.ListBuffer
 
 class GroupRepository(
   private val memberDao: MemberEntityDao,
+  private val userDao: UserEntityDao,
   private val groupDao: GroupEntityDao,
-  private val groupMembershipDao: GroupMembershipEntityDao,
   private val currencyDao: CurrencyEntityDao
 ) {
 
@@ -40,39 +40,24 @@ class GroupRepository(
 
   private def getMembersByGroupsUids(
     groupUids: List[GroupUid]
-  ): IO[DomainError, List[(GroupUid, List[Member])]] = {
+  ): IO[DomainError, List[(GroupUid, List[MemberWithUser])]] = {
     defer {
       val uidsAndMembers = ZIO
         .collectAll(
           groupUids
             .map { groupUid =>
-              groupMembershipDao
+              memberDao
                 .getByGroupUid(groupUid = groupUid)
                 .map(members => (groupUid, members))
             }
         )
         .run
 
-      val memberUids = uidsAndMembers
-        .flatMap((_, members) => members.map(_.memberUid))
-        .distinct
-
-      val userUidToUserMap = memberDao
-        .getByUids(memberUids)
-        .run
-        .map(user => (user.uid, user))
-        .toMap
-
-      uidsAndMembers.map { (groupUid, members) =>
-        val membersWithUsers = members.map { member =>
-          Member(
-            user = userUidToUserMap(member.memberUid),
-            entity = member
-          )
+      ZIO
+        .foreach(uidsAndMembers) { case (groupUid, members) =>
+          resolveMembers(members).map(groupUid -> _)
         }
-
-        (groupUid, membersWithUsers)
-      }
+        .run
     }
   }
 
@@ -89,24 +74,27 @@ class GroupRepository(
     }
   }
 
-  def getMembers(groupUid: GroupUid): IO[DomainError, List[Member]] = {
+  def getMembers(groupUid: GroupUid): IO[DomainError, List[MemberWithUser]] = {
     defer {
-      val userUidToUserMap = memberDao
-        .getByGroupUid(groupUid)
-        .run
-        .map(user => (user.uid, user))
-        .toMap
-
-      val members = groupMembershipDao.getByGroupUid(groupUid).run
-
-      members
-        .map { member =>
-          userUidToUserMap
-            .get(member.memberUid)
-            .map(user => Member(user = user, entity = member))
-        }
-        .filter(member => member.isDefined)
-        .map(member => member.get)
+      val members = memberDao.getByGroupUid(groupUid).run
+      resolveMembers(members).run
     }
   }
+
+  private def resolveMembers(
+    members: List[com.github.ai.split.data.db.model.MemberEntity]
+  ): IO[DomainError, List[MemberWithUser]] =
+    defer {
+      val users = userDao.getByUids(members.flatMap(_.userUid).distinct).run
+      val usersByUid = users.map(user => user.uid -> user).toMap
+
+      members.map { member =>
+        val user = member.userUid.flatMap(userUid => usersByUid.get(userUid))
+
+        MemberWithUser(
+          member = member,
+          user = user
+        )
+      }
+    }
 }

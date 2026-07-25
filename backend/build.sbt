@@ -108,6 +108,7 @@ lazy val apiClient = project
 
     libraryDependencies ++= Seq(
       "dev.zio" %% "zio" % zioVersion,
+      "dev.zio" %% "zio-json" % zioJsonVersion,
       "dev.zio" %% "zio-direct" % zioDirect,
       "dev.zio" %% "zio-http" % zioHttp
     )

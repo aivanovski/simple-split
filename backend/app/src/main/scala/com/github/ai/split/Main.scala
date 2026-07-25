@@ -6,7 +6,14 @@ import com.github.ai.split.domain.ApplicationEnvironmentLoader
 import com.github.ai.split.domain.usecases.{FillTestDataUseCase, StartUpServerUseCase}
 import com.github.ai.split.entity.ApplicationEnvironment
 import com.github.ai.split.entity.HttpProtocol.{HTTP, HTTPS}
-import com.github.ai.split.presentation.routes.{AuthRoutes, CurrencyRoutes, ExpenseRoutes, ExportRoutes, GroupRoutes, MemberRoutes}
+import com.github.ai.split.presentation.routes.{
+  AuthRoutes,
+  CurrencyRoutes,
+  ExpenseRoutes,
+  ExportRoutes,
+  GroupRoutes,
+  MemberRoutes
+}
 import com.github.ai.split.openapi.ApiEndpoints
 import com.github.ai.split.utils.RequestLogger
 import zio.*
@@ -90,8 +97,6 @@ object Main extends ZIOAppDefault {
         ZLayer.succeed(config),
 
         // Use-Cases
-        Layers.addUserUseCase,
-        Layers.getAllUsersUseCase,
         Layers.addGroupUseCase,
         Layers.getGroupByUidUseCase,
         Layers.addMemberUseCase,
@@ -136,11 +141,11 @@ object Main extends ZIOAppDefault {
         Layers.expenseRepository,
         Layers.groupRepository,
         Layers.currencyRepository,
+        Layers.userRepository,
 
         // Dao
         Layers.expenseDao,
         Layers.groupDao,
-        Layers.groupMembershipDao,
         Layers.memberDao,
         Layers.userDao,
         Layers.paidByDao,
@@ -154,5 +159,7 @@ object Main extends ZIOAppDefault {
       )
       .run
     ()
+  }.catchAll { error =>
+    ZIO.attempt(error.printStackTrace()).orDie *> ZIO.fail(error)
   }
 }

@@ -3,14 +3,14 @@ package com.github.ai.split.domain.usecases
 import com.github.ai.split.data.db.model.ExpenseEntity
 import com.github.ai.split.data.db.repository.{ExpenseRepository, GroupRepository}
 import com.github.ai.split.entity.{
-  Member,
+  MemberWithUser,
   Split,
   SplitBetweenMembers,
   SplitBetweenAll,
   MemberReference,
   NameReference,
   NewExpense,
-  NewUser,
+  NewMember,
   UserReference
 }
 import com.github.ai.split.entity.exception.DomainError
@@ -24,7 +24,7 @@ class ValidateExpenseUseCase(
 ) {
 
   def validateExpenseData(
-    members: List[NewUser | Member],
+    members: List[NewMember | MemberWithUser],
     currentExpenses: List[ExpenseEntity],
     expense: NewExpense
   ): IO[DomainError, Unit] = {
@@ -49,7 +49,7 @@ class ValidateExpenseUseCase(
   }
 
   private def validatePaidBy(
-    members: List[NewUser | Member],
+    members: List[NewMember | MemberWithUser],
     paidBy: List[UserReference]
   ): IO[DomainError, Unit] = {
     for {
@@ -69,7 +69,7 @@ class ValidateExpenseUseCase(
   }
 
   private def validateSplit(
-    members: List[NewUser | Member],
+    members: List[NewMember | MemberWithUser],
     split: Split
   ): IO[DomainError, Unit] = {
     defer {
@@ -96,18 +96,18 @@ class ValidateExpenseUseCase(
   }
 
   private def resolveReference(
-    members: List[NewUser | Member],
+    members: List[NewMember | MemberWithUser],
     reference: UserReference
   ): IO[DomainError, Unit] = {
     val memberNames = members.map {
-      case newUser: NewUser => newUser.name
-      case m: Member => m.user.name
+      case newUser: NewMember => newUser.name
+      case m: MemberWithUser => m.getName()
     }
 
     val memberUids = members
       .map {
-        case _: NewUser => None
-        case member: Member => Some(member.entity.uid)
+        case _: NewMember => None
+        case member: MemberWithUser => Some(member.member.uid)
       }
       .filter(uid => uid.isDefined)
       .map(uid => uid.get)

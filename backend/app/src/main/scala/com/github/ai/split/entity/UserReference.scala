@@ -1,11 +1,11 @@
 package com.github.ai.split.entity
 
-import com.github.ai.split.data.db.model.MembershipUid
+import com.github.ai.split.data.db.model.MemberUid
 
 sealed trait UserReference
 
 case class MemberReference(
-  uid: MembershipUid
+  uid: MemberUid
 ) extends UserReference
 
 case class NameReference(

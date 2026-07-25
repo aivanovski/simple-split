@@ -1,7 +1,7 @@
 package com.github.ai.split.domain
 
-import com.github.ai.split.data.db.dao.{GroupEntityDao, GroupMembershipEntityDao}
-import com.github.ai.split.data.db.model.{ExpenseUid, GroupUid, MemberUid, MembershipUid}
+import com.github.ai.split.data.db.dao.{GroupEntityDao, MemberEntityDao}
+import com.github.ai.split.data.db.model.{ExpenseUid, GroupUid, MemberUid}
 import com.github.ai.split.data.db.repository.ExpenseRepository
 import com.github.ai.split.entity.{Access, AccessResolutionResult}
 import com.github.ai.split.entity.Access.{DENIED, GRANTED}
@@ -15,7 +15,7 @@ class AccessResolverService(
   private val expenseRepository: ExpenseRepository,
   private val passwordService: PasswordService,
   private val groupDao: GroupEntityDao,
-  private val groupMemberDao: GroupMembershipEntityDao
+  private val groupMemberDao: MemberEntityDao
 ) {
 
   def canAccessToGroups(
@@ -79,7 +79,7 @@ class AccessResolverService(
   }
 
   def canAccessToMember(
-    memberUid: MembershipUid,
+    memberUid: MemberUid,
     password: String
   ): IO[DomainError, Unit] = {
     defer {

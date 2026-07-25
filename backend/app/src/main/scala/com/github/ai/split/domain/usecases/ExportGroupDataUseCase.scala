@@ -20,7 +20,7 @@ class ExportGroupDataUseCase(
       val expenses = expenseRepository.getByGroupUid(groupUid).run
 
       // Create a map from member UID to user name for quick lookup
-      val memberUidToNameMap = group.members.map(member => member.entity.uid -> member.user.name).toMap
+      val memberUidToNameMap = group.members.map(member => (member.member.uid, member.getName())).toMap
 
       // CSV header
       val header = "Title,Description,Amount,Paid By,Split Between"
@@ -31,16 +31,16 @@ class ExportGroupDataUseCase(
 
         // Resolve paid by member names
         val paidByNames = expenseWithRelations.paidBy
-          .map(_.membershipUid)
+          .map(_.memberUid)
           .map(memberUidToNameMap.getOrElse(_, "Unknown"))
           .mkString("; ")
 
         // Resolve split between member names
         val splitBetweenNames = if (expense.isSplitBetweenAll) {
-          group.members.map(_.user.name).mkString("; ")
+          group.members.map(_.getName()).mkString("; ")
         } else {
           expenseWithRelations.splitBetween
-            .map(_.membershipUid)
+            .map(_.memberUid)
             .map(memberUidToNameMap.getOrElse(_, "Unknown"))
             .mkString("; ")
         }

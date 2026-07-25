@@ -1,11 +1,19 @@
 package com.github.ai.split.domain.usecases
 
-import com.github.ai.split.data.db.dao.{GroupMembershipEntityDao, PaidByEntityDao, SplitBetweenEntityDao, MemberEntityDao}
-import com.github.ai.split.data.db.model.{ExpenseEntity, ExpenseUid, GroupUid, MembershipUid, PaidByEntity, SplitBetweenEntity, Timestamp}
+import com.github.ai.split.data.db.dao.{PaidByEntityDao, SplitBetweenEntityDao}
+import com.github.ai.split.data.db.model.{
+  ExpenseEntity,
+  ExpenseUid,
+  GroupUid,
+  MemberUid,
+  PaidByEntity,
+  SplitBetweenEntity,
+  Timestamp
+}
 import com.github.ai.split.data.db.repository.{ExpenseRepository, GroupRepository}
 import com.github.ai.split.entity.{
   ExpenseWithRelations,
-  Member,
+  MemberWithUser,
   Split,
   SplitBetweenAll,
   SplitBetweenMembers,
@@ -21,8 +29,6 @@ import java.time.{LocalDateTime, ZoneOffset}
 class UpdateExpenseUseCase(
   private val groupRepository: GroupRepository,
   private val expenseRepository: ExpenseRepository,
-  private val userDao: MemberEntityDao,
-  private val groupMemberDao: GroupMembershipEntityDao,
   private val paidByDao: PaidByEntityDao,
   private val splitBetweenDao: SplitBetweenEntityDao,
   private val resolveUserReferencesUseCase: ResolveUserReferencesUseCase
@@ -59,7 +65,7 @@ class UpdateExpenseUseCase(
                 PaidByEntity(
                   groupUid = groupUid,
                   expenseUid = expense.entity.uid,
-                  membershipUid = payer.entity.uid
+                  memberUid = payer.member.uid
                 )
               }
             }
@@ -82,7 +88,7 @@ class UpdateExpenseUseCase(
                     SplitBetweenEntity(
                       groupUid = groupUid,
                       expenseUid = expense.entity.uid,
-                      membershipUid = member.entity.uid
+                      memberUid = member.member.uid
                     )
                   }
                 }
@@ -163,7 +169,7 @@ class UpdateExpenseUseCase(
 
   private def isPaidByValid(
     groupUid: GroupUid,
-    members: List[Member],
+    members: List[MemberWithUser],
     paidBy: Option[List[UserReference]]
   ): IO[DomainError, Unit] = {
     if (paidBy.isEmpty) {
@@ -183,7 +189,7 @@ class UpdateExpenseUseCase(
 
   private def isSplitValid(
     groupUid: GroupUid,
-    members: List[Member],
+    members: List[MemberWithUser],
     split: Option[Split]
   ): IO[DomainError, Unit] = {
     if (split.isEmpty) {

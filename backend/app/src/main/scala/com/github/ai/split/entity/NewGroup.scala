@@ -5,6 +5,6 @@ case class NewGroup(
   title: String,
   description: String,
   currencyIsoCode: String,
-  members: List[NewUser],
+  members: List[NewMember],
   expenses: List[NewExpense]
 )

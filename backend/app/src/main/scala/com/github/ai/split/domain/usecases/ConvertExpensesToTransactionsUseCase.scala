@@ -1,6 +1,6 @@
 package com.github.ai.split.domain.usecases
 
-import com.github.ai.split.data.db.model.{ExpenseEntity, MembershipUid, PaidByEntity, SplitBetweenEntity}
+import com.github.ai.split.data.db.model.{ExpenseEntity, MemberUid, PaidByEntity, SplitBetweenEntity}
 import com.github.ai.split.entity.{ExpenseWithRelations, Transaction}
 
 import java.util.UUID
@@ -10,7 +10,7 @@ class ConvertExpensesToTransactionsUseCase {
 
   def convertToTransactions(
     expenses: List[ExpenseWithRelations],
-    members: List[MembershipUid]
+    members: List[MemberUid]
   ): List[Transaction] =
     convertToTransactions(
       expenses = expenses.map(_.entity),
@@ -21,7 +21,7 @@ class ConvertExpensesToTransactionsUseCase {
 
   def convertToTransactions(
     expenses: List[ExpenseEntity],
-    members: List[MembershipUid],
+    members: List[MemberUid],
     paidBy: List[PaidByEntity],
     splitBetween: List[SplitBetweenEntity]
   ): List[Transaction] = {
@@ -37,7 +37,7 @@ class ConvertExpensesToTransactionsUseCase {
       } else {
         expenseUidToSplitBetweenMap
           .getOrElse(expense.uid, List.empty)
-          .map(split => split.membershipUid)
+          .map(split => split.memberUid)
       }
 
       for (payment <- payments) {
@@ -47,7 +47,7 @@ class ConvertExpensesToTransactionsUseCase {
           expense.amount / splitUserUids.size
         }
 
-        val creditorUid = payment.membershipUid
+        val creditorUid = payment.memberUid
 
         for (splitUserUid <- splitUserUids.filter(uid => uid != creditorUid)) {
           transactions.addOne(

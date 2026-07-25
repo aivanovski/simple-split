@@ -10,7 +10,7 @@ import com.github.ai.split.domain.usecases.{
 }
 import com.github.ai.split.api.request.{PostExpenseRequest, PutExpenseRequest}
 import com.github.ai.split.api.response.{DeleteExpenseResponse, PostExpenseResponse, PutExpenseResponse}
-import com.github.ai.split.data.db.model.{ExpenseUid, GroupUid, MembershipUid}
+import com.github.ai.split.data.db.model.{ExpenseUid, GroupUid, MemberUid}
 import com.github.ai.split.data.db.repository.ExpenseRepository
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.domain.AccessResolverService
@@ -134,7 +134,7 @@ class ExpenseController(
   ): IO[DomainError, List[UserReference]] = {
     ZIO.collectAll(
       paidByUids.map { payer =>
-        payer.parseUid().map(uid => MemberReference(MembershipUid(uid)))
+        payer.parseUid().map(uid => MemberReference(MemberUid(uid)))
       }
     )
   }
@@ -147,7 +147,7 @@ class ExpenseController(
       ZIO
         .collectAll(
           splitUids.map { uid =>
-            uid.parseUid().map(uid => MemberReference(MembershipUid(uid)))
+            uid.parseUid().map(uid => MemberReference(MemberUid(uid)))
           }
         )
         .map(uids => SplitBetweenMembers(members = uids))

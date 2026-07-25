@@ -2,7 +2,6 @@ package com.github.ai.split.presentation.controllers
 
 import com.github.ai.split.domain.usecases.{
   AddMembersUseCase,
-  AddUserUseCase,
   AssembleGroupResponseUseCase,
   GetGroupUseCase,
   RemoveMembersUseCase,
@@ -10,7 +9,7 @@ import com.github.ai.split.domain.usecases.{
 }
 import com.github.ai.split.api.request.{PostMemberRequest, PutMemberRequest}
 import com.github.ai.split.api.response.{DeleteMemberResponse, PostMemberResponse, PutMemberResponse}
-import com.github.ai.split.data.db.model.{GroupUid, MembershipUid}
+import com.github.ai.split.data.db.model.{GroupUid, MemberUid}
 import com.github.ai.split.domain.AccessResolverService
 import com.github.ai.split.utils.{parsePasswordParam, parseUid, parseUidFromUrl}
 import com.github.ai.split.entity.exception.DomainError
@@ -22,7 +21,6 @@ class MemberController(
   private val accessResolver: AccessResolverService,
   private val accessResolverService: AccessResolverService,
   private val getGroupUseCase: GetGroupUseCase,
-  private val addUserUseCase: AddUserUseCase,
   private val addMemberUseCase: AddMembersUseCase,
   private val removeMembersUseCase: RemoveMembersUseCase,
   private val updateMemberUseCase: UpdateMemberUseCase,
@@ -51,7 +49,7 @@ class MemberController(
     body: PutMemberRequest
   ): IO[DomainError, PutMemberResponse] = {
     defer {
-      val memberUid = memberId.parseUid().map(uid => MembershipUid(uid)).run
+      val memberUid = memberId.parseUid().map(uid => MemberUid(uid)).run
 
       accessResolver.canAccessToMember(memberUid = memberUid, password = password).run
 
@@ -67,7 +65,7 @@ class MemberController(
     password: String
   ): IO[DomainError, DeleteMemberResponse] = {
     for {
-      memberUid <- memberId.parseUid().map(uid => MembershipUid(uid))
+      memberUid <- memberId.parseUid().map(uid => MemberUid(uid))
       _ <- accessResolverService.canAccessToMember(memberUid = memberUid, password = password)
 
       group <- getGroupUseCase.getGroupByMemberUid(memberUid)

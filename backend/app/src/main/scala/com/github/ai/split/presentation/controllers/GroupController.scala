@@ -6,11 +6,9 @@ import com.github.ai.split.domain.usecases.{
   AddExpenseUseCase,
   AddGroupUseCase,
   AddMembersUseCase,
-  AddUserUseCase,
   AssembleGroupResponseUseCase,
   AssembleGroupsResponseUseCase,
   ExportGroupDataUseCase,
-  GetAllUsersUseCase,
   UpdateGroupUseCase
 }
 import com.github.ai.split.entity.{
@@ -18,7 +16,7 @@ import com.github.ai.split.entity.{
   NameReference,
   NewExpense,
   NewGroup,
-  NewUser,
+  NewMember,
   SplitBetweenAll,
   SplitBetweenMembers
 }
@@ -37,11 +35,9 @@ import java.util.UUID
 
 class GroupController(
   private val accessResolver: AccessResolverService,
-  private val addUserUseCase: AddUserUseCase,
   private val addMemberUseCase: AddMembersUseCase,
   private val addGroupUseCase: AddGroupUseCase,
   private val addExpenseUseCase: AddExpenseUseCase,
-  private val getAllUsersUseCase: GetAllUsersUseCase,
   private val assembleGroupUseCase: AssembleGroupResponseUseCase,
   private val assembleGroupsUseCase: AssembleGroupsResponseUseCase,
   private val updateGroupUseCase: UpdateGroupUseCase,
@@ -122,7 +118,7 @@ class GroupController(
       )
 
       newGroup <- {
-        val newUsers = data.members.map(member => NewUser(name = member.name))
+        val newUsers = data.members.map(member => NewMember(name = member.name))
 
         addGroupUseCase.addGroup(
           NewGroup(

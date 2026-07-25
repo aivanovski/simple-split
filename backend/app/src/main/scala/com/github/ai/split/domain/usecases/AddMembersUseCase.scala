@@ -1,7 +1,7 @@
 package com.github.ai.split.domain.usecases
 
-import com.github.ai.split.data.db.dao.{GroupEntityDao, GroupMembershipEntityDao, MemberEntityDao}
-import com.github.ai.split.data.db.model.{GroupMembershipEntity, GroupUid, MemberEntity, MemberUid, MembershipUid}
+import com.github.ai.split.data.db.dao.{GroupEntityDao, MemberEntityDao, UserEntityDao}
+import com.github.ai.split.data.db.model.{Acknowledgement, GroupUid, MemberEntity, MemberUid, UserUid}
 import com.github.ai.split.data.db.repository.GroupRepository
 import com.github.ai.split.utils.some
 import com.github.ai.split.entity.exception.DomainError
@@ -13,40 +13,34 @@ import java.util.UUID
 class AddMembersUseCase(
   private val groupRepository: GroupRepository,
   private val groupDao: GroupEntityDao,
-  private val groupMemberDao: GroupMembershipEntityDao,
-  private val userDao: MemberEntityDao,
+  private val groupMemberDao: MemberEntityDao,
+  private val userDao: UserEntityDao,
   private val validateMemberUseCase: ValidateMemberNameUseCase
 ) {
 
   def addMember(
     groupUid: GroupUid,
     name: String
-  ): IO[DomainError, GroupMembershipEntity] = {
+  ): IO[DomainError, MemberEntity] = {
     defer {
       val members = groupRepository.getMembers(groupUid).run
 
       validateMemberUseCase
         .validateNewMembers(
-          currentMemberNames = members.map(_.user.name),
+          currentMemberNames = members.map(_.getName()),
           newMemberNames = List(name)
-        )
-        .run
-
-      val user = userDao
-        .add(
-          MemberEntity(
-            uid = MemberUid(UUID.randomUUID()),
-            name = name
-          )
         )
         .run
 
       groupMemberDao
         .add(
-          GroupMembershipEntity(
-            uid = MembershipUid(UUID.randomUUID()),
+          MemberEntity(
+            uid = MemberUid(UUID.randomUUID()),
             groupUid = groupUid,
-            memberUid = user.uid
+            userUid = None,
+            name = Some(name),
+            email = None,
+            acknowledgement = Acknowledgement.NOT_REQUESTED
           )
         )
         .run
@@ -55,18 +49,21 @@ class AddMembersUseCase(
 
   def addMembers(
     groupUid: GroupUid,
-    userUids: List[MemberUid]
-  ): IO[DomainError, List[GroupMembershipEntity]] = {
+    userUids: List[UserUid]
+  ): IO[DomainError, List[MemberEntity]] = {
     defer {
       validateUsers(userUids = userUids).run
 
       canAddMembers(groupUid = groupUid, userUids = userUids).run
 
       val newMembers = userUids.map { userUid =>
-        GroupMembershipEntity(
-          uid = MembershipUid(UUID.randomUUID()),
+        MemberEntity(
+          uid = MemberUid(UUID.randomUUID()),
           groupUid = groupUid,
-          memberUid = userUid
+          userUid = Some(userUid),
+          name = None,
+          email = None,
+          acknowledgement = Acknowledgement.CONFIRMED
         )
       }
 
@@ -75,7 +72,7 @@ class AddMembersUseCase(
   }
 
   private def validateUsers(
-    userUids: List[MemberUid]
+    userUids: List[UserUid]
   ): IO[DomainError, Unit] = {
     defer {
       userDao.getByUids(userUids).run
@@ -86,13 +83,13 @@ class AddMembersUseCase(
 
   def canAddMembers(
     groupUid: GroupUid,
-    userUids: List[MemberUid]
+    userUids: List[UserUid]
   ): IO[DomainError, Unit] = {
     defer {
       val users = userDao.getByUids(uids = userUids).run
       val members = groupMemberDao.getByGroupUid(groupUid = groupUid).run
 
-      val memberUids = members.map(_.memberUid).toSet
+      val memberUids = members.flatMap(_.userUid).toSet
       val addedUsers = users.filter(user => memberUids.contains(user.uid))
       if (addedUsers.nonEmpty) {
         val addedUids = addedUsers.map(_.uid).mkString(", ")

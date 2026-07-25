@@ -11,7 +11,6 @@ class AssembleGroupResponseUseCase(
   private val expenseRepository: ExpenseRepository,
   private val currencyRepository: CurrencyRepository,
   private val groupRepository: GroupRepository,
-  private val getAllUsersUseCase: GetAllUsersUseCase,
   private val convertExpensesUseCase: ConvertExpensesToTransactionsUseCase,
   private val calculateSettlementUseCase: CalculateSettlementUseCase
 ) {
@@ -20,15 +19,14 @@ class AssembleGroupResponseUseCase(
     groupUid: GroupUid
   ): IO[DomainError, GroupDto] = {
     for {
-      userUidToUserMap <- getAllUsersUseCase.getUserUidToUserMap()
       group <- groupRepository.getByUid(groupUid)
       expenses <- expenseRepository.getByGroupUid(groupUid)
       dto <- {
-        val members = group.members.map(_.entity)
+        val members = group.members
 
         val transactions = convertExpensesUseCase.convertToTransactions(
           expenses = expenses,
-          members = members.map(member => member.uid)
+          members = members.map(_.member.uid)
         )
 
         toGroupDto(
@@ -36,7 +34,6 @@ class AssembleGroupResponseUseCase(
           currency = group.currency,
           members = members,
           expenses = expenses,
-          userUidToUserMap = userUidToUserMap,
           paybackTransactions = calculateSettlementUseCase.calculateSettlement(transactions)
         )
       }

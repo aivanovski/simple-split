@@ -1,7 +1,7 @@
 package com.github.ai.split.data.db.dao
 
 import com.github.ai.split.data.db.AppDatabase
-import com.github.ai.split.data.db.model.{GroupUid, MemberEntity, MemberUid}
+import com.github.ai.split.data.db.model.{GroupUid, MemberEntity, MemberUid, UserUid}
 import com.github.ai.split.data.db.given
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.some
@@ -10,8 +10,7 @@ import zio.direct.*
 import slick.jdbc.SQLiteProfile.api.*
 
 class MemberEntityDao(
-  db: AppDatabase,
-  private val groupMemberDao: GroupMembershipEntityDao
+  db: AppDatabase
 ) extends Dao(db = db.context, table = db.MemberTable) {
 
   private val table = db.MemberTable
@@ -23,9 +22,7 @@ class MemberEntityDao(
 
   def getByGroupUid(groupUid: GroupUid): IO[DomainError, List[MemberEntity]] = {
     defer {
-      val users = groupMemberDao.getByGroupUid(groupUid).run
-      val memberUids = users.map(_.memberUid).toSet
-      query(table => table.uid inSet memberUids).run
+      query(table => table.groupUid === groupUid).run
     }
   }
 
@@ -33,19 +30,15 @@ class MemberEntityDao(
     queryOne(table => table.uid === uid)
   }
 
-  def getByUids(uids: List[MemberUid]): IO[DomainError, List[MemberEntity]] = {
+  def getByUids(uids: List[MemberUid]): IO[DomainError, List[MemberEntity]] = defer {
     val uidSet = uids.toSet
+    val members = query(t => t.uid inSet uidSet).run
 
-    query(t => t.uid inSet uidSet)
-      .flatMap { users =>
-        if (users.size == uidSet.size) {
-          ZIO.succeed(users)
-        } else {
-          val foundUids = users.map(_.uid).toSet
-          val notFoundUids = uidSet.diff(foundUids).mkString(", ")
-          ZIO.fail(DomainError(message = s"Failed to find users: $notFoundUids".some))
-        }
-      }
+    if (members.size == uids.size) {
+      members
+    } else {
+      ZIO.fail(DomainError(message = s"Failed to find requested entities by uids: $uids".some)).run
+    }
   }
 
   def getByUid(uid: MemberUid): IO[DomainError, MemberEntity] = {
@@ -68,12 +61,12 @@ class MemberEntityDao(
     )
   }
 
-  // TODO: remove function and refactor
-  def getMemberUidToMemberMap(): IO[DomainError, Map[MemberUid, MemberEntity]] = {
-    for {
-      users <- getAll()
-    } yield {
-      users.map { user => user.uid -> user }.toMap
-    }
-  }
+  def getByUserUid(userUid: UserUid): IO[DomainError, List[MemberEntity]] =
+    getAll().map(_.filter(_.userUid.contains(userUid)))
+
+  def removeByGroupUid(groupUid: GroupUid): IO[DomainError, Unit] =
+    delete(table => table.groupUid === groupUid)
+
+  def removeByUid(uid: MemberUid): IO[DomainError, Unit] =
+    deleteOne(table => table.uid === uid)
 }

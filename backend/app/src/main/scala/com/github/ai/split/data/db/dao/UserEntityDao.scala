@@ -29,6 +29,17 @@ class UserEntityDao(
   def findByEmail(email: String): IO[DomainError, Option[UserEntity]] =
     queryOne(_.email === email)
 
+  def getByUids(uids: List[UserUid]): IO[DomainError, List[UserEntity]] = defer {
+    val uidSet = uids.toSet
+    val users = query(t => t.uid inSet uidSet).run
+
+    if (users.size == uids.size) {
+      users
+    } else {
+      ZIO.fail(DomainError(message = s"Failed to find requested entities by uids: $uids".some)).run
+    }
+  }
+
   def add(user: UserEntity): IO[DomainError, UserEntity] =
     insert(user)
 

@@ -1,30 +1,18 @@
 package com.github.ai.split.domain.usecases
 
-import com.github.ai.split.data.db.dao.{
-  GroupEntityDao,
-  GroupMembershipEntityDao,
-  PaidByEntityDao,
-  SplitBetweenEntityDao,
-  MemberEntityDao
-}
-import com.github.ai.split.data.db.model.{GroupEntity, GroupMembershipEntity, GroupUid, MemberUid, MembershipUid, Timestamp}
-import com.github.ai.split.domain.usecases.AddMembersUseCase
+import com.github.ai.split.data.db.dao.{GroupEntityDao, MemberEntityDao, PaidByEntityDao, SplitBetweenEntityDao}
+import com.github.ai.split.data.db.model.{GroupEntity, GroupUid, MemberEntity, MemberUid, Timestamp}
 import com.github.ai.split.domain.PasswordService
 import com.github.ai.split.entity.exception.DomainError
 import zio.*
 import zio.direct.*
 
-import java.time.{LocalDateTime, ZoneOffset}
-import java.util.UUID
-
 class UpdateGroupUseCase(
   private val passwordService: PasswordService,
   private val groupDao: GroupEntityDao,
-  private val groupMemberDao: GroupMembershipEntityDao,
-  private val userDao: MemberEntityDao,
+  private val memberDao: MemberEntityDao,
   private val paidByDao: PaidByEntityDao,
   private val splitBetweenDao: SplitBetweenEntityDao,
-  private val addMemberUseCase: AddMembersUseCase,
   private val removeMembersUseCase: RemoveMembersUseCase,
   private val validateCurrencyUseCase: ValidateCurrencyUseCase
 ) {
@@ -41,18 +29,7 @@ class UpdateGroupUseCase(
       _ <- isCurrencyIsoCodeValid(newCurrencyIsoCode)
 
       group <- groupDao.getByUid(uid = groupUid)
-      currentMembers <- groupMemberDao.getByGroupUid(groupUid = groupUid)
-
-      membersToAdd <- getMembersToAdd(
-        currentMembers = currentMembers,
-        newMemberUids = newMemberUids
-      )
-      _ <-
-        if (membersToAdd.nonEmpty) {
-          addMemberUseCase.canAddMembers(groupUid = groupUid, userUids = membersToAdd)
-        } else {
-          ZIO.succeed(())
-        }
+      currentMembers <- memberDao.getByGroupUid(groupUid = groupUid)
 
       membersToRemove <- getMembersToRemove(
         currentMembers = currentMembers,
@@ -87,24 +64,10 @@ class UpdateGroupUseCase(
     } yield groupUid
   }
 
-  private def getMembersToAdd(
-    currentMembers: List[GroupMembershipEntity],
+  private def getMembersToRemove(
+    currentMembers: List[MemberEntity],
     newMemberUids: Option[List[MemberUid]]
   ): IO[DomainError, List[MemberUid]] = {
-    if (newMemberUids.isEmpty) {
-      return ZIO.succeed(List.empty)
-    }
-
-    val newUids = newMemberUids.getOrElse(List.empty)
-    val userUidSet = currentMembers.map(_.memberUid).toSet
-
-    ZIO.succeed(newUids.filter(uid => !userUidSet.contains(uid)).distinct)
-  }
-
-  private def getMembersToRemove(
-    currentMembers: List[GroupMembershipEntity],
-    newMemberUids: Option[List[MemberUid]]
-  ): IO[DomainError, List[MembershipUid]] = {
     if (newMemberUids.isEmpty) {
       return ZIO.succeed(List.empty)
     }
@@ -113,7 +76,7 @@ class UpdateGroupUseCase(
 
     ZIO.succeed(
       currentMembers
-        .filter(member => !newUids.contains(member.memberUid))
+        .filter(member => !newUids.contains(member.uid))
         .map(_.uid)
         .distinct
     )
@@ -122,25 +85,17 @@ class UpdateGroupUseCase(
   private def updateMembers(
     groupUid: GroupUid,
     newMembersOption: Option[List[MemberUid]]
-  ): IO[DomainError, List[GroupMembershipEntity]] = {
+  ): IO[DomainError, List[MemberEntity]] = {
     if (newMembersOption.isEmpty) {
       return ZIO.succeed(List.empty)
     }
 
-    val newMembers = newMembersOption.getOrElse(List.empty)
-
     for {
-      _ <- groupMemberDao.removeByGroupUid(groupUid)
-      result <- groupMemberDao.add(
-        newMembers.map { userUid =>
-          GroupMembershipEntity(
-            uid = MembershipUid(UUID.randomUUID()),
-            groupUid = groupUid,
-            memberUid = userUid
-          )
-        }
-      )
-    } yield result
+      members <- memberDao.getByGroupUid(groupUid)
+      retained = members.filter(member => newMembersOption.get.contains(member.uid))
+      removed = members.filterNot(member => retained.exists(_.uid == member.uid))
+      _ <- ZIO.foreachDiscard(removed)(member => memberDao.removeByUid(member.uid))
+    } yield retained
   }
 
   private def isCurrencyIsoCodeValid(

@@ -8,6 +8,12 @@ class DomainError(
       cause.orNull
     )
 
+class InvalidCredentialsError
+    extends DomainError(
+      message = Some("Invalid email or password"),
+      cause = None
+    )
+
 class ParsingError(
   message: String,
   cause: Option[Throwable] = None

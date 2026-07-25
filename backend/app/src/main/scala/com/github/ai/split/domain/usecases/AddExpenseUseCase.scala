@@ -1,11 +1,18 @@
 package com.github.ai.split.domain.usecases
 
-import com.github.ai.split.data.db.dao.{GroupEntityDao, GroupMembershipEntityDao, MemberEntityDao}
-import com.github.ai.split.data.db.model.{ExpenseEntity, ExpenseUid, GroupMembershipEntity, GroupUid, MemberEntity, MembershipUid, PaidByEntity, SplitBetweenEntity, Timestamp}
+import com.github.ai.split.data.db.dao.GroupEntityDao
+import com.github.ai.split.data.db.model.{
+  ExpenseEntity,
+  ExpenseUid,
+  GroupUid,
+  PaidByEntity,
+  SplitBetweenEntity,
+  Timestamp
+}
 import com.github.ai.split.data.db.repository.{ExpenseRepository, GroupRepository}
 import com.github.ai.split.entity.{
   ExpenseWithRelations,
-  Member,
+  MemberWithUser,
   MemberReference,
   NameReference,
   NewExpense,
@@ -25,9 +32,7 @@ import java.util.UUID
 class AddExpenseUseCase(
   private val expenseRepository: ExpenseRepository,
   private val groupRepository: GroupRepository,
-  private val memberDao: MemberEntityDao,
   private val groupDao: GroupEntityDao,
-  private val groupMemberDao: GroupMembershipEntityDao,
   private val resolveUserUseCase: ResolveUserReferencesUseCase,
   private val validateExpenseUseCase: ValidateExpenseUseCase
 ) {
@@ -72,7 +77,7 @@ class AddExpenseUseCase(
         SplitBetweenEntity(
           groupUid = groupUid,
           expenseUid = expenseUid,
-          membershipUid = splitMember.entity.uid
+          memberUid = splitMember.member.uid
         )
       }
 
@@ -80,7 +85,7 @@ class AddExpenseUseCase(
         PaidByEntity(
           groupUid = groupUid,
           expenseUid = expenseUid,
-          membershipUid = payer.entity.uid
+          memberUid = payer.member.uid
         )
       }
 
@@ -111,8 +116,8 @@ class AddExpenseUseCase(
 
   private def validateExpenseData(
     expenses: List[ExpenseEntity],
-    paidByMembers: List[Member],
-    splitMembers: List[Member],
+    paidByMembers: List[MemberWithUser],
+    splitMembers: List[MemberWithUser],
     data: NewExpense
   ): IO[DomainError, Unit] = {
     defer {

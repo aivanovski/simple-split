@@ -1,6 +1,6 @@
 package com.github.ai.split.domain.usecases
 
-import com.github.ai.split.data.db.model.MembershipUid
+import com.github.ai.split.data.db.model.MemberUid
 import com.github.ai.split.entity.Transaction
 
 import java.util.UUID
@@ -12,7 +12,7 @@ class CalculateSettlementUseCase {
   def calculateSettlement(
     transactions: List[Transaction]
   ): List[Transaction] = {
-    val balances = mutable.Map[MembershipUid, Double]()
+    val balances = mutable.Map[MemberUid, Double]()
 
     for (transaction <- transactions) {
       val creditorBalance = balances.getOrElse(transaction.creditor, 0.0)
@@ -22,8 +22,8 @@ class CalculateSettlementUseCase {
       balances.put(transaction.debtor, debtorBalance - transaction.amount)
     }
 
-    val creditors = ListBuffer[(MembershipUid, Double)]()
-    val debtors = ListBuffer[(MembershipUid, Double)]()
+    val creditors = ListBuffer[(MemberUid, Double)]()
+    val debtors = ListBuffer[(MemberUid, Double)]()
 
     for ((person, balance) <- balances) {
       if (balance > 0) {
