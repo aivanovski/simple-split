@@ -78,7 +78,7 @@ object Layers {
   // Services
   val passwordService = ZLayer.succeed(PasswordService())
   val authService = ZLayer.fromFunction(AuthService(_, _))
-  val accessResolverService = ZLayer.fromFunction(AccessResolverService(_, _, _, _))
+  val accessResolverService = ZLayer.fromFunction(AccessResolverService(_, _, _, _, _, _))
 
   // Use cases
   val addGroupUseCase = ZLayer.fromFunction(AddGroupUseCase(_, _, _, _, _, _, _, _))

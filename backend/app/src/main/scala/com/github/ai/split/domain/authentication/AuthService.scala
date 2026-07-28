@@ -32,17 +32,29 @@ class AuthService(
     )
 
   def validateAuthToken(token: AuthToken): IO[DomainError, UserUid] =
-    validateToken(token.toString, AUTH_TOKEN)
+    defer {
+      val userUid = validateToken(token.toString, AUTH_TOKEN).run
+      userDao.getByUid(userUid).run
+      userUid
+    }
 
   def validateRefreshToken(token: RefreshToken): IO[DomainError, UserUid] =
-    validateToken(token.toString, REFRESH_TOKEN)
+    defer {
+      val userUid = validateToken(token.toString, REFRESH_TOKEN).run
+      userDao.getByUid(userUid).run
+      userUid
+    }
+
+  def getUserByAuthToken(token: AuthToken): IO[DomainError, UserEntity] =
+    defer {
+      val userUid = validateToken(token.toString, AUTH_TOKEN).run
+      userDao.getByUid(userUid).run
+    }
 
   def validateAuthHeader(header: String): IO[DomainError, UserEntity] =
     defer {
-      // TODO: modify
       val token = extractTokenFromHeader(header).run
-      val userUid = validateAuthToken(AuthToken(token)).run
-      userDao.getByUid(userUid).run
+      getUserByAuthToken(AuthToken(token)).run
     }
 
   private def validateToken(
@@ -75,11 +87,6 @@ class AuthService(
 
       val userUid = ZIO
         .attempt(UserUid(UUID.fromString(Option(decodedToken.getSubject).getOrElse(""))))
-        .mapError(error => DomainError(cause = error.some))
-        .run
-
-      userDao
-        .getByUid(userUid)
         .mapError(error => DomainError(cause = error.some))
         .run
 

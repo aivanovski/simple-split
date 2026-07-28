@@ -1,20 +1,6 @@
 package com.github.ai.split.data.db
 
-import com.github.ai.split.data.db.model.{
-  Acknowledgement,
-  CurrencyEntity,
-  ExpenseEntity,
-  ExpenseUid,
-  GroupEntity,
-  GroupUid,
-  MemberEntity,
-  MemberUid,
-  PaidByEntity,
-  SplitBetweenEntity,
-  Timestamp,
-  UserEntity,
-  UserUid
-}
+import com.github.ai.split.data.db.model.{Acknowledgement, CurrencyEntity, ExpenseEntity, ExpenseUid, GroupEntity, GroupUid, MemberEntity, MemberUid, PaidByEntity, PasswordHash, SplitBetweenEntity, Timestamp, UserEntity, UserUid}
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.toDomainError
 import slick.jdbc.SQLiteProfile.api.*
@@ -84,7 +70,7 @@ class UserEntityTable(tag: Tag) extends Table[UserEntity](tag, None, "UserEntity
   val uid = column[UserUid]("uid", O.PrimaryKey)
   val name = column[String]("name")
   val email = column[String]("email")
-  val passwordHash = column[String]("password_hash")
+  val passwordHash = column[PasswordHash]("password_hash")
 
   override def * = (uid, name, email, passwordHash).mapTo[UserEntity]
 }
@@ -123,7 +109,7 @@ class GroupEntityTable(tag: Tag) extends Table[GroupEntity](tag, None, "GroupEnt
   val uid = column[GroupUid]("uid", O.PrimaryKey)
   val title = column[String]("title")
   val description = column[String]("description")
-  val passwordHash = column[String]("password_hash")
+  val passwordHash = column[PasswordHash]("password_hash")
   val currencyIsoCode = column[String]("currency_iso_code")
   val created = column[Timestamp]("created")
   val modified = column[Timestamp]("modified")
@@ -160,4 +146,9 @@ given timestampColumnType: BaseColumnType[Timestamp] = MappedColumnType.base[Tim
 given acknowledgementColumnType: BaseColumnType[Acknowledgement] = MappedColumnType.base[Acknowledgement, String](
   acknowledgement => acknowledgement.toString,
   value => Acknowledgement.valueOf(value)
+)
+
+given passwordHashColumnType: BaseColumnType[PasswordHash] = MappedColumnType.base[PasswordHash, String](
+  hash => hash.value,
+  value => PasswordHash(value)
 )

@@ -4,7 +4,8 @@ case class GroupEntity(
   uid: GroupUid,
   title: String,
   description: String,
-  passwordHash: String,
+  @Deprecated
+  passwordHash: PasswordHash,
   currencyIsoCode: String,
   created: Timestamp,
   modified: Timestamp

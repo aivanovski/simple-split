@@ -40,18 +40,18 @@ class ExpenseController(
   def createExpense(
     password: String,
     body: PostExpenseRequest
-  ): IO[DomainError, PostExpenseResponse] = {
-    for {
-      groupUid <- body.groupUid.parseUid().map(uid => GroupUid(uid))
-      _ <- accessResolver.canAccessToGroup(groupUid = groupUid, password = password)
+  ): IO[DomainError, PostExpenseResponse] =
+    defer {
+      val groupUid = GroupUid(body.groupUid.parseUid().run)
+      accessResolver.canAccessToGroup(groupUid = groupUid, password = password).run
 
-      paidBy <- parsePaidBy(paidByUids = body.paidBy.map(_.uid))
-      split <- parseSplit(
+      val paidBy = parsePaidBy(paidByUids = body.paidBy.map(_.uid)).run
+      val split = parseSplit(
         isSplitEqually = body.isSplitBetweenAll.getOrElse(false),
         splitUids = body.splitBetween.map(_.uid)
-      )
+      ).run
 
-      expense <- addExpenseUseCase.addExpenseToGroup(
+      val expense = addExpenseUseCase.addExpenseToGroup(
         groupUid = groupUid,
         newExpense = NewExpense(
           title = body.title.trim,
@@ -60,62 +60,64 @@ class ExpenseController(
           paidBy = paidBy,
           split = split
         )
-      )
-      expenseDto <- assembleExpenseUseCase.assembleExpenseDto(expenseUid = expense.uid)
-    } yield PostExpenseResponse(expenseDto)
-  }
+      ).run
+
+      val expenseDto = assembleExpenseUseCase.assembleExpenseDto(expenseUid = expense.uid).run
+      PostExpenseResponse(expenseDto)
+    }
 
   def updateExpense(
     expenseId: String,
     password: String,
     data: PutExpenseRequest
-  ): IO[DomainError, PutExpenseResponse] = {
-    for {
-      expenseUid <- expenseId.parseUid().map(uid => ExpenseUid(uid))
-      _ <- accessResolver.canAccessToExpense(expenseUid = expenseUid, password = password)
+  ): IO[DomainError, PutExpenseResponse] =
+    defer {
+      val expenseUid = ExpenseUid(expenseId.parseUid().run)
+      accessResolver.canAccessToExpense(expenseUid = expenseUid, password = password).run
 
-      newPaidBy <- {
-        val paidBy = data.paidBy
+      val paidBy = data.paidBy
+      val newPaidBy =
         if (paidBy.nonEmpty) {
-          parsePaidBy(
-            paidByUids = paidBy.map(_.uid)
-          ).map(paidBy => Some(paidBy))
-        } else {
-          ZIO.succeed(None)
-        }
-      }
-
-      newSplit <-
-        val splitBetween = data.splitBetween
-        val isSplitBetweenAll = data.isSplitBetweenAll
-
-        if (splitBetween.nonEmpty || isSplitBetweenAll.isDefined) {
-          parseSplit(
-            isSplitEqually = isSplitBetweenAll.getOrElse(false),
-            splitUids = splitBetween.map(_.uid)
+          Some(
+            parsePaidBy(
+              paidByUids = paidBy.map(_.uid)
+            ).run
           )
-            .map(split => Some(split))
         } else {
-          ZIO.succeed(None)
+          None
         }
 
-      _ <- updateExpenseUseCase.updateExpense(
+      val splitBetween = data.splitBetween
+      val isSplitBetweenAll = data.isSplitBetweenAll
+      val newSplit =
+        if (splitBetween.nonEmpty || isSplitBetweenAll.isDefined) {
+          Some(
+            parseSplit(
+              isSplitEqually = isSplitBetweenAll.getOrElse(false),
+              splitUids = splitBetween.map(_.uid)
+            ).run
+          )
+        } else {
+          None
+        }
+
+      updateExpenseUseCase.updateExpense(
         expenseUid = expenseUid,
         newTitle = data.title.map(_.trim).filter(_.nonEmpty),
         newDescription = data.description.map(_.trim).filter(_.nonEmpty),
         newAmount = data.amount,
         newPaidBy = newPaidBy,
         newSplit = newSplit
-      )
+      ).run
 
-      expenseDto <- assembleExpenseUseCase.assembleExpenseDto(expenseUid = expenseUid)
-    } yield PutExpenseResponse(expenseDto)
-  }
+      val expenseDto = assembleExpenseUseCase.assembleExpenseDto(expenseUid = expenseUid).run
+      PutExpenseResponse(expenseDto)
+    }
 
   def removeExpense(
     expenseId: String,
     password: String
-  ): IO[DomainError, DeleteExpenseResponse] = {
+  ): IO[DomainError, DeleteExpenseResponse] =
     defer {
       val expenseUid = expenseId.parseUid().map(uid => ExpenseUid(uid)).run
       accessResolver.canAccessToExpense(expenseUid, password).run
@@ -127,32 +129,28 @@ class ExpenseController(
 
       DeleteExpenseResponse(groupDto)
     }
-  }
 
   private def parsePaidBy(
     paidByUids: List[String]
-  ): IO[DomainError, List[UserReference]] = {
-    ZIO.collectAll(
-      paidByUids.map { payer =>
+  ): IO[DomainError, List[UserReference]] =
+    defer {
+      ZIO.foreach(paidByUids) { payer =>
         payer.parseUid().map(uid => MemberReference(MemberUid(uid)))
-      }
-    )
-  }
+      }.run
+    }
 
   private def parseSplit(
     isSplitEqually: Boolean,
     splitUids: List[String]
-  ): IO[DomainError, Split] = {
-    if (!isSplitEqually) {
-      ZIO
-        .collectAll(
-          splitUids.map { uid =>
-            uid.parseUid().map(uid => MemberReference(MemberUid(uid)))
-          }
-        )
-        .map(uids => SplitBetweenMembers(members = uids))
-    } else {
-      ZIO.succeed(SplitBetweenAll)
+  ): IO[DomainError, Split] =
+    defer {
+      if (!isSplitEqually) {
+        val members = ZIO.foreach(splitUids) { uid =>
+          uid.parseUid().map(value => MemberReference(MemberUid(value)))
+        }.run
+        SplitBetweenMembers(members = members)
+      } else {
+        SplitBetweenAll
+      }
     }
-  }
 }

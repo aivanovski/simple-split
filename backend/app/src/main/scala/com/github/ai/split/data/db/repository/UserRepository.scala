@@ -16,6 +16,9 @@ class UserRepository(
   private val passwordService: PasswordService
 ) {
 
+  def getByUid(uid: UserUid) =
+    userDao.getByUid(uid)
+
   def add(user: NewUser) =
     userDao.add(
       user = UserEntity(

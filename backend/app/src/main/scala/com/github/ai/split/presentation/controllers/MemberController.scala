@@ -30,24 +30,25 @@ class MemberController(
   def createMember(
     password: String,
     body: PostMemberRequest
-  ): IO[DomainError, PostMemberResponse] = {
-    for {
-      groupUid <- body.groupUid.parseUid().map(uid => GroupUid(uid))
-      _ <- accessResolverService.canAccessToGroup(groupUid = groupUid, password = password)
+  ): IO[DomainError, PostMemberResponse] =
+    defer {
+      val groupUid = GroupUid(body.groupUid.parseUid().run)
+      accessResolverService.canAccessToGroup(groupUid = groupUid, password = password).run
 
-      newMember <- addMemberUseCase.addMember(
+      addMemberUseCase.addMember(
         groupUid = groupUid,
         name = body.name
-      )
-      groupDto <- assembleGroupUseCase.assembleGroupDto(groupUid)
-    } yield PostMemberResponse(groupDto)
-  }
+      ).run
+
+      val groupDto = assembleGroupUseCase.assembleGroupDto(groupUid).run
+      PostMemberResponse(groupDto)
+    }
 
   def updateMember(
     memberId: String,
     password: String,
     body: PutMemberRequest
-  ): IO[DomainError, PutMemberResponse] = {
+  ): IO[DomainError, PutMemberResponse] =
     defer {
       val memberUid = memberId.parseUid().map(uid => MemberUid(uid)).run
 
@@ -58,21 +59,20 @@ class MemberController(
       val groupDto = assembleGroupUseCase.assembleGroupDto(groupUid = member.groupUid).run
       PutMemberResponse(groupDto)
     }
-  }
 
   def removeMember(
     memberId: String,
     password: String
-  ): IO[DomainError, DeleteMemberResponse] = {
-    for {
-      memberUid <- memberId.parseUid().map(uid => MemberUid(uid))
-      _ <- accessResolverService.canAccessToMember(memberUid = memberUid, password = password)
+  ): IO[DomainError, DeleteMemberResponse] =
+    defer {
+      val memberUid = MemberUid(memberId.parseUid().run)
+      accessResolverService.canAccessToMember(memberUid = memberUid, password = password).run
 
-      group <- getGroupUseCase.getGroupByMemberUid(memberUid)
+      val group = getGroupUseCase.getGroupByMemberUid(memberUid).run
 
-      _ <- removeMembersUseCase.removeMemberByUids(memberUids = List(memberUid))
+      removeMembersUseCase.removeMemberByUids(memberUids = List(memberUid)).run
 
-      groupDto <- assembleGroupUseCase.assembleGroupDto(groupUid = group.uid)
-    } yield DeleteMemberResponse(groupDto)
-  }
+      val groupDto = assembleGroupUseCase.assembleGroupDto(groupUid = group.uid).run
+      DeleteMemberResponse(groupDto)
+    }
 }

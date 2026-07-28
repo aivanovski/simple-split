@@ -1,7 +1,7 @@
 package com.github.ai.split.domain.usecases
 
 import com.github.ai.split.data.db.dao.{GroupEntityDao, MemberEntityDao}
-import com.github.ai.split.data.db.model.{GroupEntity, GroupUid, Timestamp}
+import com.github.ai.split.data.db.model.{GroupEntity, GroupUid, PasswordHash, Timestamp}
 import com.github.ai.split.domain.PasswordService
 import com.github.ai.split.entity.NewGroup
 import com.github.ai.split.entity.exception.DomainError
@@ -38,11 +38,7 @@ class AddGroupUseCase(
             uid = groupUid,
             title = newGroup.title,
             description = newGroup.description,
-            passwordHash = if (newGroup.password.nonEmpty) {
-              passwordService.hashPassword(newGroup.password)
-            } else {
-              ""
-            },
+            passwordHash = passwordService.hashPassword(newGroup.password),
             currencyIsoCode = newGroup.currencyIsoCode,
             created = created,
             modified = created

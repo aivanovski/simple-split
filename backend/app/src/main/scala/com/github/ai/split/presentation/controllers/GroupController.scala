@@ -22,7 +22,7 @@ import com.github.ai.split.entity.{
 }
 import com.github.ai.split.api.request.{PostGroupRequest, PutGroupRequest}
 import com.github.ai.split.api.response.{GetGroupsResponse, PostGroupResponse, PutGroupResponse}
-import com.github.ai.split.data.db.model.{GroupUid, MemberUid}
+import com.github.ai.split.data.db.model.{GroupUid, MemberUid, UserEntity}
 import com.github.ai.split.entity.Access.{DENIED, GRANTED}
 import com.github.ai.split.entity.FileExtension.{CSV, HTML}
 import com.github.ai.split.entity.exception.DomainError
@@ -45,82 +45,84 @@ class GroupController(
 ) {
 
   def getGroups(
-    ids: String,
-    passwordValues: String
-  ): IO[DomainError, GetGroupsResponse] = {
-    for {
-      groupUids <- parseUids(ids).map(uids => uids.map(GroupUid(_)))
-      passwords = passwordValues.split(",").toList
-      uidsAndAccesses <- accessResolver.canAccessToGroups(groupUids = groupUids, passwords = passwords)
+    user: UserEntity,
+    ids: String
+  ): IO[DomainError, GetGroupsResponse] =
+    defer {
+      val groupUids = parseUids(ids).run.map(GroupUid(_))
+      val uidsAndAccesses = accessResolver
+        .canAccessToGroups(userUid = user.uid, groupUids = groupUids)
+        .run
 
-      grantedGroupsUids = uidsAndAccesses
+      val grantedGroupsUids = uidsAndAccesses
         .filter(result => result.access == GRANTED)
         .map(result => result.uid)
 
-      deniedGroupUids = uidsAndAccesses
+      val deniedGroupUids = uidsAndAccesses
         .filter(result => result.access == DENIED)
         .map(result => result.uid)
 
-      groups <- assembleGroupsUseCase.assembleGroupDtos(uids = grantedGroupsUids)
-      errors <- ZIO
-        .succeed(
-          deniedGroupUids.map { uid =>
-            GetGroupErrorDto(
-              uid.toString,
-              "Not found"
-            )
-          }
+      val groups = assembleGroupsUseCase.assembleGroupDtos(uids = grantedGroupsUids).run
+      val errors = deniedGroupUids.map { uid =>
+        GetGroupErrorDto(
+          uid.toString,
+          "Not found"
         )
-    } yield GetGroupsResponse(groups, errors)
-  }
-
-  def updateGroup(
-    groupId: String,
-    password: String,
-    data: PutGroupRequest
-  ): IO[DomainError, PutGroupResponse] = {
-    for {
-      groupUid <- groupId.parseUid().map(uid => GroupUid(uid))
-      _ <- accessResolver.canAccessToGroup(groupUid = groupUid, password = password)
-
-      newMembers <- {
-        val newMembers = data.members
-        if (newMembers.nonEmpty) {
-          ZIO
-            .collectAll(
-              newMembers.map(member => member.uid.parseUid().map(uid => MemberUid(uid)))
-            )
-            .map(uids => Some(uids))
-        } else {
-          ZIO.succeed(None)
-        }
       }
 
-      _ <- updateGroupUseCase.updateGroup(
-        groupUid = groupUid,
-        newPassword = data.password.map(_.trim).filter(_.nonEmpty),
-        newTitle = data.title.map(_.trim).filter(_.nonEmpty),
-        newDescription = data.description.map(_.trim).filter(_.nonEmpty),
-        newCurrencyIsoCode = data.currencyIsoCode.map(_.trim).filter(_.nonEmpty),
-        newMemberUids = newMembers
-      )
+      GetGroupsResponse(groups, errors)
+    }
 
-      groupDto <- assembleGroupUseCase.assembleGroupDto(groupUid = groupUid)
-    } yield PutGroupResponse(groupDto)
-  }
+  def updateGroup(
+    user: UserEntity,
+    groupId: String,
+    data: PutGroupRequest
+  ): IO[DomainError, PutGroupResponse] =
+    defer {
+      val groupUid = GroupUid(groupId.parseUid().run)
+      accessResolver.canAccessToGroup(userUid = user.uid, groupUid = groupUid).run
+
+      val members = data.members
+      val newMembers =
+        if (members.nonEmpty) {
+          Some(
+            ZIO
+              .foreach(members) { member =>
+                member.uid.parseUid().map(uid => MemberUid(uid))
+              }
+              .run
+          )
+        } else {
+          None
+        }
+
+      updateGroupUseCase
+        .updateGroup(
+          groupUid = groupUid,
+          newPassword = data.password.map(_.trim).filter(_.nonEmpty),
+          newTitle = data.title.map(_.trim).filter(_.nonEmpty),
+          newDescription = data.description.map(_.trim).filter(_.nonEmpty),
+          newCurrencyIsoCode = data.currencyIsoCode.map(_.trim).filter(_.nonEmpty),
+          newMemberUids = newMembers
+        )
+        .run
+
+      val groupDto = assembleGroupUseCase.assembleGroupDto(groupUid = groupUid).run
+      PutGroupResponse(groupDto)
+    }
 
   def createGroup(
+    user: UserEntity,
     data: PostGroupRequest
-  ): IO[DomainError, PostGroupResponse] = {
-    for {
-      newExpenses <- parseNewExpenses(
+  ): IO[DomainError, PostGroupResponse] =
+    defer {
+      val newExpenses = parseNewExpenses(
         expenses = data.expenses
-      )
+      ).run
 
-      newGroup <- {
-        val newUsers = data.members.map(member => NewMember(name = member.name))
-
-        addGroupUseCase.addGroup(
+      val newUsers = data.members.map(member => NewMember(name = member.name))
+      val newGroup = addGroupUseCase
+        .addGroup(
           NewGroup(
             password = data.password.trim,
             title = data.title.trim,
@@ -130,19 +132,19 @@ class GroupController(
             expenses = newExpenses
           )
         )
-      }
+        .run
 
-      groupDto <- assembleGroupUseCase.assembleGroupDto(groupUid = newGroup.uid)
-    } yield PostGroupResponse(groupDto)
-  }
+      val groupDto = assembleGroupUseCase.assembleGroupDto(groupUid = newGroup.uid).run
+      PostGroupResponse(groupDto)
+    }
 
   def exportGroup(
+    user: UserEntity,
     request: Request
-  ): IO[DomainError, Response] = {
+  ): IO[DomainError, Response] =
     defer {
-      val password = parsePasswordParam(request).run
       val (groupUid, extension) = parseGroupUidAndExtension(request).run
-      accessResolver.canAccessToGroup(groupUid = groupUid, password = password).run
+      accessResolver.canAccessToGroup(userUid = user.uid, groupUid = groupUid).run
 
       val data = extension match
         case CSV => exportDataUseCase.exportDataToCsv(groupUid).run
@@ -166,69 +168,58 @@ class GroupController(
         body = Body.fromString(data.content)
       )
     }
-  }
 
   private def parseNewExpenses(
     expenses: List[NewExpenseDto]
-  ): IO[DomainError, List[NewExpense]] = {
-    val newExpenses = expenses.map { expense =>
-      val isSplitBetweenAll = expense.isSplitBetweenAll.getOrElse(true)
-      val splitMembers = expense.splitBetween
-        .map(splitMember => NameReference(name = splitMember.name))
+  ): IO[DomainError, List[NewExpense]] =
+    defer {
+      expenses.map { expense =>
+        val isSplitBetweenAll = expense.isSplitBetweenAll.getOrElse(true)
+        val splitMembers = expense.splitBetween
+          .map(splitMember => NameReference(name = splitMember.name))
 
-      NewExpense(
-        title = expense.title,
-        description = expense.description,
-        amount = expense.amount,
-        paidBy = expense.paidBy.map(payer => NameReference(name = payer.name)),
-        split = if (isSplitBetweenAll) SplitBetweenAll else SplitBetweenMembers(splitMembers)
-      )
+        NewExpense(
+          title = expense.title,
+          description = expense.description,
+          amount = expense.amount,
+          paidBy = expense.paidBy.map(payer => NameReference(name = payer.name)),
+          split = if (isSplitBetweenAll) SplitBetweenAll else SplitBetweenMembers(splitMembers)
+        )
+      }
     }
 
-    ZIO.succeed(newExpenses)
-  }
-
   private def parseUids(ids: String): IO[DomainError, List[UUID]] = {
-    for {
-      uids <- {
-        val uids = ids
-          .split(",")
-          .toList
-          .map(id => id.parseUid())
+    defer {
+      val values = ZIO.succeed(ids.split(",").toList).run
 
-        if (uids.nonEmpty) {
-          ZIO.collectAll(uids)
-        } else {
-          ZIO.fail(DomainError(message = "No group ids were specified".some))
-        }
+      if (values.nonEmpty) {
+        ZIO.foreach(values)(_.parseUid()).run
+      } else {
+        ZIO.fail(DomainError(message = "No group ids were specified".some)).run
       }
-    } yield uids
+    }
   }
 
   private def parseGroupUidAndExtension(
     request: Request
-  ): IO[DomainError, (GroupUid, FileExtension)] = {
-    for {
-      text <- request.getLastUrlParameter()
+  ): IO[DomainError, (GroupUid, FileExtension)] =
+    defer {
+      val text = request.getLastUrlParameter().run
+      val values = ZIO.succeed(text.split("\\.").toList).run
 
-      values = text.split("\\.").toList
+      if (values.size != 2) {
+        ZIO.fail(DomainError(message = "Invalid url".some)).run
+      }
 
-      _ <-
-        if (values.size != 2) {
-          ZIO.fail(DomainError(message = "Invalid url".some))
-        } else {
-          ZIO.succeed(())
-        }
-
-      uid <- values.head.parseUid()
-
-      extensionStr = values(1)
-
-      extension <- ZIO
+      val uid = values.head.parseUid().run
+      val extensionStr = values(1)
+      val extension = ZIO
         .fromOption(
           FileExtension.fromString(extensionStr.toUpperCase)
         )
         .mapError(_ => DomainError(message = s"Invalid extension: $extensionStr".some))
-    } yield (GroupUid(uid), extension)
-  }
+        .run
+
+      (GroupUid(uid), extension)
+    }
 }

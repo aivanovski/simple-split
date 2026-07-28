@@ -1,9 +1,17 @@
 package com.github.ai.split.client
 
 import com.github.ai.split.api.{NewExpenseDto, UserNameDto, UserUidDto}
-import com.github.ai.split.api.request.{PostExpenseRequest, PostGroupRequest, PostMemberRequest, PutMemberRequest}
+import com.github.ai.split.api.request.{
+  LoginRequest,
+  PostExpenseRequest,
+  PostGroupRequest,
+  PostMemberRequest,
+  PutMemberRequest
+}
+import com.github.ai.split.api.response.LoginResponse
 import com.github.ai.split.openapi.Schemas.given
 import zio.*
+import zio.direct.*
 import zio.http.*
 import zio.schema.Schema
 import zio.schema.codec.JsonCodec
@@ -14,19 +22,44 @@ class ApiClient(
 
   type ApiResponse = ZIO[Scope, Throwable, Response]
 
-  private val DefaultPassword = "abc123"
   private val baseUrl = "https://127.0.0.1:8443"
 
-  def getGroup(
-    uid: String = Groups.TripToDisneyLand,
-    password: String = DefaultPassword
-  ): ApiResponse = {
-    client.request(
-      Request.get(
-        path = s"$baseUrl/group?ids=$uid&passwords=$password"
+  def login(email: String, password: String) = {
+    val body = LoginRequest(email = email, password = password)
+
+    client
+      .request(
+        Request.post(
+          path = s"$baseUrl/login",
+          body = Body.fromString(encodeToJson(body))
+        )
       )
-    )
   }
+
+  def getAuthToken(
+    email: String = DefaultUser.Email,
+    password: String = DefaultUser.Password
+  ): ZIO[Scope, Throwable, String] = {
+    login(
+      email = email,
+      password = password
+    )
+      .flatMap(_.body.asString)
+      .flatMap(jsonResponse => decodeFromJson[LoginResponse](jsonResponse))
+      .map(response => response.token)
+  }
+
+  def getGroup(
+    authToken: String,
+    uid: String = Groups.TripToDisneyLand,
+    password: String = DefaultUser.Password
+  ) = client.request(
+    Request(
+      method = Method.GET,
+      url = URL.decode(s"$baseUrl/group?ids=$uid&passwords=$password").getOrElse(URL.empty),
+      headers = Headers(Header.Authorization.Bearer(authToken))
+    )
+  )
 
   def getCurrencies(): ApiResponse = {
     client.request(
@@ -38,7 +71,7 @@ class ApiClient(
 
   def postGroup(): ApiResponse = {
     val body = PostGroupRequest(
-      DefaultPassword,
+      DefaultUser.Password,
       "Oktoberfest",
       "Amazing party",
       "USD",
@@ -77,13 +110,13 @@ class ApiClient(
     client.request(
       Request.post(
         path = s"$baseUrl/group",
-        body = Body.fromString(encode(body))
+        body = Body.fromString(encodeToJson(body))
       )
     )
   }
 
   def postExpense(
-    password: String = DefaultPassword,
+    password: String = DefaultUser.Password,
     title: String = "Beer"
   ): ApiResponse = {
     val body = PostExpenseRequest(
@@ -99,13 +132,13 @@ class ApiClient(
     client.request(
       Request.post(
         path = s"$baseUrl/expense?password=$password",
-        body = Body.fromString(encode(body))
+        body = Body.fromString(encodeToJson(body))
       )
     )
   }
 
   def postMember(
-    password: String = DefaultPassword,
+    password: String = DefaultUser.Password,
     groupUid: String = Groups.TripToDisneyLand,
     userName: String = "Bob"
   ): ApiResponse = {
@@ -117,14 +150,14 @@ class ApiClient(
     client.request(
       Request.post(
         path = s"$baseUrl/member?password=$password",
-        body = Body.fromString(encode(body))
+        body = Body.fromString(encodeToJson(body))
       )
     )
   }
 
   def deleteMember(
     memberUid: String,
-    password: String = DefaultPassword
+    password: String = DefaultUser.Password
   ): ApiResponse = {
     client.request(
       Request.delete(
@@ -135,14 +168,14 @@ class ApiClient(
 
   def putMember(
     memberUid: String,
-    password: String = DefaultPassword,
+    password: String = DefaultUser.Password,
     newName: String
   ): ApiResponse = {
     client.request(
       Request.put(
         path = s"$baseUrl/member/$memberUid?password=$password",
         body = Body.fromString(
-          encode(
+          encodeToJson(
             PutMemberRequest(newName)
           )
         )
@@ -150,12 +183,20 @@ class ApiClient(
     )
   }
 
-  private def encode[A](value: A)(using schema: Schema[A]): String =
+  private def encodeToJson[A](value: A)(using schema: Schema[A]): String =
     JsonCodec.jsonEncoder(schema).encodeJson(value, None).toString
+
+  private def decodeFromJson[A](json: String)(using schema: Schema[A]): IO[Throwable, A] = {
+    val res = ZIO
+      .fromEither(JsonCodec.jsonDecoder(schema).decodeJson(json))
+      .mapError(error => Exception(s"Failed to decode: $error"))
+
+    res
+  }
 
   def deleteExpense(
     expenseUid: String,
-    password: String = DefaultPassword
+    password: String = DefaultUser.Password
   ): ApiResponse = {
     client.request(
       Request.delete(
@@ -172,4 +213,9 @@ class ApiClient(
 
 object Groups {
   val TripToDisneyLand = "00000000-0000-0000-0000-b00000000001"
+}
+
+object DefaultUser {
+  val Email = "mickey.mouse@mail.com"
+  val Password = "abc123"
 }

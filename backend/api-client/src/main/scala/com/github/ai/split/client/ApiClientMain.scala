@@ -12,6 +12,8 @@ object ApiClientMain extends ZIOAppDefault {
     """
       |Commands:
       |
+      |login                                                 Send login request with default credentials
+      |
       |group                                                 Get default group
       |group [GROUP_UID]                                     Get group by GROUP_UID
       |gen-group                                             Generate new test group with members and expenses
@@ -28,8 +30,8 @@ object ApiClientMain extends ZIOAppDefault {
       |help                                                  Print help
       |""".stripMargin
 
-  class InvalidCliArgumentException(message: String) extends Exception(message)
-  class EmptyCliArgumentException extends InvalidCliArgumentException("Empty arguments")
+  class InvalidCliArgumentError(message: String) extends Exception(message)
+  class NoArgumentsError extends InvalidCliArgumentError("No arguments were specified")
 
   override def run: ZIO[ZIOAppArgs, Any, ExitCode] = {
     val application = for {
@@ -46,11 +48,11 @@ object ApiClientMain extends ZIOAppDefault {
     application
       .catchAll { error =>
         defer {
-          if (!error.isInstanceOf[EmptyCliArgumentException]) {
+          if (!error.isInstanceOf[NoArgumentsError]) {
             Console.printLine(s"Error: $error").run
           }
 
-          if (error.isInstanceOf[InvalidCliArgumentException]) {
+          if (error.isInstanceOf[InvalidCliArgumentError]) {
             Console.printLine(HelpText).run
           }
 
@@ -64,12 +66,24 @@ object ApiClientMain extends ZIOAppDefault {
     val printer = ZIO.service[Printer].run
 
     if (arguments.isBlank) {
-      ZIO.fail(EmptyCliArgumentException()).run
+      ZIO.fail(NoArgumentsError()).run
     }
 
     val response = arguments match {
-      case "group" => api.getGroup(uid = Groups.TripToDisneyLand).run
-      case s"group $groupUid" => api.getGroup(uid = groupUid).run
+      case "login" => api.login(email = DefaultUser.Email, password = DefaultUser.Password).run
+
+      case "group" =>
+        api
+          .getAuthToken()
+          .flatMap(token => api.getGroup(authToken = token, uid = Groups.TripToDisneyLand))
+          .run
+
+      case s"group $groupUid" =>
+        api
+          .getAuthToken()
+          .flatMap(token => api.getGroup(authToken = token, uid = groupUid))
+          .run
+
       case s"gen-group" => api.postGroup().run
 
       case "post-expense" => api.postExpense().run
@@ -85,7 +99,7 @@ object ApiClientMain extends ZIOAppDefault {
       case s"delete-member $memberUid" => api.deleteMember(memberUid = memberUid).run
 
       case s"currencies" => api.getCurrencies().run
-      case _ => ZIO.fail(InvalidCliArgumentException(s"Illegal arguments: $arguments")).run
+      case _ => ZIO.fail(InvalidCliArgumentError(s"Illegal arguments: $arguments")).run
     }
 
     printer.print(response).run
