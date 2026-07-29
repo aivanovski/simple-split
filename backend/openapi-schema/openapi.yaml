@@ -3,6 +3,37 @@ info:
   title: Simple Split API
   version: 0.1.0
 paths:
+  /auth/refresh:
+    description: |
+      - authentication
+    post:
+      tags:
+      - authentication
+      description: |
+        - authentication
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+        required: true
+      responses:
+        '200':
+          description: |+
+            Refreshed authentication tokens
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefreshTokenResponse'
+        '400':
+          description: |+
+            Bad request
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessageDto'
   /expense:
     description: |
       - expenses
@@ -61,6 +92,37 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetCurrenciesResponse'
+        '400':
+          description: |+
+            Bad request
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessageDto'
+  /signup:
+    description: |
+      - authentication
+    post:
+      tags:
+      - authentication
+      description: |
+        - authentication
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignupRequest'
+        required: true
+      responses:
+        '200':
+          description: |+
+            Created user and authentication tokens
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignupResponse'
         '400':
           description: |+
             Bad request
@@ -389,6 +451,37 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorMessageDto'
+  /login:
+    description: |
+      - authentication
+    post:
+      tags:
+      - authentication
+      description: |
+        - authentication
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+        required: true
+      responses:
+        '200':
+          description: |+
+            Authentication tokens
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: |+
+            Bad request
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessageDto'
   /group/{groupId}:
     description: |
       - groups
@@ -438,43 +531,6 @@ paths:
                 $ref: '#/components/schemas/ErrorMessageDto'
 components:
   schemas:
-    GroupDto:
-      type: object
-      properties:
-        description:
-          type: string
-        paybackTransactions:
-          type: array
-          items:
-            $ref: '#/components/schemas/TransactionDto'
-        modified:
-          $ref: '#/components/schemas/TimestampDto'
-        members:
-          type: array
-          items:
-            $ref: '#/components/schemas/MemberDto'
-        title:
-          type: string
-        expenses:
-          type: array
-          items:
-            $ref: '#/components/schemas/ExpenseDto'
-        created:
-          $ref: '#/components/schemas/TimestampDto'
-        currency:
-          $ref: '#/components/schemas/CurrencyDto'
-        uid:
-          type: string
-      required:
-      - uid
-      - title
-      - description
-      - currency
-      - members
-      - expenses
-      - paybackTransactions
-      - created
-      - modified
     PostMemberRequest:
       type: object
       properties:
@@ -501,13 +557,6 @@ components:
           type: string
       required:
       - uid
-    PostGroupResponse:
-      type: object
-      properties:
-        group:
-          $ref: '#/components/schemas/GroupDto'
-      required:
-      - group
     PutExpenseRequest:
       type: object
       properties:
@@ -557,13 +606,6 @@ components:
           $ref: '#/components/schemas/ExpenseDto'
       required:
       - expense
-    PutMemberResponse:
-      type: object
-      properties:
-        group:
-          $ref: '#/components/schemas/GroupDto'
-      required:
-      - group
     PostExpenseRequest:
       type: object
       properties:
@@ -595,6 +637,13 @@ components:
       - amount
       - paidBy
       - splitBetween
+    RefreshTokenRequest:
+      type: object
+      properties:
+        refreshToken:
+          type: string
+      required:
+      - refreshToken
     NewExpenseDto:
       type: object
       properties:
@@ -748,20 +797,76 @@ components:
           $ref: '#/components/schemas/ExpenseDto'
       required:
       - expense
-    TransactionDto:
+    LoginRequest:
       type: object
       properties:
-        creditorUid:
+        email:
           type: string
-        debtorUid:
+        password:
           type: string
-        amount:
-          type: number
-          format: double
       required:
-      - creditorUid
-      - debtorUid
-      - amount
+      - email
+      - password
+    GroupDto:
+      type: object
+      properties:
+        description:
+          type: string
+        paybackTransactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransactionDto'
+        modified:
+          $ref: '#/components/schemas/TimestampDto'
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/MemberDto'
+        title:
+          type: string
+        expenses:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExpenseDto'
+        created:
+          $ref: '#/components/schemas/TimestampDto'
+        currency:
+          $ref: '#/components/schemas/CurrencyDto'
+        uid:
+          type: string
+      required:
+      - uid
+      - title
+      - description
+      - currency
+      - members
+      - expenses
+      - paybackTransactions
+      - created
+      - modified
+    UserDto:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+      required:
+      - name
+      - email
+    SignupRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+      required:
+      - name
+      - email
+      - password
     PostGroupRequest:
       type: object
       properties:
@@ -816,6 +921,23 @@ components:
       required:
       - timestampSeconds
       - formatted
+    RefreshTokenResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        refreshToken:
+          type: string
+      required:
+      - token
+      - refreshToken
+    PostGroupResponse:
+      type: object
+      properties:
+        group:
+          $ref: '#/components/schemas/GroupDto'
+      required:
+      - group
     GetGroupErrorDto:
       type: object
       properties:
@@ -845,6 +967,26 @@ components:
       - exception
       - stacktraceBase64
       - stacktraceLines
+    PutMemberResponse:
+      type: object
+      properties:
+        group:
+          $ref: '#/components/schemas/GroupDto'
+      required:
+      - group
+    SignupResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        refreshToken:
+          type: string
+        user:
+          $ref: '#/components/schemas/UserDto'
+      required:
+      - token
+      - refreshToken
+      - user
     DeleteMemberResponse:
       type: object
       properties:
@@ -859,3 +1001,30 @@ components:
           type: string
       required:
       - name
+    TransactionDto:
+      type: object
+      properties:
+        creditorUid:
+          type: string
+        debtorUid:
+          type: string
+        amount:
+          type: number
+          format: double
+      required:
+      - creditorUid
+      - debtorUid
+      - amount
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        refreshToken:
+          type: string
+        user:
+          $ref: '#/components/schemas/UserDto'
+      required:
+      - token
+      - refreshToken
+      - user

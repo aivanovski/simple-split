@@ -28,6 +28,20 @@ import java.time.format.DateTimeFormatter
 
 object Main extends ZIOAppDefault {
 
+  private val corsConfig =
+    Middleware.CorsConfig(
+      allowedMethods = Header.AccessControlAllowMethods(
+        Method.GET,
+        Method.POST,
+        Method.PUT,
+        Method.DELETE,
+        Method.OPTIONS
+      ),
+      allowedHeaders = Header.AccessControlAllowHeaders.All,
+      allowCredentials = Header.AccessControlAllowCredentials.Allow,
+      exposedHeaders = Header.AccessControlExposeHeaders.All
+    )
+
   private val routes =
     (AuthRoutes.routes()
       ++ GroupRoutes.routes()
@@ -36,6 +50,7 @@ object Main extends ZIOAppDefault {
       ++ ExpenseRoutes.routes()
       ++ CurrencyRoutes.routes()
       ++ SwaggerUI.routes("docs" / "openapi", ApiEndpoints.openApi))
+      @@ Middleware.cors(corsConfig)
       @@ RequestLogger.requestLogger
 
   override val bootstrap: ZLayer[Any, Nothing, Unit] = {
