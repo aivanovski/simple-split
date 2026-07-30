@@ -8,7 +8,8 @@ import com.github.ai.split.data.db.model.{UserEntity, UserUid}
 import com.github.ai.split.data.db.repository.UserRepository
 import com.github.ai.split.domain.PasswordService
 import com.github.ai.split.domain.authentication.{AuthHandler, AuthService}
-import com.github.ai.split.entity.{JwtTokenType, JwtTokens, NewUser, RefreshToken}
+import com.github.ai.split.entity.HttpProtocol.HTTPS
+import com.github.ai.split.entity.{ApplicationEnvironment, JwtTokenType, JwtTokens, NewUser, RefreshToken}
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.some
 import zio.*
@@ -20,7 +21,8 @@ import java.util.UUID
 
 class AuthController(
   private val userRepository: UserRepository,
-  private val authService: AuthService
+  private val authService: AuthService,
+  private val environment: ApplicationEnvironment
 ) {
 
   def signup(body: SignupRequest): IO[DomainError, SignupResponse] =
@@ -91,11 +93,13 @@ class AuthController(
     }
 
   private def createAuthHeaders(tokens: JwtTokens): (Header.SetCookie, Header.SetCookie) = {
+    val isSecure = environment.server.protocol == HTTPS
+
     val authTokenCookie = Cookie.Response(
       name = AuthHandler.AuthTokenCookieName,
       content = tokens.token.toString,
       isHttpOnly = true,
-      isSecure = true,
+      isSecure = isSecure,
       sameSite = Option(Lax),
       path = Option(Path("/api")),
       maxAge = Some(authService.getTokenTimeToLive(JwtTokenType.AUTH_TOKEN))
@@ -105,7 +109,7 @@ class AuthController(
       name = AuthHandler.RefreshTokenCookieName,
       content = tokens.refreshToken.toString,
       isHttpOnly = true,
-      isSecure = true,
+      isSecure = isSecure,
       path = Option(Path("/api/auth/refresh")),
       maxAge = Some(authService.getTokenTimeToLive(JwtTokenType.REFRESH_TOKEN))
     )

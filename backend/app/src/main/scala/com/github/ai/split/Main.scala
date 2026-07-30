@@ -91,25 +91,25 @@ object Main extends ZIOAppDefault {
   }
 
   override def run: ZIO[ZIOAppArgs, Throwable, Unit] = defer {
-    val config = ApplicationEnvironmentLoader().loadConfig().run
-    val port = config.server.protocol match {
+    val environment = ApplicationEnvironmentLoader().loadConfig().run
+    val port = environment.server.protocol match {
       case HTTP => 8080
       case HTTPS => 8443
     }
 
     ZIO.logInfo(s"Starting server on port $port").run
-    ZIO.logInfo(s"   database.url=${config.database.url}").run
-    ZIO.logInfo(s"   database.maximumPoolSize=${config.database.maximumPoolSize}").run
-    ZIO.logInfo(s"   database.minimumIdle=${config.database.minimumIdle}").run
-    ZIO.logInfo(s"   populateTestData=${config.populateTestData}").run
-    ZIO.logInfo(s"   protocol=${config.server.protocol}").run
+    ZIO.logInfo(s"   database.url=${environment.database.url}").run
+    ZIO.logInfo(s"   database.maximumPoolSize=${environment.database.maximumPoolSize}").run
+    ZIO.logInfo(s"   database.minimumIdle=${environment.database.minimumIdle}").run
+    ZIO.logInfo(s"   populateTestData=${environment.populateTestData}").run
+    ZIO.logInfo(s"   protocol=${environment.server.protocol}").run
 
-    val serverConfig = createServerConfig(config).run
+    val serverConfig = createServerConfig(environment).run
 
     application()
       .provide(
         // Application config
-        ZLayer.succeed(config),
+        ZLayer.succeed(environment),
 
         // Use-Cases
         Layers.addGroupUseCase,
