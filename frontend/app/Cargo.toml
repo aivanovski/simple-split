@@ -6,5 +6,7 @@ edition = "2024"
 [dependencies]
 backend-api = { path = "../backend-api" }
 console_error_panic_hook = "0.1.7"
+gloo-net = { version = "0.7", features = ["json"] }
 leptos = { version = "0.8.20", features = ["csr"] }
 leptos_router = "0.8.15"
+serde = "1"

@@ -1,8 +1,9 @@
+use crate::api::client::ApiClient;
 use crate::session::AuthSession;
-use backend_api::{ApiClient, DEFAULT_BASE_URL, LoginRequest};
 use leptos::task::spawn_local;
 use leptos::{ev::SubmitEvent, prelude::*};
 use leptos_router::{NavigateOptions, hooks::use_navigate};
+use std::sync::Arc;
 
 #[derive(Clone, Copy)]
 struct LoginState {
@@ -28,7 +29,7 @@ pub fn LoginPage() -> impl IntoView {
     let state = LoginState::new();
     let navigate = use_navigate();
     let session = expect_context::<RwSignal<Option<AuthSession>>>();
-    let client = ApiClient::new(DEFAULT_BASE_URL);
+    let client = expect_context::<Arc<ApiClient>>();
 
     view! {
         <main class="auth-shell">
@@ -100,7 +101,7 @@ pub fn LoginPage() -> impl IntoView {
 fn submit_login(
     event: SubmitEvent,
     state: LoginState,
-    client: ApiClient,
+    client: Arc<ApiClient>,
     session: RwSignal<Option<AuthSession>>,
     navigate: impl Fn(&str, NavigateOptions) + Clone + 'static,
 ) {
@@ -127,12 +128,12 @@ fn submit_login(
     state.is_loading.set(true);
 
     spawn_local(async move {
-        let request = LoginRequest { email, password };
-
-        match client.login(&request).await {
+        match client.login(email, password).await {
             Ok(response) => {
                 state.is_loading.set(false);
-                session.set(Some(AuthSession::from(response)));
+                session.set(Some(AuthSession {
+                    user: response.user,
+                }));
                 navigate("/dashboard", NavigateOptions::default());
             }
             Err(error) => {
