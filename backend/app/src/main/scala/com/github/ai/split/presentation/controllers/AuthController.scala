@@ -3,10 +3,8 @@ package com.github.ai.split.presentation.controllers
 import com.github.ai.split.api.UserDto
 import com.github.ai.split.api.request.{LoginRequest, RefreshTokenRequest, SignupRequest}
 import com.github.ai.split.api.response.{LoginResponse, RefreshTokenResponse, SignupResponse}
-import com.github.ai.split.data.db.dao.UserEntityDao
 import com.github.ai.split.data.db.model.{UserEntity, UserUid}
 import com.github.ai.split.data.db.repository.UserRepository
-import com.github.ai.split.domain.PasswordService
 import com.github.ai.split.domain.authentication.{AuthHandler, AuthService}
 import com.github.ai.split.entity.HttpProtocol.HTTPS
 import com.github.ai.split.entity.{ApplicationEnvironment, JwtTokenType, JwtTokens, NewUser, RefreshToken}
@@ -17,15 +15,15 @@ import zio.direct.*
 import zio.http.Cookie.SameSite.Lax
 import zio.http.{Cookie, Header, Path}
 
-import java.util.UUID
-
 class AuthController(
   private val userRepository: UserRepository,
   private val authService: AuthService,
   private val environment: ApplicationEnvironment
 ) {
 
-  def signup(body: SignupRequest): IO[DomainError, SignupResponse] =
+  def signup(
+    body: SignupRequest
+  ): IO[DomainError, (SignupResponse, Header.SetCookie, Header.SetCookie)] =
     defer {
       val existingUser = userRepository.findByEmail(body.email).run
       if (existingUser.isDefined) {
@@ -45,11 +43,14 @@ class AuthController(
         .run
 
       val tokens = authService.createTokens(user.uid)
-      SignupResponse(
+      val response = SignupResponse(
         token = tokens.token.toString,
         refreshToken = tokens.refreshToken.toString,
         user = toUserDto(user)
       )
+
+      val (authTokenHeader, refreshTokenHeader) = createAuthHeaders(tokens)
+      (response, authTokenHeader, refreshTokenHeader)
     }
 
   def login(

@@ -1,13 +1,12 @@
 package com.github.ai.split.data.db.repository
 
 import com.github.ai.split.data.db.dao.{CurrencyEntityDao, GroupEntityDao, MemberEntityDao, UserEntityDao}
-import com.github.ai.split.data.db.model.GroupUid
+import com.github.ai.split.data.db.model.Acknowledgement.{CONFIRMED, REQUESTED}
+import com.github.ai.split.data.db.model.{GroupUid, UserEntity, UserUid}
 import com.github.ai.split.entity.{GroupWithMembers, MemberWithUser}
 import com.github.ai.split.entity.exception.DomainError
 import zio.*
 import zio.direct.*
-
-import scala.collection.mutable.ListBuffer
 
 class GroupRepository(
   private val memberDao: MemberEntityDao,
@@ -46,18 +45,12 @@ class GroupRepository(
         .collectAll(
           groupUids
             .map { groupUid =>
-              memberDao
-                .getByGroupUid(groupUid = groupUid)
-                .map(members => (groupUid, members))
+              getMembers(groupUid).map(members => (groupUid, members))
             }
         )
         .run
 
-      ZIO
-        .foreach(uidsAndMembers) { case (groupUid, members) =>
-          resolveMembers(members).map(groupUid -> _)
-        }
-        .run
+      uidsAndMembers
     }
   }
 
@@ -77,24 +70,31 @@ class GroupRepository(
   def getMembers(groupUid: GroupUid): IO[DomainError, List[MemberWithUser]] = {
     defer {
       val members = memberDao.getByGroupUid(groupUid).run
-      resolveMembers(members).run
+      val users = userDao.getByUids(members.flatMap(_.userUid).distinct).run
+
+      members.zipWithUsers(users)
     }
   }
 
-  private def resolveMembers(
-    members: List[com.github.ai.split.data.db.model.MemberEntity]
-  ): IO[DomainError, List[MemberWithUser]] =
-    defer {
-      val users = userDao.getByUids(members.flatMap(_.userUid).distinct).run
-      val usersByUid = users.map(user => user.uid -> user).toMap
+  def getUserGroupUids(userUid: UserUid): IO[DomainError, List[GroupUid]] = defer {
+    val members = memberDao.getAll().run
+    val users = userDao.getAll().run
 
-      members.map { member =>
-        val user = member.userUid.flatMap(userUid => usersByUid.get(userUid))
+    val user = userDao.getByUid(userUid).run
+    val membersAndUsers = members.zipWithUsers(users)
 
-        MemberWithUser(
-          member = member,
-          user = user
-        )
+    membersAndUsers
+      .filter { member =>
+        val isAlreadyMember = member.member.userUid.contains(user.uid)
+        val acknowledgement = member.member.acknowledgement
+
+        val wasRequestedToBeMember =
+          member.member.email.exists(_.equalsIgnoreCase(user.email)) &&
+            (acknowledgement == REQUESTED || acknowledgement == CONFIRMED)
+
+        isAlreadyMember || wasRequestedToBeMember
       }
-    }
+      .map(_.member.groupUid)
+      .distinct
+  }
 }

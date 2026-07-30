@@ -340,14 +340,14 @@ class FillTestDataUseCase(
       title = "Sports Team",
       description = "Basketball team equipment and tournament fees",
       password = "abc123",
-      members = List(Mickey, Goofy, Chip, Dale, Daisy, Huey),
+      members = List(Goofy, Chip, Dale, Daisy, Huey),
       expenses = List(
         Expense(
           uid = ExpenseUid(UUID.fromString("00000000-0000-0000-0000-e00000000008")),
           title = "Tournament Entry Fee",
           description = "Registration for regional tournament",
           amount = 240.00,
-          paidBy = List(Mickey.userUid),
+          paidBy = List(Huey.userUid),
           split = SplitBetweenAll
         ),
         Expense(

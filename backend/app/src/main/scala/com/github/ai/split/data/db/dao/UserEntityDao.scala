@@ -2,7 +2,7 @@ package com.github.ai.split.data.db.dao
 
 import com.github.ai.split.data.db.AppDatabase
 import com.github.ai.split.data.db.given
-import com.github.ai.split.data.db.model.{UserEntity, UserUid}
+import com.github.ai.split.data.db.model.{MemberEntity, UserEntity, UserUid}
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.some
 import slick.jdbc.SQLiteProfile.api.*
@@ -12,6 +12,10 @@ import zio.direct.*
 class UserEntityDao(
   db: AppDatabase
 ) extends Dao(db = db.context, table = db.UserTable) {
+
+  // TODO: refactor
+  def getAll(): IO[DomainError, List[UserEntity]] =
+    queryAll()
 
   def getByUid(uid: UserUid): IO[DomainError, UserEntity] =
     defer {

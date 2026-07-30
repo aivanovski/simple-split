@@ -75,8 +75,8 @@ class UpdateExpenseUseCase(
 
       splitBetween <-
         if (newSplit.isDefined) {
-          val split = newSplit.get match {
-            case SplitBetweenAll => List.empty
+          newSplit.get match {
+            case SplitBetweenAll => ZIO.succeed(List.empty)
             case SplitBetweenMembers(references) =>
               resolveUserReferencesUseCase
                 .resolveReferences(
@@ -93,8 +93,6 @@ class UpdateExpenseUseCase(
                   }
                 }
           }
-
-          ZIO.succeed(List.empty)
         } else {
           ZIO.succeed(expense.splitBetween)
         }

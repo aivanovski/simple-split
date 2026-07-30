@@ -29,6 +29,8 @@ object ApiEndpoints {
     endpoint(Method.POST / "api" / "signup")
       .in[SignupRequest]
       .out[SignupResponse](Doc.p("Created user and authentication tokens"))
+      .outHeader(HeaderCodec.setCookie)
+      .outHeader(HeaderCodec.setCookie)
       .tag("authentication")
 
   val login =
@@ -49,7 +51,7 @@ object ApiEndpoints {
 
   val getGroups =
     endpoint(Method.GET / "api" / "group")
-      .query(QueryCodec.query[String]("ids"))
+      .query(QueryCodec.query[String]("ids").optional)
       .out[GetGroupsResponse](Doc.p("Groups matching the supplied credentials"))
       .tag("groups")
 
@@ -67,52 +69,49 @@ object ApiEndpoints {
 
   // TODO: add api prefix
   val postMember =
-    endpoint(Method.POST / "member")
+    endpoint(Method.POST / "api"  / "member")
       .query(QueryCodec.query[String]("password").optional)
       .in[PostMemberRequest]
       .out[PostMemberResponse](Doc.p("Group containing the created member"))
       .tag("members")
 
   val putMember =
-    endpoint(Method.PUT / "member" / string("memberId"))
+    endpoint(Method.PUT / "api"  / "member" / string("memberId"))
       .query(QueryCodec.query[String]("password").optional)
       .in[PutMemberRequest]
       .out[PutMemberResponse](Doc.p("Group containing the updated member"))
       .tag("members")
 
   val deleteMember =
-    endpoint(Method.DELETE / "member" / string("memberId"))
+    endpoint(Method.DELETE / "api"  / "member" / string("memberId"))
       .query(QueryCodec.query[String]("password").optional)
       .out[DeleteMemberResponse](Doc.p("Group after removing the member"))
       .tag("members")
 
   val postExpense =
-    endpoint(Method.POST / "expense")
-      .query(QueryCodec.query[String]("password").optional)
+    endpoint(Method.POST / "api"  / "expense")
       .in[PostExpenseRequest]
       .out[PostExpenseResponse](Doc.p("Created expense"))
       .tag("expenses")
 
   val putExpense =
-    endpoint(Method.PUT / "expense" / string("expenseId"))
-      .query(QueryCodec.query[String]("password").optional)
+    endpoint(Method.PUT / "api"  / "expense" / string("expenseId"))
       .in[PutExpenseRequest]
       .out[PutExpenseResponse](Doc.p("Updated expense"))
       .tag("expenses")
 
   val deleteExpense =
-    endpoint(Method.DELETE / "expense" / string("expenseId"))
-      .query(QueryCodec.query[String]("password").optional)
+    endpoint(Method.DELETE / "api"  / "expense" / string("expenseId"))
       .out[DeleteExpenseResponse](Doc.p("Group after removing the expense"))
       .tag("expenses")
 
   val getCurrencies =
-    endpoint(Method.GET / "currency")
+    endpoint(Method.GET / "api"  / "currency")
       .out[GetCurrenciesResponse](Doc.p("Supported currencies"))
       .tag("currencies")
 
   val exportGroup =
-    endpoint(Method.GET / "export" / string("groupIdAndExtension"))
+    endpoint(Method.GET / "api"  / "export" / string("groupIdAndExtension"))
       .query(QueryCodec.query[String]("password").optional)
       .out[String](MediaType.text.csv, Doc.p("Exported group data"))
       .tag("groups")

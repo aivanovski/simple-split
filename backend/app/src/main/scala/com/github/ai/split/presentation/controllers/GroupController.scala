@@ -23,10 +23,11 @@ import com.github.ai.split.entity.{
 import com.github.ai.split.api.request.{PostGroupRequest, PutGroupRequest}
 import com.github.ai.split.api.response.{GetGroupsResponse, PostGroupResponse, PutGroupResponse}
 import com.github.ai.split.data.db.model.{GroupUid, MemberUid, UserEntity}
-import com.github.ai.split.entity.Access.{DENIED, GRANTED}
+import com.github.ai.split.data.db.repository.GroupRepository
+import com.github.ai.split.entity.Access.GRANTED
 import com.github.ai.split.entity.FileExtension.{CSV, HTML}
 import com.github.ai.split.entity.exception.DomainError
-import com.github.ai.split.utils.{getLastUrlParameter, parsePasswordParam, parseUid, parseUidFromUrl, some}
+import com.github.ai.split.utils.{getLastUrlParameter, parseUid, some}
 import zio.{IO, ZIO}
 import zio.http.{Body, Charsets, Header, Headers, MediaType, Request, Response, Status}
 import zio.direct.*
@@ -41,28 +42,31 @@ class GroupController(
   private val assembleGroupUseCase: AssembleGroupResponseUseCase,
   private val assembleGroupsUseCase: AssembleGroupsResponseUseCase,
   private val updateGroupUseCase: UpdateGroupUseCase,
-  private val exportDataUseCase: ExportGroupDataUseCase
+  private val exportDataUseCase: ExportGroupDataUseCase,
+  private val groupRepository: GroupRepository
 ) {
 
   def getGroups(
     user: UserEntity,
-    ids: String
+    ids: Option[String]
   ): IO[DomainError, GetGroupsResponse] =
     defer {
-      val groupUids = parseUids(ids).run.map(GroupUid(_))
-      val uidsAndAccesses = accessResolver
-        .canAccessToGroups(userUid = user.uid, groupUids = groupUids)
-        .run
+      val (grantedGroupUids, deniedGroupUids) = ids match {
+        case Some(value) =>
+          val groupUids = parseUids(value).run.map(GroupUid(_))
 
-      val grantedGroupsUids = uidsAndAccesses
-        .filter(result => result.access == GRANTED)
-        .map(result => result.uid)
+          val uidsAndAccesses = accessResolver
+            .canAccessToGroups(userUid = user.uid, groupUids = groupUids)
+            .run
 
-      val deniedGroupUids = uidsAndAccesses
-        .filter(result => result.access == DENIED)
-        .map(result => result.uid)
+          uidsAndAccesses.partition(_.access == GRANTED) match {
+            case (granted, denied) => (granted.map(_.uid), denied.map(_.uid))
+          }
+        case None =>
+          (groupRepository.getUserGroupUids(user.uid).run, List.empty)
+      }
 
-      val groups = assembleGroupsUseCase.assembleGroupDtos(uids = grantedGroupsUids).run
+      val groups = assembleGroupsUseCase.assembleGroupDtos(uids = grantedGroupUids).run
       val errors = deniedGroupUids.map { uid =>
         GetGroupErrorDto(
           uid.toString,
@@ -120,7 +124,10 @@ class GroupController(
         expenses = data.expenses
       ).run
 
-      val newUsers = data.members.map(member => NewMember(name = member.name))
+      val newUsers = data.members
+        .filterNot(member => member.name.trim.equalsIgnoreCase(user.name.trim))
+        .map(member => NewMember(name = member.name))
+
       val newGroup = addGroupUseCase
         .addGroup(
           NewGroup(
@@ -133,6 +140,8 @@ class GroupController(
           )
         )
         .run
+
+      addMemberUseCase.addMembers(groupUid = newGroup.uid, userUids = List(user.uid)).run
 
       val groupDto = assembleGroupUseCase.assembleGroupDto(groupUid = newGroup.uid).run
       PostGroupResponse(groupDto)

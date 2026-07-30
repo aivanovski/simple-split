@@ -17,7 +17,7 @@ class AccessResolverService(
   private val groupRepository: GroupRepository,
   private val userRepository: UserRepository,
   private val groupDao: GroupEntityDao,
-  private val groupMemberDao: MemberEntityDao
+  private val memberDao: MemberEntityDao
 ) {
 
   def canAccessToGroup(
@@ -137,7 +137,7 @@ class AccessResolverService(
     password: String
   ): IO[DomainError, Unit] = {
     defer {
-      val member = groupMemberDao.getByUid(uid = memberUid).run
+      val member = memberDao.getByUid(uid = memberUid).run
       val group = groupDao.getByUid(uid = member.groupUid).run
       isPasswordMatch(password = password, passwordHash = group.passwordHash).run
 

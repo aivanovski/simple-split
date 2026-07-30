@@ -10,11 +10,10 @@ import com.github.ai.split.domain.usecases.{
 }
 import com.github.ai.split.api.request.{PostExpenseRequest, PutExpenseRequest}
 import com.github.ai.split.api.response.{DeleteExpenseResponse, PostExpenseResponse, PutExpenseResponse}
-import com.github.ai.split.data.db.model.{ExpenseUid, GroupUid, MemberUid}
+import com.github.ai.split.data.db.model.{ExpenseUid, GroupUid, MemberUid, UserEntity}
 import com.github.ai.split.data.db.repository.ExpenseRepository
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.domain.AccessResolverService
-import com.github.ai.split.utils.parsePasswordParam
 import com.github.ai.split.entity.{
   MemberReference,
   NewExpense,
@@ -24,7 +23,6 @@ import com.github.ai.split.entity.{
   UserReference
 }
 import zio.*
-import zio.http.*
 import zio.direct.*
 
 class ExpenseController(
@@ -38,12 +36,12 @@ class ExpenseController(
 ) {
 
   def createExpense(
-    password: String,
+    user: UserEntity,
     body: PostExpenseRequest
   ): IO[DomainError, PostExpenseResponse] =
     defer {
       val groupUid = GroupUid(body.groupUid.parseUid().run)
-      accessResolver.canAccessToGroup(groupUid = groupUid, password = password).run
+      accessResolver.canAccessToGroup(userUid = user.uid, groupUid = groupUid).run
 
       val paidBy = parsePaidBy(paidByUids = body.paidBy.map(_.uid)).run
       val split = parseSplit(
@@ -67,13 +65,16 @@ class ExpenseController(
     }
 
   def updateExpense(
+    user: UserEntity,
     expenseId: String,
-    password: String,
     data: PutExpenseRequest
   ): IO[DomainError, PutExpenseResponse] =
     defer {
       val expenseUid = ExpenseUid(expenseId.parseUid().run)
-      accessResolver.canAccessToExpense(expenseUid = expenseUid, password = password).run
+      val existingExpense = expenseRepository.getEntityByUid(expenseUid).run
+      accessResolver
+        .canAccessToGroup(userUid = user.uid, groupUid = existingExpense.groupUid)
+        .run
 
       val paidBy = data.paidBy
       val newPaidBy =
@@ -104,7 +105,7 @@ class ExpenseController(
       updateExpenseUseCase.updateExpense(
         expenseUid = expenseUid,
         newTitle = data.title.map(_.trim).filter(_.nonEmpty),
-        newDescription = data.description.map(_.trim).filter(_.nonEmpty),
+        newDescription = data.description.map(_.trim),
         newAmount = data.amount,
         newPaidBy = newPaidBy,
         newSplit = newSplit
@@ -115,14 +116,13 @@ class ExpenseController(
     }
 
   def removeExpense(
-    expenseId: String,
-    password: String
+    user: UserEntity,
+    expenseId: String
   ): IO[DomainError, DeleteExpenseResponse] =
     defer {
       val expenseUid = expenseId.parseUid().map(uid => ExpenseUid(uid)).run
-      accessResolver.canAccessToExpense(expenseUid, password).run
-
       val expense = expenseRepository.getEntityByUid(expenseUid).run
+      accessResolver.canAccessToGroup(userUid = user.uid, groupUid = expense.groupUid).run
       removeExpenseUseCase.remvoveExpense(expenseUid).run
 
       val groupDto = assembleGroupUseCase.assembleGroupDto(expense.groupUid).run

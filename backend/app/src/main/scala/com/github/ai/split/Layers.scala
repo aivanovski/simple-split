@@ -107,7 +107,7 @@ object Layers {
   val assembleExpenseUseCase = ZLayer.fromFunction(AssembleExpenseUseCase(_, _, _))
 
   // Controllers
-  val groupController = ZLayer.fromFunction(GroupController(_, _, _, _, _, _, _, _))
+  val groupController = ZLayer.fromFunction(GroupController(_, _, _, _, _, _, _, _, _))
   val authController = ZLayer.fromFunction(AuthController(_, _, _))
   val memberController = ZLayer.fromFunction(MemberController(_, _, _, _, _, _, _))
   val expenseController = ZLayer.fromFunction(ExpenseController(_, _, _, _, _, _, _))
