@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 pub struct GetGroupsResponse {
     #[serde(rename = "groups")]
     pub groups: Vec<models::GroupDto>,
-    #[serde(rename = "errors")]
+    #[serde(rename = "errors", default)]
     pub errors: Vec<models::GetGroupErrorDto>,
 }
 
@@ -25,5 +25,19 @@ impl GetGroupsResponse {
         errors: Vec<models::GetGroupErrorDto>,
     ) -> GetGroupsResponse {
         GetGroupsResponse { groups, errors }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::GetGroupsResponse;
+
+    #[test]
+    fn omitted_errors_are_deserialized_as_an_empty_list() {
+        let response: GetGroupsResponse =
+            serde_json::from_str(r#"{"groups":[]}"#).expect("response should deserialize");
+
+        assert!(response.groups.is_empty());
+        assert!(response.errors.is_empty());
     }
 }

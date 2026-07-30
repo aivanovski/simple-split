@@ -1,7 +1,9 @@
 use frontend::api::client::ApiClient;
 use frontend::dashboard::DashboardPage;
+use frontend::group::GroupPage;
 use frontend::login::LoginPage;
 use frontend::session::AuthSession;
+use frontend::signup::SignupPage;
 use leptos::prelude::*;
 use leptos_router::{components::*, path};
 use std::sync::Arc;
@@ -13,7 +15,7 @@ fn main() {
 
 #[component]
 pub fn App() -> impl IntoView {
-    let session = RwSignal::new(None::<AuthSession>);
+    let session = RwSignal::new(AuthSession::load());
     let client = Arc::new(ApiClient::new());
 
     provide_context(session);
@@ -26,10 +28,27 @@ pub fn App() -> impl IntoView {
                     path=path!("/")
                     view=move || view! { <LoginRoute /> }
                 />
+                <Route path=path!("/signup") view=SignupRoute />
                 <Route path=path!("/dashboard") view=DashboardRoute />
+                <Route path=path!("/groups/:group_id") view=GroupRoute />
             </Routes>
         </Router>
     }
+}
+
+#[component]
+fn SignupRoute() -> impl IntoView {
+    let session = expect_context::<RwSignal<Option<AuthSession>>>();
+
+    view! {
+        <Show
+            when=move || session.with(Option::is_none)
+            fallback=|| view! { <Redirect path="/dashboard" /> }
+        >
+            <SignupPage />
+        </Show>
+    }
+    .into_any()
 }
 
 #[component]
@@ -57,6 +76,21 @@ fn DashboardRoute() -> impl IntoView {
             fallback=|| view! { <Redirect path="/" /> }
         >
             <DashboardPage />
+        </Show>
+    }
+    .into_any()
+}
+
+#[component]
+fn GroupRoute() -> impl IntoView {
+    let session = expect_context::<RwSignal<Option<AuthSession>>>();
+
+    view! {
+        <Show
+            when=move || session.with(Option::is_some)
+            fallback=|| view! { <Redirect path="/" /> }
+        >
+            <GroupPage />
         </Show>
     }
     .into_any()

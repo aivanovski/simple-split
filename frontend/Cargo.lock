@@ -106,6 +106,7 @@ name = "backend-api"
 version = "0.1.0"
 dependencies = [
  "serde",
+ "serde_json",
  "serde_with",
 ]
 
@@ -470,6 +471,7 @@ dependencies = [
  "leptos",
  "leptos_router",
  "serde",
+ "serde_json",
  "web-sys",
 ]
 

@@ -10,4 +10,5 @@ gloo-net = { version = "0.7", features = ["json"] }
 leptos = { version = "0.8.20", features = ["csr"] }
 leptos_router = "0.8.15"
 serde = "1"
-web-sys = { version = "0.3", features = ["RequestCredentials"] }
+serde_json = "1"
+web-sys = { version = "0.3", features = ["RequestCredentials", "Storage", "Window"] }

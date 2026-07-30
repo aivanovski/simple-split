@@ -15,15 +15,15 @@ use serde::{Deserialize, Serialize};
 pub struct GroupDto {
     #[serde(rename = "description")]
     pub description: String,
-    #[serde(rename = "paybackTransactions")]
+    #[serde(rename = "paybackTransactions", default)]
     pub payback_transactions: Vec<models::TransactionDto>,
     #[serde(rename = "modified")]
     pub modified: models::TimestampDto,
-    #[serde(rename = "members")]
+    #[serde(rename = "members", default)]
     pub members: Vec<models::MemberDto>,
     #[serde(rename = "title")]
     pub title: String,
-    #[serde(rename = "expenses")]
+    #[serde(rename = "expenses", default)]
     pub expenses: Vec<models::ExpenseDto>,
     #[serde(rename = "created")]
     pub created: models::TimestampDto,
@@ -56,5 +56,28 @@ impl GroupDto {
             currency,
             uid,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::GroupDto;
+
+    #[test]
+    fn omitted_empty_collections_are_deserialized_as_empty_lists() {
+        let json = r#"{
+            "description": "A new group",
+            "modified": {"timestampSeconds": 0, "formatted": ""},
+            "title": "New group",
+            "created": {"timestampSeconds": 0, "formatted": ""},
+            "currency": {"isoCode": "EUR", "name": "Euro", "symbol": "€"},
+            "uid": "group-id"
+        }"#;
+
+        let group: GroupDto = serde_json::from_str(json).expect("group should deserialize");
+
+        assert!(group.payback_transactions.is_empty());
+        assert!(group.members.is_empty());
+        assert!(group.expenses.is_empty());
     }
 }

@@ -1,5 +1,7 @@
 use backend_api::{
-    DEFAULT_BASE_URL, ErrorMessageDto, GetGroupsResponse, LoginRequest, LoginResponse,
+    DEFAULT_BASE_URL, ErrorMessageDto, GetCurrenciesResponse, GetGroupsResponse, LoginRequest,
+    LoginResponse, PostExpenseRequest, PostExpenseResponse, PostGroupRequest, PostGroupResponse,
+    PutExpenseRequest, PutExpenseResponse, SignupRequest, SignupResponse,
 };
 use gloo_net::http::{Request, Response};
 use serde::de::DeserializeOwned;
@@ -33,10 +35,83 @@ impl ApiClient {
         decode_response(response).await
     }
 
-    pub async fn get_groups(&self, ids: &[&str]) -> Result<GetGroupsResponse, ApiError> {
-        let response = Request::get(&format!("{}/api/group", self.base_url))
-            .query([("ids", ids.join(","))])
+    pub async fn signup(
+        &self,
+        name: String,
+        email: String,
+        password: String,
+    ) -> Result<SignupResponse, ApiError> {
+        let request = SignupRequest::new(name, email, password);
+
+        let response = Request::post(&format!("{}/api/signup", self.base_url))
             .credentials(RequestCredentials::Include)
+            .json(&request)
+            .map_err(network_error)?
+            .send()
+            .await
+            .map_err(network_error)?;
+
+        decode_response(response).await
+    }
+
+    pub async fn get_groups(&self) -> Result<GetGroupsResponse, ApiError> {
+        let response = Request::get(&format!("{}/api/group", self.base_url))
+            .credentials(RequestCredentials::Include)
+            .send()
+            .await
+            .map_err(network_error)?;
+
+        decode_response(response).await
+    }
+
+    pub async fn get_currencies(&self) -> Result<GetCurrenciesResponse, ApiError> {
+        let response = Request::get(&format!("{}/currency", self.base_url))
+            .send()
+            .await
+            .map_err(network_error)?;
+
+        decode_response(response).await
+    }
+
+    pub async fn create_group(
+        &self,
+        request: PostGroupRequest,
+    ) -> Result<PostGroupResponse, ApiError> {
+        let response = Request::post(&format!("{}/api/group", self.base_url))
+            .credentials(RequestCredentials::Include)
+            .json(&request)
+            .map_err(network_error)?
+            .send()
+            .await
+            .map_err(network_error)?;
+
+        decode_response(response).await
+    }
+
+    pub async fn create_expense(
+        &self,
+        request: PostExpenseRequest,
+    ) -> Result<PostExpenseResponse, ApiError> {
+        let response = Request::post(&format!("{}/expense", self.base_url))
+            .credentials(RequestCredentials::Include)
+            .json(&request)
+            .map_err(network_error)?
+            .send()
+            .await
+            .map_err(network_error)?;
+
+        decode_response(response).await
+    }
+
+    pub async fn update_expense(
+        &self,
+        expense_uid: &str,
+        request: PutExpenseRequest,
+    ) -> Result<PutExpenseResponse, ApiError> {
+        let response = Request::put(&format!("{}/expense/{}", self.base_url, expense_uid))
+            .credentials(RequestCredentials::Include)
+            .json(&request)
+            .map_err(network_error)?
             .send()
             .await
             .map_err(network_error)?;

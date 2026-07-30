@@ -6,16 +6,18 @@ use leptos_router::{NavigateOptions, hooks::use_navigate};
 use std::sync::Arc;
 
 #[derive(Clone, Copy)]
-struct LoginState {
+struct SignupState {
+    name: RwSignal<String>,
     email: RwSignal<String>,
     password: RwSignal<String>,
     error: RwSignal<Option<String>>,
     is_loading: RwSignal<bool>,
 }
 
-impl LoginState {
+impl SignupState {
     fn new() -> Self {
         Self {
+            name: RwSignal::new(String::new()),
             email: RwSignal::new(String::new()),
             password: RwSignal::new(String::new()),
             error: RwSignal::new(None),
@@ -25,8 +27,8 @@ impl LoginState {
 }
 
 #[component]
-pub fn LoginPage() -> impl IntoView {
-    let state = LoginState::new();
+pub fn SignupPage() -> impl IntoView {
+    let state = SignupState::new();
     let navigate = use_navigate();
     let session = expect_context::<RwSignal<Option<AuthSession>>>();
     let client = expect_context::<Arc<ApiClient>>();
@@ -34,8 +36,8 @@ pub fn LoginPage() -> impl IntoView {
     view! {
         <main class="auth-shell">
             <form
-                class="login-form"
-                on:submit=move |event| submit_login(
+                class="signup-form"
+                on:submit=move |event| submit_signup(
                     event,
                     state,
                     client.clone(),
@@ -44,6 +46,27 @@ pub fn LoginPage() -> impl IntoView {
                 )
                 novalidate
             >
+                <h1 class="auth-heading">"Create your account"</h1>
+                <p class="auth-subtitle">"Start splitting expenses with your group."</p>
+
+                <label class="field">
+                    <span class="field-label">"Name"</span>
+                    <input
+                        class="field-input"
+                        id="name"
+                        name="name"
+                        type="text"
+                        autocomplete="name"
+                        autofocus
+                        placeholder="Your name"
+                        prop:value=move || state.name.get()
+                        on:input=move |event| {
+                            state.name.set(event_target_value(&event));
+                            state.error.set(None);
+                        }
+                    />
+                </label>
+
                 <label class="field">
                     <span class="field-label">"Email"</span>
                     <input
@@ -52,7 +75,6 @@ pub fn LoginPage() -> impl IntoView {
                         name="email"
                         type="email"
                         autocomplete="username"
-                        autofocus
                         placeholder="name@example.com"
                         prop:value=move || state.email.get()
                         on:input=move |event| {
@@ -69,8 +91,8 @@ pub fn LoginPage() -> impl IntoView {
                         id="password"
                         name="password"
                         type="password"
-                        autocomplete="current-password"
-                        placeholder="Enter your password"
+                        autocomplete="new-password"
+                        placeholder="Create a password"
                         prop:value=move || state.password.get()
                         on:input=move |event| {
                             state.password.set(event_target_value(&event));
@@ -88,44 +110,46 @@ pub fn LoginPage() -> impl IntoView {
                 <button class="primary-button" type="submit" disabled=move || state.is_loading.get()>
                     <Show
                         when=move || !state.is_loading.get()
-                        fallback=|| view! { <span class="button-loader" aria-label="Signing in"></span> }
+                        fallback=|| view! { <span class="button-loader" aria-label="Creating account"></span> }
                     >
-                        "Log in"
+                        "Create account"
                     </Show>
                 </button>
 
                 <p class="auth-switch">
-                    "New to Simple Split? "
-                    <a href="/signup">"Create an account"</a>
+                    "Already have an account? "
+                    <a href="/">"Log in"</a>
                 </p>
             </form>
         </main>
     }
 }
 
-fn submit_login(
+fn submit_signup(
     event: SubmitEvent,
-    state: LoginState,
+    state: SignupState,
     client: Arc<ApiClient>,
     session: RwSignal<Option<AuthSession>>,
     navigate: impl Fn(&str, NavigateOptions) + Clone + 'static,
 ) {
     event.prevent_default();
 
+    let name = state.name.get().trim().to_owned();
     let email = state.email.get().trim().to_owned();
     let password = state.password.get();
 
+    if name.is_empty() {
+        state.error.set(Some("Enter your name.".to_owned()));
+        return;
+    }
+
     if email.is_empty() {
-        state.error.set(Some(
-            "Enter the email of an existing backend user.".to_owned(),
-        ));
+        state.error.set(Some("Enter your email.".to_owned()));
         return;
     }
 
     if password.trim().is_empty() {
-        state
-            .error
-            .set(Some("Enter the password for that backend user.".to_owned()));
+        state.error.set(Some("Create a password.".to_owned()));
         return;
     }
 
@@ -133,7 +157,7 @@ fn submit_login(
     state.is_loading.set(true);
 
     spawn_local(async move {
-        match client.login(email, password).await {
+        match client.signup(name, email, password).await {
             Ok(response) => {
                 state.is_loading.set(false);
                 let auth_session = AuthSession {
