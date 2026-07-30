@@ -3,37 +3,6 @@ info:
   title: Simple Split API
   version: 0.1.0
 paths:
-  /auth/refresh:
-    description: |
-      - authentication
-    post:
-      tags:
-      - authentication
-      description: |
-        - authentication
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RefreshTokenRequest'
-        required: true
-      responses:
-        '200':
-          description: |+
-            Refreshed authentication tokens
-
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RefreshTokenResponse'
-        '400':
-          description: |+
-            Bad request
-
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorMessageDto'
   /expense:
     description: |
       - expenses
@@ -100,7 +69,68 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorMessageDto'
-  /signup:
+  /api/group:
+    description: |
+      - groups
+    get:
+      tags:
+      - groups
+      description: |
+        - groups
+      parameters:
+      - name: ids
+        in: query
+        required: true
+        schema:
+          type: string
+        allowReserved: false
+        style: form
+      responses:
+        '200':
+          description: |+
+            Groups matching the supplied credentials
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetGroupsResponse'
+        '400':
+          description: |+
+            Bad request
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessageDto'
+    post:
+      tags:
+      - groups
+      description: |
+        - groups
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostGroupRequest'
+        required: true
+      responses:
+        '200':
+          description: |+
+            Created group
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostGroupResponse'
+        '400':
+          description: |+
+            Bad request
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessageDto'
+  /api/auth/refresh:
     description: |
       - authentication
     post:
@@ -112,17 +142,22 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SignupRequest'
+              $ref: '#/components/schemas/RefreshTokenRequest'
         required: true
       responses:
         '200':
           description: |+
-            Created user and authentication tokens
+            Refreshed authentication tokens
 
+          headers:
+            set-cookie:
+              required: true
+              schema:
+                type: string
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SignupResponse'
+                $ref: '#/components/schemas/RefreshTokenResponse'
         '400':
           description: |+
             Bad request
@@ -342,6 +377,42 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorMessageDto'
+  /api/login:
+    description: |
+      - authentication
+    post:
+      tags:
+      - authentication
+      description: |
+        - authentication
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+        required: true
+      responses:
+        '200':
+          description: |+
+            Authentication tokens
+
+          headers:
+            set-cookie:
+              required: true
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: |+
+            Bad request
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessageDto'
   /member:
     description: |
       - members
@@ -383,106 +454,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorMessageDto'
-  /group:
-    description: |
-      - groups
-    get:
-      tags:
-      - groups
-      description: |
-        - groups
-      parameters:
-      - name: ids
-        in: query
-        required: true
-        schema:
-          type: string
-        allowReserved: false
-        style: form
-      - name: passwords
-        in: query
-        required: true
-        schema:
-          type: string
-        allowReserved: false
-        style: form
-      responses:
-        '200':
-          description: |+
-            Groups matching the supplied credentials
-
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetGroupsResponse'
-        '400':
-          description: |+
-            Bad request
-
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorMessageDto'
-    post:
-      tags:
-      - groups
-      description: |
-        - groups
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PostGroupRequest'
-        required: true
-      responses:
-        '200':
-          description: |+
-            Created group
-
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PostGroupResponse'
-        '400':
-          description: |+
-            Bad request
-
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorMessageDto'
-  /login:
-    description: |
-      - authentication
-    post:
-      tags:
-      - authentication
-      description: |
-        - authentication
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/LoginRequest'
-        required: true
-      responses:
-        '200':
-          description: |+
-            Authentication tokens
-
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LoginResponse'
-        '400':
-          description: |+
-            Bad request
-
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorMessageDto'
-  /group/{groupId}:
+  /api/group/{groupId}:
     description: |
       - groups
     put:
@@ -491,15 +463,6 @@ paths:
       description: |
         - groups
       parameters:
-      - name: password
-        in: query
-        required: true
-        schema:
-          type:
-          - string
-          - 'null'
-        allowReserved: false
-        style: form
       - name: groupId
         in: path
         required: true
@@ -521,6 +484,37 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PutGroupResponse'
+        '400':
+          description: |+
+            Bad request
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessageDto'
+  /api/signup:
+    description: |
+      - authentication
+    post:
+      tags:
+      - authentication
+      description: |
+        - authentication
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignupRequest'
+        required: true
+      responses:
+        '200':
+          description: |+
+            Created user and authentication tokens
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignupResponse'
         '400':
           description: |+
             Bad request

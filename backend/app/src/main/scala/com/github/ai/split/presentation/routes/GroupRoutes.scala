@@ -12,7 +12,7 @@ import zio.http.Routes
 object GroupRoutes {
 
   def routes() = Routes(
-    ApiEndpoints.getGroups.implement { case (ids, _) =>
+    ApiEndpoints.getGroups.implement { ids =>
       defer {
         val user = ZIO.service[UserEntity].run
         val controller = ZIO.service[GroupController].run
@@ -26,7 +26,7 @@ object GroupRoutes {
         controller.createGroup(user, body).mapError(_.toErrorMessageDto).run
       }
     },
-    ApiEndpoints.putGroup.implement { case (groupId, _, body) =>
+    ApiEndpoints.putGroup.implement { case (groupId, body) =>
       defer {
         val user = ZIO.service[UserEntity].run
         val controller = ZIO.service[GroupController].run

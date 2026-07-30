@@ -19,7 +19,7 @@ class AuthService(
   private val userDao: UserEntityDao
 ) {
 
-  private def getTokenTimeToLive(tokenType: JwtTokenType): Duration =
+  def getTokenTimeToLive(tokenType: JwtTokenType): Duration =
     tokenType match {
       case AUTH_TOKEN => 2.hours
       case REFRESH_TOKEN => 60.days

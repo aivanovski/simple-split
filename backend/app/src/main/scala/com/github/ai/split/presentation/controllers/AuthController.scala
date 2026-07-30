@@ -7,12 +7,14 @@ import com.github.ai.split.data.db.dao.UserEntityDao
 import com.github.ai.split.data.db.model.{UserEntity, UserUid}
 import com.github.ai.split.data.db.repository.UserRepository
 import com.github.ai.split.domain.PasswordService
-import com.github.ai.split.domain.authentication.AuthService
-import com.github.ai.split.entity.{NewUser, RefreshToken}
+import com.github.ai.split.domain.authentication.{AuthHandler, AuthService}
+import com.github.ai.split.entity.{JwtTokenType, JwtTokens, NewUser, RefreshToken}
 import com.github.ai.split.entity.exception.DomainError
 import com.github.ai.split.utils.some
 import zio.*
 import zio.direct.*
+import zio.http.Cookie.SameSite.Lax
+import zio.http.{Cookie, Header, Path}
 
 import java.util.UUID
 
@@ -48,7 +50,9 @@ class AuthController(
       )
     }
 
-  def login(body: LoginRequest): IO[DomainError, LoginResponse] =
+  def login(
+    body: LoginRequest
+  ): IO[DomainError, (LoginResponse, Header.SetCookie, Header.SetCookie)] =
     defer {
       val user = userRepository
         .authenticate(
@@ -58,25 +62,59 @@ class AuthController(
         .run
 
       val tokens = authService.createTokens(user.uid)
-      LoginResponse(
+      val response = LoginResponse(
         token = tokens.token.toString,
         refreshToken = tokens.refreshToken.toString,
         user = toUserDto(user)
       )
+
+      val (authTokenHeader, refreshTokenHeader) = createAuthHeaders(tokens)
+      (response, authTokenHeader, refreshTokenHeader)
     }
 
-  def refreshToken(body: RefreshTokenRequest): IO[DomainError, RefreshTokenResponse] =
+  def refreshToken(
+    body: RefreshTokenRequest
+  ): IO[DomainError, (RefreshTokenResponse, Header.SetCookie, Header.SetCookie)] =
     defer {
       val userUid = authService
         .validateRefreshToken(RefreshToken(body.refreshToken))
         .run
 
       val tokens = authService.createTokens(userUid)
-      RefreshTokenResponse(
+      val response = RefreshTokenResponse(
         token = tokens.token.toString,
         refreshToken = tokens.refreshToken.toString
       )
+
+      val (authTokenHeader, refreshTokenHeader) = createAuthHeaders(tokens)
+      (response, authTokenHeader, refreshTokenHeader)
     }
+
+  private def createAuthHeaders(tokens: JwtTokens): (Header.SetCookie, Header.SetCookie) = {
+    val authTokenCookie = Cookie.Response(
+      name = AuthHandler.AuthTokenCookieName,
+      content = tokens.token.toString,
+      isHttpOnly = true,
+      isSecure = true,
+      sameSite = Option(Lax),
+      path = Option(Path("/api")),
+      maxAge = Some(authService.getTokenTimeToLive(JwtTokenType.AUTH_TOKEN))
+    )
+
+    val refreshTokenCookie = Cookie.Response(
+      name = AuthHandler.RefreshTokenCookieName,
+      content = tokens.refreshToken.toString,
+      isHttpOnly = true,
+      isSecure = true,
+      path = Option(Path("/api/auth/refresh")),
+      maxAge = Some(authService.getTokenTimeToLive(JwtTokenType.REFRESH_TOKEN))
+    )
+
+    (
+      Header.SetCookie(authTokenCookie),
+      Header.SetCookie(refreshTokenCookie)
+    )
+  }
 
   private def toUserDto(user: UserEntity): UserDto =
     UserDto(

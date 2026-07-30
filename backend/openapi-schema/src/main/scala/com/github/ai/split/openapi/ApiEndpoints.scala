@@ -5,7 +5,7 @@ import com.github.ai.split.api.request.*
 import com.github.ai.split.api.response.*
 import com.github.ai.split.openapi.Schemas.given
 import zio.http.*
-import zio.http.codec.{Doc, HttpContentCodec, QueryCodec}
+import zio.http.codec.{Doc, HeaderCodec, HttpContentCodec, QueryCodec}
 import zio.http.endpoint.Endpoint
 import zio.http.endpoint.openapi.{OpenAPI, OpenAPIGen}
 import zio.schema.Schema
@@ -26,43 +26,46 @@ object ApiEndpoints {
     Endpoint(route).outError[ErrorMessageDto](Status.BadRequest, Doc.p("Bad request"))
 
   val signup =
-    endpoint(Method.POST / "signup")
+    endpoint(Method.POST / "api" / "signup")
       .in[SignupRequest]
       .out[SignupResponse](Doc.p("Created user and authentication tokens"))
       .tag("authentication")
 
   val login =
-    endpoint(Method.POST / "login")
+    endpoint(Method.POST / "api" / "login")
       .in[LoginRequest]
       .out[LoginResponse](Doc.p("Authentication tokens"))
+      .outHeader(HeaderCodec.setCookie)
+      .outHeader(HeaderCodec.setCookie)
       .tag("authentication")
 
   val refreshToken =
-    endpoint(Method.POST / "auth" / "refresh")
+    endpoint(Method.POST / "api" / "auth" / "refresh")
       .in[RefreshTokenRequest]
       .out[RefreshTokenResponse](Doc.p("Refreshed authentication tokens"))
+      .outHeader(HeaderCodec.setCookie)
+      .outHeader(HeaderCodec.setCookie)
       .tag("authentication")
 
   val getGroups =
-    endpoint(Method.GET / "group")
+    endpoint(Method.GET / "api" / "group")
       .query(QueryCodec.query[String]("ids"))
-      .query(QueryCodec.query[String]("passwords"))
       .out[GetGroupsResponse](Doc.p("Groups matching the supplied credentials"))
       .tag("groups")
 
   val postGroup =
-    endpoint(Method.POST / "group")
+    endpoint(Method.POST / "api" / "group")
       .in[PostGroupRequest]
       .out[PostGroupResponse](Doc.p("Created group"))
       .tag("groups")
 
   val putGroup =
-    endpoint(Method.PUT / "group" / string("groupId"))
-      .query(QueryCodec.query[String]("password").optional)
+    endpoint(Method.PUT / "api" / "group" / string("groupId"))
       .in[PutGroupRequest]
       .out[PutGroupResponse](Doc.p("Updated group"))
       .tag("groups")
 
+  // TODO: add api prefix
   val postMember =
     endpoint(Method.POST / "member")
       .query(QueryCodec.query[String]("password").optional)
