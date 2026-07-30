@@ -470,6 +470,7 @@ dependencies = [
  "leptos",
  "leptos_router",
  "serde",
+ "web-sys",
 ]
 
 [[package]]

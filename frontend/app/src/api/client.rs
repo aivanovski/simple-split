@@ -1,6 +1,9 @@
-use backend_api::{DEFAULT_BASE_URL, ErrorMessageDto, LoginRequest, LoginResponse};
+use backend_api::{
+    DEFAULT_BASE_URL, ErrorMessageDto, GetGroupsResponse, LoginRequest, LoginResponse,
+};
 use gloo_net::http::{Request, Response};
 use serde::de::DeserializeOwned;
+use web_sys::RequestCredentials;
 
 use crate::error::ApiError;
 
@@ -20,8 +23,20 @@ impl ApiClient {
         let request = LoginRequest::new(email, password);
 
         let response = Request::post(&format!("{}/api/login", self.base_url))
+            .credentials(RequestCredentials::Include)
             .json(&request)
             .map_err(network_error)?
+            .send()
+            .await
+            .map_err(network_error)?;
+
+        decode_response(response).await
+    }
+
+    pub async fn get_groups(&self, ids: &[&str]) -> Result<GetGroupsResponse, ApiError> {
+        let response = Request::get(&format!("{}/api/group", self.base_url))
+            .query([("ids", ids.join(","))])
+            .credentials(RequestCredentials::Include)
             .send()
             .await
             .map_err(network_error)?;
