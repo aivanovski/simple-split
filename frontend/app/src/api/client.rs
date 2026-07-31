@@ -65,7 +65,7 @@ impl ApiClient {
     }
 
     pub async fn get_currencies(&self) -> Result<GetCurrenciesResponse, ApiError> {
-        let response = Request::get(&format!("{}/currency", self.base_url))
+        let response = Request::get(&format!("{}/api/currency", self.base_url))
             .send()
             .await
             .map_err(network_error)?;
@@ -92,7 +92,7 @@ impl ApiClient {
         &self,
         request: PostExpenseRequest,
     ) -> Result<PostExpenseResponse, ApiError> {
-        let response = Request::post(&format!("{}/expense", self.base_url))
+        let response = Request::post(&format!("{}/api/expense", self.base_url))
             .credentials(RequestCredentials::Include)
             .json(&request)
             .map_err(network_error)?
@@ -108,7 +108,7 @@ impl ApiClient {
         expense_uid: &str,
         request: PutExpenseRequest,
     ) -> Result<PutExpenseResponse, ApiError> {
-        let response = Request::put(&format!("{}/expense/{}", self.base_url, expense_uid))
+        let response = Request::put(&format!("{}/api/expense/{}", self.base_url, expense_uid))
             .credentials(RequestCredentials::Include)
             .json(&request)
             .map_err(network_error)?
