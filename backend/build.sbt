@@ -54,6 +54,8 @@ lazy val app = project
   .dependsOn(api, openapiSchema)
   .settings(
     name := "simple-split-app",
+    Compile / run / fork := true,
+    Compile / run / baseDirectory := (ThisBuild / baseDirectory).value,
     assembly / assemblyMergeStrategy := {
       case PathList("META-INF", "services", xs@_*) => MergeStrategy.concat
       case PathList("META-INF", xs@_*) => MergeStrategy.discard
